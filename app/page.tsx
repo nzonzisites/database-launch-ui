@@ -243,8 +243,7 @@ export default function LandingPage() {
             <div
               style={{
                 marginTop: 52,
-                borderTop: `1px solid ${OCHRE}`,
-                padding: "26px 0 0",
+                animation: "riseIn 1.8s 2s cubic-bezier(0.33, 0, 0.2, 1) both",
               }}
             >
               {!submitted && (
@@ -266,8 +265,8 @@ export default function LandingPage() {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                     {(
                       [
-                        { key: "scholar" as const, label: "I'd like to become an Nzonzi" },
-                        { key: "buyer" as const, label: "I'd like to hire an Nzonzi" },
+                        { key: "scholar" as const, label: "I'd like to become an Nzonzi", i: 0 },
+                        { key: "buyer" as const, label: "I'd like to hire an Nzonzi", i: 1 },
                       ]
                     ).map((r) => {
                       const on = role === r.key;
@@ -285,6 +284,7 @@ export default function LandingPage() {
                             fontWeight: 500,
                             color: on ? SAND : "rgba(31,14,3,0.8)",
                             cursor: "pointer",
+                            animation: `riseIn 1.6s ${3.2 + r.i * 0.6}s cubic-bezier(0.33, 0, 0.2, 1) both`,
                           }}
                         >
                           {r.label}
