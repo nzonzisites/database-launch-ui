@@ -179,7 +179,7 @@ export default function LandingPage() {
                   maxWidth: 620,
                 }}
               >
-                                knowledge producers, rigorous practitioners, and social
+                knowledge producers, rigorous practitioners, and social
                 leaders who foster positive social impact through
                 organizations, businesses, institutions, and communities
               </p>
@@ -249,132 +249,135 @@ export default function LandingPage() {
             >
               {!submitted && (
                 <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: 13.5,
-                      fontWeight: 500,
-                      color: "rgba(31,14,3,0.6)",
-                      marginBottom: 14,
-                    }}
-                  >
-                    Register for early access to the Nzonzi database
-                  </label>
-                  <form
-                    onSubmit={handleRegister}
+                  <div
                     style={{
                       display: "flex",
                       flexWrap: "wrap",
                       alignItems: "center",
-                      gap: 20,
+                      gap: 18,
+                      marginBottom: 22,
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        flex: "1 1 auto",
-                        minWidth: 0,
-                        gap: 8,
-                      }}
-                    >
-                      {(
-                        [
-                          { key: "scholar" as const, label: "I'd like to become an Nzonzi" },
-                          { key: "buyer" as const, label: "I'd like to hire an Nzonzi" },
-                        ]
-                      ).map((r) => {
-                        const on = role === r.key;
-                        return (
-                          <button
-                            key={r.key}
-                            type="button"
-                            onClick={() => setRole(r.key)}
-                            style={{
-                              background: on ? BROWN : "transparent",
-                              border: `1px solid ${on ? BROWN : "rgba(31,14,3,0.25)"}`,
-                              borderRadius: 999,
-                              padding: "12px 20px",
-                              fontSize: 14.5,
-                              fontWeight: 500,
-                              color: on ? SAND : "rgba(31,14,3,0.8)",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {r.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flex: "1 1 260px",
-                        minWidth: 0,
-                        borderBottom: "1px solid rgba(31,14,3,0.45)",
-                      }}
-                    >
-                      <input
-                        placeholder="you@example.com"
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                    <span style={{ flex: "none", fontStyle: "italic", fontSize: 19, fontWeight: 400 }}>
+                      Where do you fit in?
+                    </span>
+                    <span style={{ flex: "1 1 60px", minWidth: 40, height: 1, background: OCHRE }} />
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                    {(
+                      [
+                        { key: "scholar" as const, label: "I'd like to become an Nzonzi" },
+                        { key: "buyer" as const, label: "I'd like to hire an Nzonzi" },
+                      ]
+                    ).map((r) => {
+                      const on = role === r.key;
+                      return (
+                        <button
+                          key={r.key}
+                          type="button"
+                          onClick={() => setRole(r.key)}
+                          style={{
+                            background: on ? BROWN : "transparent",
+                            border: `1px solid ${on ? BROWN : "rgba(31,14,3,0.25)"}`,
+                            borderRadius: 999,
+                            padding: "14px 24px",
+                            fontSize: 15.5,
+                            fontWeight: 500,
+                            color: on ? SAND : "rgba(31,14,3,0.8)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {r.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {role !== null && (
+                    <div className="rise-in" style={{ marginTop: 30 }}>
+                      <label
                         style={{
-                          flex: 1,
-                          minWidth: 0,
-                          border: 0,
-                          background: "transparent",
-                          padding: "10px 2px",
-                          fontSize: 17,
-                          fontWeight: 300,
-                          color: email ? OCHRE : BROWN,
-                        }}
-                      />
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        style={{
-                          background: "transparent",
-                          border: 0,
-                          padding: "10px 4px 10px 16px",
-                          fontSize: 15,
-                          fontWeight: 600,
-                          color: BROWN,
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
+                          display: "block",
+                          fontSize: 13.5,
+                          fontWeight: 500,
+                          color: "rgba(31,14,3,0.6)",
+                          marginBottom: 12,
                         }}
                       >
-                        {submitting ? "Submitting…" : "Request access →"}
-                      </button>
+                        {role === "scholar"
+                          ? "Apply to list on Nzonzi. Register now for early access."
+                          : "Register for early access to the Nzonzi database"}
+                      </label>
+                      <form
+                        onSubmit={handleRegister}
+                        style={{
+                          display: "flex",
+                          maxWidth: 460,
+                          borderBottom: "1px solid rgba(31,14,3,0.45)",
+                        }}
+                      >
+                        <input
+                          placeholder="you@example.com"
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            border: 0,
+                            background: "transparent",
+                            padding: "10px 2px",
+                            fontSize: 17,
+                            fontWeight: 300,
+                            color: email ? OCHRE : BROWN,
+                          }}
+                        />
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          style={{
+                            background: "transparent",
+                            border: 0,
+                            padding: "10px 4px 10px 16px",
+                            fontSize: 15,
+                            fontWeight: 600,
+                            color: BROWN,
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {submitting ? "Submitting…" : "Request access →"}
+                        </button>
+                      </form>
+                      {submitError && (
+                        <p style={{ margin: "10px 0 0", fontSize: 13, color: OCHRE }}>
+                          {submitError}
+                        </p>
+                      )}
+                      <p
+                        style={{
+                          margin: "18px 0 0",
+                          maxWidth: 560,
+                          fontSize: 12.5,
+                          fontWeight: 300,
+                          lineHeight: 1.55,
+                          color: "rgba(31,14,3,0.65)",
+                        }}
+                      >
+                        By registering, you agree to receive emails about your
+                        application and occasional updates about Nzonzi&apos;s
+                        launch. Unsubscribe anytime. See our{" "}
+                        <Link
+                          href="/privacy"
+                          style={{ fontWeight: 500, borderBottom: "1px solid currentColor" }}
+                        >
+                          Privacy Notice
+                        </Link>
+                        .
+                      </p>
                     </div>
-                  </form>
-                  {submitError && (
-                    <p style={{ margin: "10px 0 0", fontSize: 13, color: OCHRE }}>
-                      {submitError}
-                    </p>
                   )}
-                  <p
-                    style={{
-                      margin: "18px 0 0",
-                      maxWidth: 560,
-                      fontSize: 12.5,
-                      fontWeight: 300,
-                      lineHeight: 1.55,
-                      color: "rgba(31,14,3,0.65)",
-                    }}
-                  >
-                    By registering, you agree to receive emails about your
-                    application and occasional updates about Nzonzi&apos;s
-                    launch. Unsubscribe anytime. See our{" "}
-                    <Link
-                      href="/privacy"
-                      style={{ fontWeight: 500, borderBottom: "1px solid currentColor" }}
-                    >
-                      Privacy Notice
-                    </Link>
-                    .
-                  </p>
                 </div>
               )}
 
