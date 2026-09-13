@@ -179,9 +179,9 @@ export default function LandingPage() {
                   maxWidth: 620,
                 }}
               >
-                intellectuals, research-practitioners, and leaders that
-                foster positive and generative impact for organizations,
-                businesses, institutions, and collectives
+                                knowledge producers, rigorous practitioners, and social
+                leaders who foster positive social impact through
+                organizations, businesses, institutions, and communities
               </p>
 
               <div
