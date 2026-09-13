@@ -93,7 +93,7 @@ export default function LandingPage() {
 
   const continueLabel =
     role === "scholar"
-      ? "your scholar application"
+      ? "tell us about yourself"
       : role === "buyer"
       ? "your client application"
       : "tell us about yourself";
@@ -733,7 +733,7 @@ function ScholarApplicationSection({
               textTransform: "lowercase",
             }}
           >
-            scholar application
+            about you
           </h2>
           <p
             style={{
