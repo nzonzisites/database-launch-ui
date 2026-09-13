@@ -780,7 +780,7 @@ function ScholarApplicationSection({
             </div>
             <div>
               <label style={fieldLabelStyle}>
-                How has failed infrastructure guided you towards innovation?
+                How has infrastructure failure influenced the way you think about innovation?
               </label>
               <textarea
                 rows={4}
