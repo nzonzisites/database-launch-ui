@@ -110,29 +110,35 @@ export default function LandingPage() {
           color: BROWN,
           display: "flex",
           flexDirection: "column",
-          padding: "40px 48px 48px",
+          padding: "clamp(24px, 8vw, 40px) clamp(20px, 6vw, 48px) clamp(28px, 8vw, 48px)",
         }}
       >
         <div
           style={{
             flex: 1,
+            minWidth: 0,
             display: "grid",
             placeItems: "center",
             padding: "24px 0 56px",
           }}
         >
-          <div style={{ width: "100%", maxWidth: 720 }}>
+          <div style={{ width: "100%", maxWidth: 720, minWidth: 0 }}>
             {/* Definition card */}
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo.png"
                 alt="Nzonzi"
-                style={{ width: 76, height: 76, display: "block", flex: "none" }}
+                style={{
+                  width: "clamp(48px, 12vw, 76px)",
+                  height: "clamp(48px, 12vw, 76px)",
+                  display: "block",
+                  flex: "none",
+                }}
               />
               <h1
                 style={{
-                  fontSize: 84,
+                  fontSize: "clamp(40px, 13vw, 84px)",
                   fontWeight: 300,
                   letterSpacing: "-0.04em",
                   lineHeight: 1,
@@ -160,24 +166,22 @@ export default function LandingPage() {
             <div
               style={{
                 borderLeft: "1px solid rgba(31,14,3,0.35)",
-                paddingLeft: 26,
+                paddingLeft: "clamp(16px, 4vw, 26px)",
                 margin: "34px 0 0",
               }}
             >
               <p
                 style={{
-                  fontSize: 22,
+                  fontSize: "clamp(17px, 4.2vw, 22px)",
                   fontWeight: 300,
                   lineHeight: 1.55,
                   margin: 0,
                   maxWidth: 620,
                 }}
               >
-                Intellectuals who harness their knowledge for social good and
-                translate complex ideas into clarity aimed at improving the
-                collective; rigorous practitioners, knowledge producers, and
-                leaders that foster positive and generative impact for
-                organizations, businesses, institutions, and collectives
+                intellectuals, research-practitioners, and leaders that
+                foster positive and generative impact for organizations,
+                businesses, institutions, and collectives
               </p>
 
               <div
@@ -203,6 +207,7 @@ export default function LandingPage() {
                   style={{
                     position: "relative",
                     flex: 1,
+                    minWidth: 0,
                     overflow: "hidden",
                     maskImage:
                       "linear-gradient(90deg, transparent 0, #000 24px, #000 82%, transparent 100%)",
@@ -264,7 +269,15 @@ export default function LandingPage() {
                       gap: 20,
                     }}
                   >
-                    <div style={{ display: "flex", flex: "none", gap: 8 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        flex: "1 1 auto",
+                        minWidth: 0,
+                        gap: 8,
+                      }}
+                    >
                       {(
                         [
                           { key: "scholar" as const, label: "I'd like to become an Nzonzi" },
@@ -416,13 +429,13 @@ export default function LandingPage() {
                 minHeight: "calc(100vh - 46px)",
                 display: "grid",
                 placeItems: "center",
-                padding: "64px 48px",
+                padding: "clamp(40px, 10vw, 64px) clamp(20px, 6vw, 48px)",
               }}
             >
               <div className="rise-in" style={{ width: "100%", maxWidth: 720 }}>
                 <h2
                   style={{
-                    fontSize: 52,
+                    fontSize: "clamp(30px, 9vw, 52px)",
                     fontWeight: 300,
                     letterSpacing: "-0.04em",
                     lineHeight: 1.02,
@@ -507,7 +520,13 @@ function ClientApplicationSection({
   onSubmit: () => void;
 }) {
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
+    <div
+      style={{
+        maxWidth: 720,
+        margin: "0 auto",
+        padding: "clamp(48px, 10vw, 72px) clamp(20px, 6vw, 48px) clamp(56px, 10vw, 80px)",
+      }}
+    >
       {done ? (
         <div className="rise-in" style={{ textAlign: "left" }}>
           <span
@@ -522,7 +541,7 @@ function ClientApplicationSection({
           </span>
           <h3
             style={{
-              fontSize: 34,
+              fontSize: "clamp(26px, 7vw, 34px)",
               fontWeight: 300,
               letterSpacing: "-0.035em",
               lineHeight: 1.12,
@@ -563,7 +582,7 @@ function ClientApplicationSection({
         >
           <h3
             style={{
-              fontSize: 34,
+              fontSize: "clamp(26px, 7vw, 34px)",
               fontWeight: 300,
               letterSpacing: "-0.035em",
               lineHeight: 1.12,
@@ -638,7 +657,13 @@ function ScholarApplicationSection({
   onSubmit: () => void;
 }) {
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
+    <div
+      style={{
+        maxWidth: 720,
+        margin: "0 auto",
+        padding: "clamp(48px, 10vw, 72px) clamp(20px, 6vw, 48px) clamp(56px, 10vw, 80px)",
+      }}
+    >
       {done ? (
         <div className="rise-in" style={{ textAlign: "right" }}>
           <span
@@ -654,7 +679,7 @@ function ScholarApplicationSection({
           <h2
             style={{
               margin: "14px 0 14px",
-              fontSize: 34,
+              fontSize: "clamp(26px, 7vw, 34px)",
               fontWeight: 300,
               letterSpacing: "-0.035em",
               lineHeight: 1.12,
@@ -696,7 +721,7 @@ function ScholarApplicationSection({
         >
           <h2
             style={{
-              fontSize: 34,
+              fontSize: "clamp(26px, 7vw, 34px)",
               fontWeight: 300,
               letterSpacing: "-0.035em",
               lineHeight: 1.12,
