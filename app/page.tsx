@@ -610,7 +610,8 @@ function ClientApplicationSection({
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
             {[
-              { label: "Name", ph: "Maya Ellison" },
+              { label: "First name", ph: "Maya" },
+              { label: "Last name", ph: "Ellison" },
               { label: "City", ph: "New York" },
               { label: "Country", ph: "United States" },
               { label: "Affiliation", ph: "Northside Labs" },
@@ -750,8 +751,8 @@ function ScholarApplicationSection({
 
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
             {[
-              { label: "Name", ph: "As it should appear in the directory" },
-              { label: "Email", ph: "you@example.com" },
+              { label: "First name", ph: "As it should appear in the directory" },
+              { label: "Last name", ph: "As it should appear in the directory" },
               { label: "City and country", ph: "Ibadan, Nigeria" },
               { label: "Affiliation", ph: "University of Ibadan" },
             ].map((f) => (
@@ -780,7 +781,7 @@ function ScholarApplicationSection({
             </div>
             <div>
               <label style={fieldLabelStyle}>
-                How has infrastructure failure influenced the way you think about innovation?
+                How has failed infrastructure guided you towards innovation?
               </label>
               <textarea
                 rows={4}
