@@ -95,7 +95,7 @@ export default function LandingPage() {
     role === "scholar"
       ? "tell us about yourself"
       : role === "buyer"
-      ? "your client application"
+      ? "tell us what you're looking for"
       : "tell us about yourself";
 
   const showBrownSection = submitted && role !== "scholar";
@@ -191,6 +191,7 @@ export default function LandingPage() {
                   alignItems: "baseline",
                   gap: 10,
                   overflow: "hidden",
+                  animation: "riseIn 1.8s 2s cubic-bezier(0.33, 0, 0.2, 1) both",
                 }}
               >
                 <span
@@ -243,7 +244,7 @@ export default function LandingPage() {
             <div
               style={{
                 marginTop: 52,
-                animation: "riseIn 1.8s 2s cubic-bezier(0.33, 0, 0.2, 1) both",
+                animation: "riseIn 1.8s 3.8s cubic-bezier(0.33, 0, 0.2, 1) both",
               }}
             >
               {!submitted && (
@@ -284,7 +285,7 @@ export default function LandingPage() {
                             fontWeight: 500,
                             color: on ? SAND : "rgba(31,14,3,0.8)",
                             cursor: "pointer",
-                            animation: `riseIn 1.6s ${3.2 + r.i * 0.6}s cubic-bezier(0.33, 0, 0.2, 1) both`,
+                            animation: `riseIn 1.6s ${5.0 + r.i * 0.6}s cubic-bezier(0.33, 0, 0.2, 1) both`,
                           }}
                         >
                           {r.label}
@@ -594,7 +595,7 @@ function ClientApplicationSection({
               textTransform: "lowercase",
             }}
           >
-            client application
+            about you
           </h3>
           <p
             style={{
@@ -605,15 +606,30 @@ function ClientApplicationSection({
               color: "rgba(240,240,240,0.7)",
             }}
           >
-            Nzonzi Admin will consider your responses when curating the next
-            cohort of scholars.
+            The curatorial team will consider your responses when selecting
+            the next cohort of Nzonzi.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
             {[
               { label: "First name", ph: "Maya" },
               { label: "Last name", ph: "Ellison" },
-              { label: "City", ph: "New York" },
-              { label: "Country", ph: "United States" },
+            ].map((f) => (
+              <div key={f.label}>
+                <label style={fieldLabelStyle}>{f.label}</label>
+                <input placeholder={f.ph} style={fieldInputStyle} />
+              </div>
+            ))}
+            <div style={{ display: "flex", gap: 20 }}>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabelStyle}>City</label>
+                <input placeholder="New York" style={fieldInputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabelStyle}>Country</label>
+                <input placeholder="United States" style={fieldInputStyle} />
+              </div>
+            </div>
+            {[
               { label: "Affiliation", ph: "Northside Labs" },
               { label: "Title", ph: "Head of Product Development" },
             ].map((f) => (
@@ -626,7 +642,7 @@ function ClientApplicationSection({
               <label style={fieldLabelStyle}>What would you use the platform for?</label>
               <textarea
                 rows={4}
-                placeholder="The problem you'd bring to a scholar, and what a good outcome looks like. Please include any timelines if relevant, or whether this is an enduring need."
+                placeholder="What problem would you like to bring to a scholar or subject matter expert. What does a good outcome look like? Please include any relevant timelines, and specify if this is a one-off or enduring need."
                 style={{ ...fieldInputStyle, lineHeight: 1.5, resize: "vertical" }}
               />
             </div>
@@ -660,6 +676,8 @@ function ScholarApplicationSection({
   done: boolean;
   onSubmit: () => void;
 }) {
+  const [scholarCategory, setScholarCategory] = useState(SCHOLAR_CATEGORIES[0]);
+
   return (
     <div
       style={{
@@ -736,41 +754,56 @@ function ScholarApplicationSection({
           >
             about you
           </h2>
-          <p
-            style={{
-              fontSize: 15.5,
-              fontWeight: 300,
-              lineHeight: 1.5,
-              margin: "14px 0 40px",
-              color: "rgba(240,240,240,0.7)",
-            }}
-          >
-            Nzonzi Admin will review this and ask for your bio and references
-            if you&apos;re selected for the next cohort of scholars.
-          </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
             {[
-              { label: "First name", ph: "As it should appear in the directory" },
-              { label: "Last name", ph: "As it should appear in the directory" },
-              { label: "City and country", ph: "Ibadan, Nigeria" },
-              { label: "Affiliation", ph: "University of Ibadan" },
+              { label: "First name", ph: "" },
+              { label: "Last name", ph: "" },
             ].map((f) => (
               <div key={f.label}>
                 <label style={fieldLabelStyle}>{f.label}</label>
                 <input placeholder={f.ph} style={fieldInputStyle} />
               </div>
             ))}
+            <div style={{ display: "flex", gap: 20 }}>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabelStyle}>City</label>
+                <input placeholder="Ibadan" style={fieldInputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabelStyle}>Country</label>
+                <input placeholder="Nigeria" style={fieldInputStyle} />
+              </div>
+            </div>
+            <div>
+              <label style={fieldLabelStyle}>Affiliation</label>
+              <input
+                placeholder="e.g. University of Ibadan or Independent research-practitioner"
+                style={fieldInputStyle}
+              />
+            </div>
             <div>
               <label style={fieldLabelStyle}>Category</label>
-              <select style={{ ...fieldInputStyle, cursor: "pointer" }}>
+              <select
+                value={scholarCategory}
+                onChange={(e) => setScholarCategory(e.target.value)}
+                style={{ ...fieldInputStyle, cursor: "pointer" }}
+              >
                 {SCHOLAR_CATEGORIES.map((c) => (
-                  <option key={c} style={{ color: BROWN }}>
+                  <option key={c} value={c} style={{ color: BROWN }}>
                     {c}
                   </option>
                 ))}
               </select>
             </div>
+            {scholarCategory === "Other" && (
+              <div>
+                <input
+                  placeholder="Multi-disciplinarity is more than welcome"
+                  style={fieldInputStyle}
+                />
+              </div>
+            )}
             <div>
               <label style={fieldLabelStyle}>What do you do, in a sentence?</label>
               <textarea
