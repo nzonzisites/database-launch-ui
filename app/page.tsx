@@ -203,16 +203,17 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Segment 2: "see also" row. The line-overlay is a sibling of
-                the riseIn-animated content, not a child of it, so its own
-                reveal isn't compounded by the text's opacity fade. */}
-            <div style={{ position: "relative", paddingLeft: "clamp(16px, 4vw, 26px)" }}>
+            {/* Segment 2: "see also" row. The line-overlay and the
+                riseIn-animated content share the same grid cell — Grid's
+                default stretch behavior sizes the empty line-overlay to
+                match the row's real content height automatically, which
+                position:absolute + top/bottom can't do without an explicit
+                height on the parent (that was the previous bug: the line
+                silently collapsed to zero height and never appeared). */}
+            <div style={{ display: "grid", paddingLeft: "clamp(16px, 4vw, 26px)" }}>
               <div
                 style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
+                  gridArea: "1 / 1",
                   width: 1,
                   background: "rgba(31,14,3,0.35)",
                   transformOrigin: "top",
@@ -221,6 +222,7 @@ export default function LandingPage() {
               />
               <div
                 style={{
+                  gridArea: "1 / 1",
                   display: "flex",
                   alignItems: "baseline",
                   gap: 10,
