@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Nzonzi",
+  title: "nzonzi",
   description:
     "Nzonzi is a marketplace connecting vetted scholar-practitioners with the organizations that need their expertise.",
 };
