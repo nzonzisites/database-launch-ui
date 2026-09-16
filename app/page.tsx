@@ -70,6 +70,7 @@ export default function LandingPage() {
   const [fullHeight, setFullHeight] = useState<number | null>(null);
   const [lineHeight, setLineHeight] = useState(0);
   const [hasGrown, setHasGrown] = useState(false);
+  const growthTriggered = useRef(false);
 
   // Measure the full block's height on mount, and keep it current if the
   // responsive font sizing changes it (window resize, rotation).
@@ -86,19 +87,28 @@ export default function LandingPage() {
 
   // Once we know the real height, grow into it on the next frame (so the
   // browser actually paints at zero first, letting the transition play).
-  // The CSS transition-delay handles the 2s wait and 1.8s duration.
+  // The CSS transition-delay handles the 2s wait and 1.8s duration — we
+  // deliberately do NOT flip `hasGrown` here, since that would switch the
+  // transition to the fast, no-delay style before the slow one has run.
   useEffect(() => {
-    if (fullHeight !== null && !hasGrown) {
+    if (fullHeight !== null && !growthTriggered.current) {
+      growthTriggered.current = true;
       const id = requestAnimationFrame(() => {
         setLineHeight(fullHeight);
-        setHasGrown(true);
       });
       return () => cancelAnimationFrame(id);
     }
-  }, [fullHeight, hasGrown]);
+  }, [fullHeight]);
 
-  // After the initial grow-in has played once, keep the line's height
-  // in sync with any later resizes immediately, without the original delay.
+  // After the initial grow-in has actually finished playing (not just been
+  // triggered), switch to a fast, no-delay transition so later resizes
+  // track immediately instead of replaying the 2s wait.
+  function handleLineTransitionEnd() {
+    if (!hasGrown) setHasGrown(true);
+  }
+
+  // Once we're past the initial grow-in, keep the line's height in sync
+  // with any later resizes.
   useEffect(() => {
     if (hasGrown && fullHeight !== null) {
       setLineHeight(fullHeight);
@@ -215,6 +225,7 @@ export default function LandingPage() {
               }}
             >
               <div
+                onTransitionEnd={handleLineTransitionEnd}
                 style={{
                   position: "absolute",
                   left: 0,
