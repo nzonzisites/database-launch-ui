@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { BROWN, FOREST, OCHRE, SAND, WHITE } from "@/lib/colors";
 import { submitProspectSignup } from "@/lib/prospectSignup";
+import { submitScholarApplication, submitBuyerApplication } from "@/lib/applications";
 
 type Role = "scholar" | "buyer" | null;
 
@@ -498,6 +499,7 @@ export default function LandingPage() {
             <ClientApplicationSection
               done={buyerDone}
               onSubmit={() => setBuyerDone(true)}
+              email={email}
             />
           )}
         </div>
@@ -509,6 +511,7 @@ export default function LandingPage() {
           <ScholarApplicationSection
             done={scholarDone}
             onSubmit={() => setScholarDone(true)}
+            email={email}
           />
         </div>
       )}
@@ -519,10 +522,22 @@ export default function LandingPage() {
 function ClientApplicationSection({
   done,
   onSubmit,
+  email,
 }: {
   done: boolean;
   onSubmit: () => void;
+  email: string;
 }) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [affiliation, setAffiliation] = useState("");
+  const [title, setTitle] = useState("");
+  const [platformUse, setPlatformUse] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   return (
     <div
       style={{
@@ -573,15 +588,32 @@ function ClientApplicationSection({
       ) : (
         <form
           className="rise-in-delayed"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            // NOTE: intentionally not written to any database. The `application`
-            // table's current schema requires many fields this first-pass
-            // client form never asks for, and `prospect_signup` has no
-            // columns for city/country/title/use-case. Wiring this up is
-            // deferred until a migration adds a table shaped for it — for
-            // now we only transition to the confirmation state.
-            onSubmit();
+            if (submitting) return;
+            setSubmitting(true);
+            setSubmitError(null);
+            try {
+              await submitBuyerApplication({
+                email,
+                firstName,
+                lastName,
+                city,
+                country,
+                affiliation,
+                title,
+                platformUse,
+              });
+              onSubmit();
+            } catch (err) {
+              setSubmitError(
+                "Something went wrong submitting that — please try again in a moment."
+              );
+              // eslint-disable-next-line no-console
+              console.error(err);
+            } finally {
+              setSubmitting(false);
+            }
           }}
         >
           <h3
@@ -610,45 +642,81 @@ function ClientApplicationSection({
             the next cohort of Nzonzi.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
-            {[
-              { label: "First name", ph: "Maya" },
-              { label: "Last name", ph: "Ellison" },
-            ].map((f) => (
-              <div key={f.label}>
-                <label style={fieldLabelStyle}>{f.label}</label>
-                <input placeholder={f.ph} style={fieldInputStyle} />
-              </div>
-            ))}
+            <div>
+              <label style={fieldLabelStyle}>First name</label>
+              <input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Maya"
+                style={fieldInputStyle}
+              />
+            </div>
+            <div>
+              <label style={fieldLabelStyle}>Last name</label>
+              <input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Ellison"
+                style={fieldInputStyle}
+              />
+            </div>
             <div style={{ display: "flex", gap: 20 }}>
               <div style={{ flex: 1 }}>
                 <label style={fieldLabelStyle}>City</label>
-                <input placeholder="New York" style={fieldInputStyle} />
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="New York"
+                  style={fieldInputStyle}
+                />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={fieldLabelStyle}>Country</label>
-                <input placeholder="United States" style={fieldInputStyle} />
+                <input
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  placeholder="United States"
+                  style={fieldInputStyle}
+                />
               </div>
             </div>
-            {[
-              { label: "Affiliation", ph: "Northside Labs" },
-              { label: "Title", ph: "Head of Product Development" },
-            ].map((f) => (
-              <div key={f.label}>
-                <label style={fieldLabelStyle}>{f.label}</label>
-                <input placeholder={f.ph} style={fieldInputStyle} />
-              </div>
-            ))}
+            <div>
+              <label style={fieldLabelStyle}>Affiliation</label>
+              <input
+                value={affiliation}
+                onChange={(e) => setAffiliation(e.target.value)}
+                placeholder="Northside Labs"
+                style={fieldInputStyle}
+              />
+            </div>
+            <div>
+              <label style={fieldLabelStyle}>Title</label>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Head of Product Development"
+                style={fieldInputStyle}
+              />
+            </div>
             <div>
               <label style={fieldLabelStyle}>What would you use the platform for?</label>
               <textarea
                 rows={4}
+                value={platformUse}
+                onChange={(e) => setPlatformUse(e.target.value)}
                 placeholder="What problem would you like to bring to a scholar or subject matter expert. What does a good outcome look like? Please include any relevant timelines, and specify if this is a one-off or enduring need."
                 style={{ ...fieldInputStyle, lineHeight: 1.5, resize: "vertical" }}
               />
             </div>
           </div>
+          {submitError && (
+            <p style={{ margin: "16px 0 0", fontSize: 13, color: OCHRE }}>
+              {submitError}
+            </p>
+          )}
           <button
             type="submit"
+            disabled={submitting}
             style={{
               background: "transparent",
               border: 0,
@@ -661,7 +729,7 @@ function ClientApplicationSection({
               color: WHITE,
             }}
           >
-            submit →
+            {submitting ? "Submitting…" : "submit →"}
           </button>
         </form>
       )}
@@ -672,11 +740,23 @@ function ClientApplicationSection({
 function ScholarApplicationSection({
   done,
   onSubmit,
+  email,
 }: {
   done: boolean;
   onSubmit: () => void;
+  email: string;
 }) {
   const [scholarCategory, setScholarCategory] = useState(SCHOLAR_CATEGORIES[0]);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
+  const [affiliation, setAffiliation] = useState("");
+  const [categoryOther, setCategoryOther] = useState("");
+  const [whatYouDo, setWhatYouDo] = useState("");
+  const [failedInfrastructureResponse, setFailedInfrastructureResponse] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   return (
     <div
@@ -727,18 +807,34 @@ function ScholarApplicationSection({
         </div>
       ) : (
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            // NOTE: intentionally not written to any database. This first-pass
-            // scholar form is deliberately minimal (per the design handoff),
-            // but the real `application` table has many NOT NULL columns
-            // (phone/whatsapp, work modality, reference details, etc.) this
-            // form doesn't collect, and `prospect_signup` has no columns for
-            // city/country/affiliation/category/free-text answers. Wiring
-            // this up is deferred pending a DB migration that adds a table
-            // shaped for this minimal first pass — for now we only
-            // transition to the confirmation state.
-            onSubmit();
+            if (submitting) return;
+            setSubmitting(true);
+            setSubmitError(null);
+            try {
+              await submitScholarApplication({
+                email,
+                firstName,
+                lastName,
+                city,
+                country,
+                affiliation,
+                category: scholarCategory,
+                categoryOther: scholarCategory === "Other" ? categoryOther : null,
+                whatYouDo,
+                failedInfrastructureResponse,
+              });
+              onSubmit();
+            } catch (err) {
+              setSubmitError(
+                "Something went wrong submitting that — please try again in a moment."
+              );
+              // eslint-disable-next-line no-console
+              console.error(err);
+            } finally {
+              setSubmitting(false);
+            }
           }}
         >
           <h2
@@ -756,28 +852,47 @@ function ScholarApplicationSection({
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
-            {[
-              { label: "First name", ph: "" },
-              { label: "Last name", ph: "" },
-            ].map((f) => (
-              <div key={f.label}>
-                <label style={fieldLabelStyle}>{f.label}</label>
-                <input placeholder={f.ph} style={fieldInputStyle} />
-              </div>
-            ))}
+            <div>
+              <label style={fieldLabelStyle}>First name</label>
+              <input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                style={fieldInputStyle}
+              />
+            </div>
+            <div>
+              <label style={fieldLabelStyle}>Last name</label>
+              <input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                style={fieldInputStyle}
+              />
+            </div>
             <div style={{ display: "flex", gap: 20 }}>
               <div style={{ flex: 1 }}>
                 <label style={fieldLabelStyle}>City</label>
-                <input placeholder="Ibadan" style={fieldInputStyle} />
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Ibadan"
+                  style={fieldInputStyle}
+                />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={fieldLabelStyle}>Country</label>
-                <input placeholder="Nigeria" style={fieldInputStyle} />
+                <input
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  placeholder="Nigeria"
+                  style={fieldInputStyle}
+                />
               </div>
             </div>
             <div>
               <label style={fieldLabelStyle}>Affiliation</label>
               <input
+                value={affiliation}
+                onChange={(e) => setAffiliation(e.target.value)}
                 placeholder="e.g. University of Ibadan or Independent research-practitioner"
                 style={fieldInputStyle}
               />
@@ -799,6 +914,8 @@ function ScholarApplicationSection({
             {scholarCategory === "Other" && (
               <div>
                 <input
+                  value={categoryOther}
+                  onChange={(e) => setCategoryOther(e.target.value)}
                   placeholder="Multi-disciplinarity is more than welcome"
                   style={fieldInputStyle}
                 />
@@ -808,6 +925,8 @@ function ScholarApplicationSection({
               <label style={fieldLabelStyle}>What do you do, in a sentence?</label>
               <textarea
                 rows={3}
+                value={whatYouDo}
+                onChange={(e) => setWhatYouDo(e.target.value)}
                 placeholder="Formulation scientist working on high-oil-phase emulsions and shelf stability."
                 style={{ ...fieldInputStyle, lineHeight: 1.5, resize: "vertical" }}
               />
@@ -818,14 +937,23 @@ function ScholarApplicationSection({
               </label>
               <textarea
                 rows={4}
+                value={failedInfrastructureResponse}
+                onChange={(e) => setFailedInfrastructureResponse(e.target.value)}
                 placeholder="What didn't work where you are, and what you built or changed because of it."
                 style={{ ...fieldInputStyle, lineHeight: 1.5, resize: "vertical" }}
               />
             </div>
           </div>
 
+          {submitError && (
+            <p style={{ margin: "16px 0 0", fontSize: 13, color: OCHRE }}>
+              {submitError}
+            </p>
+          )}
+
           <button
             type="submit"
+            disabled={submitting}
             style={{
               background: "transparent",
               border: 0,
@@ -838,7 +966,7 @@ function ScholarApplicationSection({
               color: WHITE,
             }}
           >
-            submit →
+            {submitting ? "Submitting…" : "submit →"}
           </button>
         </form>
       )}
