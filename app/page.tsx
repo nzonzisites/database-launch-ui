@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { BROWN, FOREST, OCHRE, SAND, WHITE } from "@/lib/colors";
 import { submitProspectSignup } from "@/lib/prospectSignup";
@@ -62,74 +62,6 @@ export default function LandingPage() {
 
   const tellUsRef = useRef<HTMLDivElement>(null);
   const applyRef = useRef<HTMLDivElement>(null);
-
-  // Vertical line next to the definition: the segment next to the
-  // definition text is present immediately, no animation. Only the
-  // extension alongside "see also" grows in, on the same
-  // 2s-delay/1.8s-duration schedule as "see also" itself.
-  const definitionRef = useRef<HTMLParagraphElement>(null);
-  const defBlockRef = useRef<HTMLDivElement>(null);
-  const [shortHeight, setShortHeight] = useState<number | null>(null);
-  const [fullHeight, setFullHeight] = useState<number | null>(null);
-  const [lineHeight, setLineHeight] = useState<number | null>(null);
-  const [hasGrown, setHasGrown] = useState(false);
-  const growthTriggered = useRef(false);
-
-  // Measure both heights on mount, and keep them current if the responsive
-  // font sizing changes either block's height (window resize, rotation).
-  useLayoutEffect(() => {
-    function measure() {
-      setShortHeight(definitionRef.current?.offsetHeight ?? 0);
-      setFullHeight(defBlockRef.current?.scrollHeight ?? 0);
-    }
-    measure();
-
-    const ro = new ResizeObserver(measure);
-    if (definitionRef.current) ro.observe(definitionRef.current);
-    if (defBlockRef.current) ro.observe(defBlockRef.current);
-    return () => ro.disconnect();
-  }, []);
-
-  // Paint at the short height first, with no transition — this is the
-  // segment next to the definition text, and it should just be there,
-  // not animate in.
-  useLayoutEffect(() => {
-    if (shortHeight !== null && lineHeight === null) {
-      setLineHeight(shortHeight);
-    }
-  }, [shortHeight, lineHeight]);
-
-  // Then, extend to the full height. A single requestAnimationFrame isn't
-  // enough here — it can still fire before the browser has actually
-  // painted the short height, in which case there's nothing for the CSS
-  // transition to animate FROM, and it just snaps straight to full. Two
-  // nested frames guarantees a real paint happens in between.
-  useEffect(() => {
-    if (fullHeight !== null && lineHeight !== null && !growthTriggered.current) {
-      growthTriggered.current = true;
-      const id = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setLineHeight(fullHeight);
-        });
-      });
-      return () => cancelAnimationFrame(id);
-    }
-  }, [fullHeight, lineHeight]);
-
-  // After the initial extension has actually finished playing (not just
-  // been triggered), switch to a fast, no-delay transition so later
-  // resizes track immediately instead of replaying the 2s wait.
-  function handleLineTransitionEnd() {
-    if (!hasGrown) setHasGrown(true);
-  }
-
-  // Once we're past the initial extension, keep the line's height in sync
-  // with any later resizes.
-  useEffect(() => {
-    if (hasGrown && fullHeight !== null) {
-      setLineHeight(fullHeight);
-    }
-  }, [fullHeight, hasGrown]);
 
   function jump(ref: React.RefObject<HTMLDivElement>) {
     requestAnimationFrame(() => {
@@ -232,30 +164,31 @@ export default function LandingPage() {
               <span style={{ fontStyle: "italic" }}>noun.</span>
             </p>
 
+            {/* Keyframe for the line's extension alongside "see also" —
+                a plain CSS animation, present from the very first paint,
+                so it can never drift out of sync with "see also"'s own
+                riseIn animation regardless of how slow hydration is. */}
+            <style>{`
+              @keyframes lineGrow {
+                from { transform: scaleY(0); }
+                to { transform: scaleY(1); }
+              }
+            `}</style>
+
+            {/* Segment 1: the line next to the definition text. A plain
+                CSS border, auto-sized by the browser, present immediately
+                with no animation. paddingBottom absorbs the 40px gap that
+                used to be marginTop on the "see also" row, so this segment
+                runs seamlessly into segment 2 below with no visible seam. */}
             <div
-              ref={defBlockRef}
               style={{
-                position: "relative",
+                borderLeft: "1px solid rgba(31,14,3,0.35)",
                 paddingLeft: "clamp(16px, 4vw, 26px)",
+                paddingBottom: 40,
                 margin: "34px 0 0",
               }}
             >
-              <div
-                onTransitionEnd={handleLineTransitionEnd}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  width: 1,
-                  background: "rgba(31,14,3,0.35)",
-                  height: lineHeight ?? 0,
-                  transition: hasGrown
-                    ? "height 0.3s ease"
-                    : "height 1.8s 2s cubic-bezier(0.33, 0, 0.2, 1)",
-                }}
-              />
               <p
-                ref={definitionRef}
                 style={{
                   fontSize: "clamp(17px, 4.2vw, 22px)",
                   fontWeight: 300,
@@ -268,10 +201,26 @@ export default function LandingPage() {
                 leaders who foster positive social impact through
                 organizations, businesses, institutions, and communities
               </p>
+            </div>
 
+            {/* Segment 2: "see also" row. The line-overlay is a sibling of
+                the riseIn-animated content, not a child of it, so its own
+                reveal isn't compounded by the text's opacity fade. */}
+            <div style={{ position: "relative", paddingLeft: "clamp(16px, 4vw, 26px)" }}>
               <div
                 style={{
-                  marginTop: 40,
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 1,
+                  background: "rgba(31,14,3,0.35)",
+                  transformOrigin: "top",
+                  animation: "lineGrow 1.8s 2s cubic-bezier(0.33, 0, 0.2, 1) both",
+                }}
+              />
+              <div
+                style={{
                   display: "flex",
                   alignItems: "baseline",
                   gap: 10,
