@@ -212,7 +212,6 @@ export default function LandingPage() {
               style={{
                 display: "grid",
                 gridTemplateRows: "40px auto",
-                paddingLeft: "clamp(16px, 4vw, 26px)",
               }}
             >
               <div
@@ -229,6 +228,7 @@ export default function LandingPage() {
                 style={{
                   gridRow: "2 / 3",
                   gridColumn: 1,
+                  paddingLeft: "clamp(16px, 4vw, 26px)",
                   display: "flex",
                   alignItems: "baseline",
                   gap: 10,
