@@ -99,15 +99,18 @@ export default function LandingPage() {
     }
   }, [shortHeight, lineHeight]);
 
-  // Then, on the next frame, extend to the full height. The CSS
-  // transition-delay handles the 2s wait and 1.8s duration — we
-  // deliberately don't flip `hasGrown` here, since that would switch to
-  // the fast, no-delay transition before the slow one has actually run.
+  // Then, extend to the full height. A single requestAnimationFrame isn't
+  // enough here — it can still fire before the browser has actually
+  // painted the short height, in which case there's nothing for the CSS
+  // transition to animate FROM, and it just snaps straight to full. Two
+  // nested frames guarantees a real paint happens in between.
   useEffect(() => {
     if (fullHeight !== null && lineHeight !== null && !growthTriggered.current) {
       growthTriggered.current = true;
       const id = requestAnimationFrame(() => {
-        setLineHeight(fullHeight);
+        requestAnimationFrame(() => {
+          setLineHeight(fullHeight);
+        });
       });
       return () => cancelAnimationFrame(id);
     }
