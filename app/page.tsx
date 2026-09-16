@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { BROWN, FOREST, OCHRE, SAND, WHITE } from "@/lib/colors";
 import { submitProspectSignup } from "@/lib/prospectSignup";
@@ -62,6 +62,59 @@ export default function LandingPage() {
 
   const tellUsRef = useRef<HTMLDivElement>(null);
   const applyRef = useRef<HTMLDivElement>(null);
+
+  // Vertical line next to the definition: starts at the height of just the
+  // definition paragraph, then grows to include "see also" once it fades
+  // in, on the same 2s-delay/1.8s-duration schedule as "see also" itself.
+  const definitionRef = useRef<HTMLParagraphElement>(null);
+  const defBlockRef = useRef<HTMLDivElement>(null);
+  const [shortHeight, setShortHeight] = useState<number | null>(null);
+  const [fullHeight, setFullHeight] = useState<number | null>(null);
+  const [lineHeight, setLineHeight] = useState<number | null>(null);
+  const [hasGrown, setHasGrown] = useState(false);
+
+  // Measure both heights on mount, and keep them current if the responsive
+  // font sizing changes either block's height (window resize, rotation).
+  useLayoutEffect(() => {
+    function measure() {
+      setShortHeight(definitionRef.current?.offsetHeight ?? 0);
+      setFullHeight(defBlockRef.current?.scrollHeight ?? 0);
+    }
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    if (definitionRef.current) ro.observe(definitionRef.current);
+    if (defBlockRef.current) ro.observe(defBlockRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Paint at the short height first, before anything animates.
+  useLayoutEffect(() => {
+    if (shortHeight !== null && lineHeight === null) {
+      setLineHeight(shortHeight);
+    }
+  }, [shortHeight, lineHeight]);
+
+  // Then, on the next frame (after the short-height paint has actually
+  // happened), grow to the full height. The CSS transition-delay handles
+  // the 2s wait and 1.8s duration — this just triggers the change.
+  useEffect(() => {
+    if (fullHeight !== null && lineHeight !== null && !hasGrown) {
+      const id = requestAnimationFrame(() => {
+        setLineHeight(fullHeight);
+        setHasGrown(true);
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [fullHeight, lineHeight, hasGrown]);
+
+  // After the initial grow-in has played once, keep the line's height
+  // in sync with any later resizes immediately, without the original delay.
+  useEffect(() => {
+    if (hasGrown && fullHeight !== null) {
+      setLineHeight(fullHeight);
+    }
+  }, [fullHeight, hasGrown]);
 
   function jump(ref: React.RefObject<HTMLDivElement>) {
     requestAnimationFrame(() => {
@@ -165,13 +218,28 @@ export default function LandingPage() {
             </p>
 
             <div
+              ref={defBlockRef}
               style={{
-                borderLeft: "1px solid rgba(31,14,3,0.35)",
+                position: "relative",
                 paddingLeft: "clamp(16px, 4vw, 26px)",
                 margin: "34px 0 0",
               }}
             >
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  width: 1,
+                  background: "rgba(31,14,3,0.35)",
+                  height: lineHeight ?? 0,
+                  transition: hasGrown
+                    ? "height 0.3s ease"
+                    : "height 1.8s 2s cubic-bezier(0.33, 0, 0.2, 1)",
+                }}
+              />
               <p
+                ref={definitionRef}
                 style={{
                   fontSize: "clamp(17px, 4.2vw, 22px)",
                   fontWeight: 300,
