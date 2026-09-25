@@ -256,7 +256,7 @@ function LoginForm() {
             >
               Haven&apos;t applied yet?{" "}
               <a
-                href="/"
+                href="/apply"
                 style={{
                   color: WHITE,
                   fontWeight: 500,
