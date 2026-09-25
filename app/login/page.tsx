@@ -45,6 +45,7 @@ const linkButtonStyle: React.CSSProperties = {
 function LoginForm() {
   const searchParams = useSearchParams();
   const callbackFailed = searchParams.get("error") === "auth_callback_failed";
+  const next = searchParams.get("next") ?? "/";
 
   const [email, setEmail] = useState("");
   const [linkSent, setLinkSent] = useState(false);
@@ -62,7 +63,7 @@ function LoginForm() {
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
       if (authError) throw authError;
