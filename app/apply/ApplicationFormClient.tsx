@@ -737,7 +737,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               </div>
             </TwoCol>
 
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(200px, 240px) minmax(160px, 1fr)", gap: 24, marginTop: 18 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24, marginTop: 18 }}>
               <div>
                 <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
                   Contact by
