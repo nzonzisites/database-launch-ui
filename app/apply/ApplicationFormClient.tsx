@@ -331,6 +331,15 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     if (!email.trim()) return;
     setSendingReviewLink(true);
     try {
+      // Same cookie /login sets before calling signInWithOtp --
+      // /auth/callback reads it to know where to send them after the
+      // magic link. Without it, the callback route has nothing to fall
+      // back on but "/", which is why this was landing back on the
+      // homepage instead of /apply.
+      document.cookie = `nz_post_login_redirect=${encodeURIComponent("/apply")}; path=/; max-age=600; SameSite=Lax${
+        window.location.protocol === "https:" ? "; Secure" : ""
+      }`;
+
       const supabase = getSupabaseClient();
       await supabase.auth.signInWithOtp({
         email: email.trim(),
