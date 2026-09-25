@@ -200,6 +200,22 @@ export default function ApplicationSummary({
             <Row label="How they heard about us" value={data.referralSource} />
           </Section>
         )}
+
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 300,
+            lineHeight: 1.55,
+            margin: "40px 0 0",
+            color: "rgba(240,240,240,0.5)",
+          }}
+        >
+          If you need to update any piece of this application, please reach out to{" "}
+          <a href="mailto:hello@nzonzi.net" style={{ color: "rgba(240,240,240,0.75)" }}>
+            hello@nzonzi.net
+          </a>
+          .
+        </p>
       </div>
     </div>
   );
