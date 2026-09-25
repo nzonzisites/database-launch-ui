@@ -6,6 +6,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { BROWN } from "@/lib/colors";
 import ApplicationFormClient from "./ApplicationFormClient";
 import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
+import SessionControls from "@/app/components/SessionControls";
 
 const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
@@ -169,6 +170,9 @@ function StatusMessage({
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px", textAlign: "right" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <SessionControls />
+        </div>
         <span style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: "0.02em", color: OCHRE }}>
           {eyebrow}
         </span>

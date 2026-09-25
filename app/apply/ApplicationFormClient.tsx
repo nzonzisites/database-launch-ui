@@ -19,6 +19,7 @@ import { BROWN } from "@/lib/colors";
 import { submitApplication, type SubmitApplicationInput } from "./actions";
 import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, REFERENCE_CONTACT_METHOD_OPTIONS } from "./applicationOptions";
 import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
+import SessionControls from "@/app/components/SessionControls";
 
 // Design tokens pulled directly from design_template.html -- not all of
 // these exist in lib/colors.ts, so they're defined locally here rather
@@ -301,6 +302,9 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
       <form onSubmit={handleSubmit} style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <SessionControls />
+        </div>
         <h2
           style={{
             fontSize: 34,

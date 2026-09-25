@@ -45,6 +45,7 @@ const linkButtonStyle: React.CSSProperties = {
 function LoginForm() {
   const searchParams = useSearchParams();
   const callbackFailed = searchParams.get("error") === "auth_callback_failed";
+  const signedOutReason = searchParams.get("reason");
   const next = searchParams.get("next") ?? "/";
 
   const [email, setEmail] = useState("");
@@ -201,6 +202,21 @@ function LoginForm() {
               >
                 That sign-in link didn&apos;t work — it may have expired.
                 Request a new one below.
+              </p>
+            )}
+
+            {signedOutReason === "inactivity" && (
+              <p
+                style={{
+                  fontSize: 13.5,
+                  fontWeight: 400,
+                  lineHeight: 1.5,
+                  margin: "0 0 22px",
+                  color: "rgba(240,240,240,0.7)",
+                }}
+              >
+                You were signed out after 5 minutes of inactivity. Sign back
+                in below.
               </p>
             )}
 

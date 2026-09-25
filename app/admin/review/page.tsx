@@ -4,6 +4,7 @@ import { getPlatformAgentRow } from "@/lib/platformAgent";
 import { fetchApplicationsForReview } from "@/lib/applicationReview";
 import { BROWN, WHITE } from "@/lib/colors";
 import ReviewQueueClient from "./ReviewQueueClient";
+import SessionControls from "@/app/components/SessionControls";
 
 /**
  * Gated server-side: signed out -> /login; signed in but not a
@@ -42,6 +43,9 @@ export default async function ReviewQueuePage() {
         }}
       >
         <div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
+            <SessionControls />
+          </div>
           <p style={{ fontSize: 18, fontWeight: 400, margin: 0 }}>
             You&apos;re signed in, but this account isn&apos;t set up as a
             platform reviewer.

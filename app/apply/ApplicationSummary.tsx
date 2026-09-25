@@ -16,6 +16,7 @@
 
 import { BROWN } from "@/lib/colors";
 import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, REFERENCE_CONTACT_METHOD_OPTIONS, optionLabel } from "./applicationOptions";
+import SessionControls from "@/app/components/SessionControls";
 
 const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
@@ -127,6 +128,9 @@ export default function ApplicationSummary({
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <SessionControls />
+        </div>
         <span style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: "0.02em", color: OCHRE }}>
           submitted
         </span>

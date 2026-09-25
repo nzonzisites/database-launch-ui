@@ -5,6 +5,7 @@ import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { PlatformAgentRow } from "@/lib/platformAgent";
 import type { ApplicationForReview, ApplicationStatus } from "@/lib/applicationReview";
 import { approveApplication, rejectApplication } from "./actions";
+import SessionControls from "@/app/components/SessionControls";
 
 const CATEGORY_LABELS: Record<string, string> = {
   cosmetic_chemistry_formulation_science: "Cosmetic Chemistry & Formulation",
@@ -88,6 +89,9 @@ export default function ReviewQueueClient({
   return (
     <div style={{ background: BROWN, minHeight: "100vh", padding: "34px 32px 70px", color: SAND }}>
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+          <SessionControls textColor="rgba(230,222,210,0.55)" hoverColor={SAND} />
+        </div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 26, flexWrap: "wrap", gap: 20 }}>
           <div>
             <span style={monoLabel}>Platform agent · {agent.permissions.join(", ")}</span>
