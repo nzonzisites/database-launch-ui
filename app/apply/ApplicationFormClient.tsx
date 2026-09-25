@@ -16,7 +16,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BROWN } from "@/lib/colors";
-import { submitApplication, type SubmitApplicationInput } from "./actions";
+import { submitApplication, lookupProspectPrefill, type SubmitApplicationInput } from "./actions";
 import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, REFERENCE_CONTACT_METHOD_OPTIONS } from "./applicationOptions";
 import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
 import SessionControls from "@/app/components/SessionControls";
@@ -201,10 +201,17 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [affiliations, setAffiliations] = useState<string[]>(prefill.affiliations);
   const [headshotUrl, setHeadshotUrl] = useState(prefill.headshotUrl);
 
-  const hasPrefill =
+  const [hasPrefill, setHasPrefill] = useState(
     Boolean(prefill.firstName || prefill.lastName || prefill.city || prefill.country) ||
-    prefill.affiliations.length > 0 ||
-    Boolean(prefill.intendedCategory);
+      prefill.affiliations.length > 0 ||
+      Boolean(prefill.intendedCategory)
+  );
+  // Only relevant for a signed-out visitor (prefill.email is blank in
+  // that case -- page.tsx already did this lookup server-side for a
+  // signed-in one). Tracks whether the email-blur lookup below has
+  // already run, so it doesn't keep re-firing or clobber fields once
+  // they've been filled in, whether by the lookup or typed by hand.
+  const [prefillLookupDone, setPrefillLookupDone] = useState(false);
 
   const [intendedCategory, setIntendedCategory] = useState(prefill.intendedCategory ?? "");
   const [intendedCategoryOther, setIntendedCategoryOther] = useState("");
@@ -226,6 +233,49 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [phoneOrWhatsapp, setPhoneOrWhatsapp] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [referralSource, setReferralSource] = useState("");
+
+  // Fires when the (signed-out, blank-form) visitor finishes typing their
+  // email -- looks up any "About You" answers filed under that email and
+  // fills in whatever's still blank, so they don't retype what they
+  // already told us. Never overwrites anything already filled in, and
+  // only runs once per mount: a signed-in visitor already has
+  // prefill.email set from page.tsx, so this is a no-op for them.
+  async function handleEmailBlur() {
+    if (prefill.email || prefillLookupDone) return;
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) return;
+
+    setPrefillLookupDone(true);
+    const match = await lookupProspectPrefill(trimmed);
+    if (!match) return;
+
+    let filledSomething = false;
+    if (!firstName && match.firstName) {
+      setFirstName(match.firstName);
+      filledSomething = true;
+    }
+    if (!lastName && match.lastName) {
+      setLastName(match.lastName);
+      filledSomething = true;
+    }
+    if (!city && match.city) {
+      setCity(match.city);
+      filledSomething = true;
+    }
+    if (!country && match.country) {
+      setCountry(match.country);
+      filledSomething = true;
+    }
+    if (affiliations.length === 0 && match.affiliation) {
+      setAffiliations([match.affiliation]);
+      filledSomething = true;
+    }
+    if (!intendedCategory && match.category) {
+      setIntendedCategory(match.category);
+      filledSomething = true;
+    }
+    if (filledSomething) setHasPrefill(true);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -405,6 +455,27 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
         {/* Public-facing info -- cream card, matches the mockup's light section */}
         <div style={{ display: "flex", flexDirection: "column", gap: 30, background: CREAM, padding: 32 }}>
+          <div>
+            <label style={fieldLabelStyle(false)}>
+              Email
+              <Required />
+            </label>
+            <input
+              style={underlineInputStyle(false)}
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={handleEmailBlur}
+              required
+            />
+            {!prefill.email && (
+              <p style={{ ...helperTextStyle(false), margin: "8px 0 0" }}>
+                Already told us about yourself? We&apos;ll carry that over automatically.
+              </p>
+            )}
+          </div>
+
           <TwoCol>
             <div>
               <label style={fieldLabelStyle(false)}>
@@ -433,21 +504,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               />
             </div>
           </TwoCol>
-
-          <div>
-            <label style={fieldLabelStyle(false)}>
-              Email
-              <Required />
-            </label>
-            <input
-              style={underlineInputStyle(false)}
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
 
           <TwoCol>
             <div>

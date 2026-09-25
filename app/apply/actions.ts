@@ -35,6 +35,54 @@ export type SubmitApplicationResult =
   | { success: true }
   | { success: false; error: string };
 
+export interface ProspectPrefill {
+  firstName: string;
+  lastName: string;
+  city: string;
+  country: string;
+  affiliation: string;
+  category: string | null;
+}
+
+/**
+ * Looks up a "About You" prospect_signup row by email, for anonymous
+ * /apply visitors who already filled that out elsewhere and shouldn't
+ * have to retype their name, city, country, affiliation, or category.
+ * Signed-in visitors don't need this -- page.tsx already does the
+ * equivalent lookup server-side, keyed off their verified account email.
+ *
+ * Goes through a SECURITY DEFINER RPC (get_prospect_signup_prefill)
+ * rather than a direct table select: prospect_signup isn't otherwise
+ * readable by anonymous requests, and it shouldn't become broadly
+ * readable just to support this -- the RPC only ever returns one
+ * narrowly-scoped row for the exact email passed in, nothing you could
+ * use to browse the table. Requires that RPC to exist in Supabase (SQL
+ * delivered alongside this change) -- until then this just no-ops.
+ */
+export async function lookupProspectPrefill(email: string): Promise<ProspectPrefill | null> {
+  const trimmed = email.trim();
+  if (!trimmed || !trimmed.includes("@")) return null;
+
+  const supabase = await getSupabaseServerClient();
+  try {
+    const { data, error } = await supabase.rpc("get_prospect_signup_prefill", {
+      p_email: trimmed,
+    });
+    if (error || !data || data.length === 0) return null;
+    const row = data[0];
+    return {
+      firstName: (row.first_name as string) ?? "",
+      lastName: (row.last_name as string) ?? "",
+      city: (row.city as string) ?? "",
+      country: (row.country as string) ?? "",
+      affiliation: (row.affiliation as string) ?? "",
+      category: (row.category as string) ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Inserts a seller application. Signing in is no longer required to
  * apply -- a magic link is only needed later, to come back and review
