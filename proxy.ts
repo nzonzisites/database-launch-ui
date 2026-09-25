@@ -12,6 +12,26 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
  * See lib/supabase/server.ts for where the resulting session is read.
  */
 export async function proxy(request: NextRequest) {
+  const url = request.nextUrl;
+
+  // Supabase's magic-link flow is, for reasons not yet root-caused,
+  // unconditionally ignoring the emailRedirectTo we send and always
+  // falling back to the project's Auth "Site URL" -- landing the user on
+  // the bare domain root with ?code=... attached, instead of our
+  // /auth/callback route. Rather than depend on Supabase honoring a
+  // custom redirect_to (allow-list entries for it are already configured
+  // and still aren't being respected), this catches that exact fallback
+  // shape at the routing layer and forwards it on to /auth/callback
+  // internally -- a same-origin redirect this app fully controls, so it
+  // doesn't depend on Supabase's redirect_to validation at all. Scoped
+  // tightly (root path + a code param) so it can't affect any other page,
+  // including the landing page's own normal rendering.
+  if (url.pathname === "/" && url.searchParams.has("code")) {
+    const callbackUrl = new URL("/auth/callback", url);
+    callbackUrl.search = url.search;
+    return NextResponse.redirect(callbackUrl);
+  }
+
   let response = NextResponse.next({ request });
 
   if (!supabaseUrl || !supabaseAnonKey) {
