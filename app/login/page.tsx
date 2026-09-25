@@ -59,11 +59,23 @@ function LoginForm() {
     setSubmitting(true);
     setError(null);
     try {
+      // Store the intended post-login destination in a cookie rather than
+      // a magic-link query param. Supabase's redirect_to allow-list
+      // validation was silently dropping the ?next=... query string on
+      // emailRedirectTo and falling back to the bare Site URL every time,
+      // even with matching wildcard entries configured. A cookie sidesteps
+      // that: emailRedirectTo becomes an exact match to what is already
+      // proven to be on the allow list, and /auth/callback reads the
+      // destination from the cookie instead of the URL.
+      document.cookie = `nz_post_login_redirect=${encodeURIComponent(next)}; path=/; max-age=600; SameSite=Lax${
+        window.location.protocol === "https:" ? "; Secure" : ""
+      }`;
+
       const supabase = getSupabaseClient();
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (authError) throw authError;
