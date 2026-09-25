@@ -4,6 +4,12 @@
 // Rebuilt 2026-09-24 to match the actual Claude Design mockup's "nzonzi
 // listing application" screen (design_template.html, #apply-form block)
 // instead of the review-queue's boxed-input style used in the first pass.
+//
+// 2026-09-25: the post-submit "you're all set" branch now renders the
+// shared ApplicationSummary (same component page.tsx uses on a second
+// visit) built straight from local state, instead of a generic message
+// with no name and no data -- see applicationOptions.ts for the option
+// lists this used to define locally.
 
 "use client";
 
@@ -11,6 +17,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BROWN } from "@/lib/colors";
 import { submitApplication, type SubmitApplicationInput } from "./actions";
+import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, REFERENCE_CONTACT_METHOD_OPTIONS } from "./applicationOptions";
+import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
 
 // Design tokens pulled directly from design_template.html -- not all of
 // these exist in lib/colors.ts, so they're defined locally here rather
@@ -19,34 +27,6 @@ const CREAM = "#E6DED2";
 const FOREST = "#2D4D31";
 const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
-
-const CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: "cosmetic_chemistry_formulation_science", label: "Cosmetic chemistry / formulation science" },
-  { value: "supply_chain_procurement_sourcing", label: "Supply chain, procurement & sourcing" },
-  { value: "materials_science", label: "Materials science" },
-  { value: "mechanical_manufacturing_engineering", label: "Mechanical / manufacturing engineering" },
-  { value: "industrial_design", label: "Industrial design" },
-  { value: "applied_quant_qual_research", label: "Applied quant / qual research" },
-  { value: "arts_cultural_research", label: "Arts & cultural research" },
-  { value: "other", label: "Other" },
-];
-
-const WORK_MODALITY_OPTIONS: { value: string; label: string }[] = [
-  { value: "remote_only", label: "Remote" },
-  { value: "travel_flexible", label: "Travel required" },
-  { value: "both", label: "Either" },
-];
-
-// Note: the mockup's reference contact-method dropdown shows "Phone
-// number (US)" / "WhatsApp (international)", but the real
-// reference_contact_method enum is email/phone -- built against the real
-// enum, not the mockup's copy, per how the rest of this schema work has
-// gone. WhatsApp availability is still captured separately below when
-// phone is selected, same as before.
-const REFERENCE_CONTACT_METHOD_OPTIONS: { value: string; label: string }[] = [
-  { value: "email", label: "Email" },
-  { value: "phone", label: "Phone number" },
-];
 
 interface Prefill {
   firstName: string;
@@ -290,41 +270,32 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   }
 
   if (submitted) {
-    return (
-      <div style={{ background: BROWN, minHeight: "100vh" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px", textAlign: "right" }}>
-          <span style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: "0.02em", color: OCHRE }}>
-            submitted
-          </span>
-          <h2
-            style={{
-              margin: "14px 0 14px",
-              fontSize: 34,
-              fontWeight: 300,
-              letterSpacing: "-0.035em",
-              lineHeight: 1.12,
-              color: OFFWHITE,
-              textTransform: "lowercase",
-            }}
-          >
-            you&apos;re all set.
-          </h2>
-          <p
-            style={{
-              fontSize: 16,
-              fontWeight: 300,
-              lineHeight: 1.55,
-              margin: "0 0 0 auto",
-              maxWidth: 420,
-              color: "rgba(240,240,240,0.75)",
-            }}
-          >
-            The Nzonzi team will review your application and be in touch if you&apos;re selected for
-            the next cohort.
-          </p>
-        </div>
-      </div>
-    );
+    const summaryData: ApplicationSummaryData = {
+      fullName: `${firstName} ${lastName}`.trim(),
+      email,
+      phoneOrWhatsapp,
+      cityCountry: [city, country].filter(Boolean).join(", "),
+      affiliations,
+      headshotUrl,
+      intendedCategory,
+      intendedCategoryOther,
+      workModality,
+      expertiseNarrative,
+      infrastructureNarrative,
+      externalLinks,
+      workSamples,
+      workSamplesExplanation,
+      referenceName,
+      referenceRelationship,
+      referenceContactMethod,
+      referenceContactValue,
+      referenceWhatsappAvailable,
+      referenceMayContact,
+      additionalNotes,
+      referralSource,
+    };
+
+    return <ApplicationSummary firstName={firstName} data={summaryData} />;
   }
 
   return (

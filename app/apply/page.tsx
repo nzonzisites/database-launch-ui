@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { BROWN } from "@/lib/colors";
 import ApplicationFormClient from "./ApplicationFormClient";
+import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
 
 const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
@@ -12,9 +13,10 @@ const OFFWHITE = "#F0F0F0";
 /**
  * Gated server-side, same pattern as /admin/review:
  *  - signed out -> /login?next=/apply
- *  - signed in but already has a submitted application -> a plain status
- *    message instead of the form (default choice -- change this if
- *    Modupe wants re-submission/editing allowed instead of a hard stop)
+ *  - signed in but already has a submitted application -> a full,
+ *    read-only recap of what they submitted (ApplicationSummary), with
+ *    their name in the heading, rather than a bare "applied" line --
+ *    every visit re-confirms their own data instead of a generic status.
  *  - otherwise -> the real form, prefilled from app_user and (best-effort)
  *    from an existing prospect_signup row so nobody re-answers what they
  *    already told us on About You -- prefilled fields stay editable on
@@ -51,17 +53,43 @@ export default async function ApplyPage() {
 
   const { data: existingApplication } = await supabase
     .from("application")
-    .select("id, status")
+    .select(
+      "status, full_name, email, phone_or_whatsapp, city_country, affiliations, external_links, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source"
+    )
     .eq("applicant_user_id", appUser.id)
     .maybeSingle();
 
   if (existingApplication) {
+    const firstName = existingApplication.full_name?.trim().split(/\s+/)[0] ?? "";
+    const summaryData: ApplicationSummaryData = {
+      fullName: existingApplication.full_name ?? "",
+      email: existingApplication.email ?? "",
+      phoneOrWhatsapp: existingApplication.phone_or_whatsapp ?? "",
+      cityCountry: existingApplication.city_country ?? "",
+      affiliations: existingApplication.affiliations ?? [],
+      headshotUrl: appUser.headshot_url ?? "",
+      intendedCategory: existingApplication.intended_category ?? "",
+      intendedCategoryOther: existingApplication.intended_category_other ?? "",
+      workModality: existingApplication.work_modality ?? "",
+      expertiseNarrative: existingApplication.expertise_narrative ?? "",
+      infrastructureNarrative: existingApplication.infrastructure_narrative ?? "",
+      externalLinks: existingApplication.external_links ?? [],
+      workSamples: (existingApplication.work_samples ?? []).map(
+        (sample: { url?: string }) => sample?.url ?? ""
+      ).filter(Boolean),
+      workSamplesExplanation: existingApplication.work_samples_explanation ?? "",
+      referenceName: existingApplication.reference_name ?? "",
+      referenceRelationship: existingApplication.reference_relationship ?? "",
+      referenceContactMethod: existingApplication.reference_contact_method ?? "",
+      referenceContactValue: existingApplication.reference_contact_value ?? "",
+      referenceWhatsappAvailable: Boolean(existingApplication.reference_whatsapp_available),
+      referenceMayContact: Boolean(existingApplication.reference_may_contact),
+      additionalNotes: existingApplication.additional_notes ?? "",
+      referralSource: existingApplication.referral_source ?? "",
+    };
+
     return (
-      <StatusMessage
-        eyebrow="submitted"
-        heading="you're all set."
-        body={`Status: ${String(existingApplication.status).replace(/_/g, " ")}. We'll be in touch.`}
-      />
+      <ApplicationSummary firstName={firstName} status={existingApplication.status} data={summaryData} />
     );
   }
 
