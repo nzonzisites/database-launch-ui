@@ -36,10 +36,20 @@ export type SubmitApplicationResult =
   | { success: false; error: string };
 
 /**
- * Inserts a seller application for the signed-in user. Re-derives the
- * app_user row and re-checks for a duplicate submission server-side --
- * never trust that the page's own gating (in page.tsx) is the only thing
- * standing between a request and a duplicate/invalid insert.
+ * Inserts a seller application. Signing in is no longer required to
+ * apply -- a magic link is only needed later, to come back and review
+ * what was submitted. If a session DOES exist (a returning applicant who
+ * happens to already be signed in), the application still gets linked to
+ * their app_user account the same way it always did; otherwise it's
+ * anchored purely by the email typed into the form, and
+ * applicant_user_id is left null. Re-checks for a duplicate submission
+ * server-side either way -- never trust that the page's own gating is
+ * the only thing standing between a request and a duplicate/invalid
+ * insert.
+ *
+ * Requires a matching DB migration: applicant_user_id must be nullable,
+ * and the application table needs an INSERT policy that allows the
+ * anon role (see the SQL Modupe ran alongside this change).
  */
 export async function submitApplication(
   input: SubmitApplicationInput
@@ -49,28 +59,38 @@ export async function submitApplication(
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return { success: false, error: "You need to be signed in to apply." };
+  let applicantUserId: string | null = null;
+
+  if (user) {
+    const { data: appUser, error: appUserError } = await supabase
+      .from("app_user")
+      .select("id")
+      .eq("auth_provider_id", user.id)
+      .maybeSingle();
+
+    if (appUserError || !appUser) {
+      return {
+        success: false,
+        error: "We couldn't find your account. Please try signing in again.",
+      };
+    }
+    applicantUserId = appUser.id as string;
   }
 
-  const { data: appUser, error: appUserError } = await supabase
-    .from("app_user")
-    .select("id")
-    .eq("auth_provider_id", user.id)
-    .maybeSingle();
-
-  if (appUserError || !appUser) {
-    return {
-      success: false,
-      error: "We couldn't find your account. Please try signing in again.",
-    };
-  }
-
-  const { data: existing } = await supabase
-    .from("application")
-    .select("id")
-    .eq("applicant_user_id", appUser.id)
-    .maybeSingle();
+  // Duplicate check -- by account when signed in, otherwise by the email
+  // just typed into the form (case-insensitive), since that's the only
+  // identity an anonymous submission has.
+  const { data: existing } = applicantUserId
+    ? await supabase
+        .from("application")
+        .select("id")
+        .eq("applicant_user_id", applicantUserId)
+        .maybeSingle()
+    : await supabase
+        .from("application")
+        .select("id")
+        .ilike("email", input.email.trim())
+        .maybeSingle();
 
   if (existing) {
     return { success: false, error: "You've already submitted an application." };
@@ -105,9 +125,28 @@ export async function submitApplication(
     return { success: false, error: 'Describe your category since you selected "other".' };
   }
 
+  // Best-effort: an anonymous submission has no session to look up an
+  // "About You" prospect_signup row from client-side, so try the same
+  // lookup here, server-side, by the email they just gave us -- keeps
+  // that linkage from silently disappearing just because there was no
+  // session at submit time.
+  let prospectSignupId = input.prospectSignupId;
+  if (!prospectSignupId) {
+    try {
+      const { data: prospectSignup } = await supabase
+        .from("prospect_signup")
+        .select("id")
+        .ilike("email", input.email.trim())
+        .maybeSingle();
+      if (prospectSignup) prospectSignupId = prospectSignup.id as string;
+    } catch {
+      // best-effort only -- ignore any failure here
+    }
+  }
+
   const { error: insertError } = await supabase.from("application").insert({
-    applicant_user_id: appUser.id,
-    prospect_signup_id: input.prospectSignupId,
+    applicant_user_id: applicantUserId,
+    prospect_signup_id: prospectSignupId,
     full_name: input.fullName.trim(),
     email: input.email.trim(),
     phone_or_whatsapp: input.phoneOrWhatsapp.trim(),
@@ -138,14 +177,17 @@ export async function submitApplication(
   }
 
   // Keep app_user in sync with what they just told us (name, headshot),
-  // since those live at the person level rather than per-application.
-  await supabase
-    .from("app_user")
-    .update({
-      full_name: input.fullName.trim(),
-      headshot_url: input.headshotUrl.trim() || null,
-    })
-    .eq("id", appUser.id);
+  // since those live at the person level rather than per-application --
+  // only relevant if they already had an account at submit time.
+  if (applicantUserId) {
+    await supabase
+      .from("app_user")
+      .update({
+        full_name: input.fullName.trim(),
+        headshot_url: input.headshotUrl.trim() || null,
+      })
+      .eq("id", applicantUserId);
+  }
 
   revalidatePath("/apply");
   return { success: true };

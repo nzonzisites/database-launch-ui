@@ -1,7 +1,6 @@
 // DESTINATION: app/apply/page.tsx
 // (new folder -- create app/apply/ and save this as page.tsx inside it)
 
-import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { BROWN } from "@/lib/colors";
 import ApplicationFormClient from "./ApplicationFormClient";
@@ -11,17 +10,50 @@ import SessionControls from "@/app/components/SessionControls";
 const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
+const APPLICATION_SUMMARY_COLUMNS =
+  "status, full_name, email, phone_or_whatsapp, city_country, affiliations, external_links, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source";
+
+type ExistingApplicationRow = {
+  status: string;
+  full_name: string | null;
+  email: string | null;
+  phone_or_whatsapp: string | null;
+  city_country: string | null;
+  affiliations: string[] | null;
+  external_links: string[] | null;
+  intended_category: string | null;
+  intended_category_other: string | null;
+  work_modality: string | null;
+  infrastructure_narrative: string | null;
+  expertise_narrative: string | null;
+  work_samples: { url?: string }[] | null;
+  work_samples_explanation: string | null;
+  reference_name: string | null;
+  reference_relationship: string | null;
+  reference_contact_method: string | null;
+  reference_contact_value: string | null;
+  reference_whatsapp_available: boolean | null;
+  reference_may_contact: boolean | null;
+  additional_notes: string | null;
+  referral_source: string | null;
+};
+
 /**
- * Gated server-side, same pattern as /admin/review:
- *  - signed out -> /login?next=/apply
- *  - signed in but already has a submitted application -> a full,
- *    read-only recap of what they submitted (ApplicationSummary), with
- *    their name in the heading, rather than a bare "applied" line --
- *    every visit re-confirms their own data instead of a generic status.
- *  - otherwise -> the real form, prefilled from app_user and (best-effort)
- *    from an existing prospect_signup row so nobody re-answers what they
- *    already told us on About You -- prefilled fields stay editable on
- *    the form itself, they're just not blank by default.
+ * Signing in is no longer required just to apply -- a magic link is only
+ * needed to come BACK and review what was already submitted. So:
+ *  - anyone, signed in or not -> gets the real form (no redirect to
+ *    /login). Signed-out visitors get a blank form; signed-in ones get
+ *    it prefilled from app_user and (best-effort) an existing
+ *    prospect_signup row, same as before.
+ *  - if they already have a submitted application -- found either via
+ *    their signed-in account or, for someone who applied anonymously and
+ *    is now revisiting after clicking a magic link, by matching the
+ *    verified email on their session -- show the full, read-only recap
+ *    (ApplicationSummary) instead of the form.
+ *
+ * Requires the matching DB migration (applicant_user_id nullable, plus
+ * RLS policies letting an anonymous insert and an authenticated
+ * email-matched select) -- see the SQL delivered alongside this change.
  */
 export default async function ApplyPage() {
   const supabase = await getSupabaseServerClient();
@@ -29,8 +61,24 @@ export default async function ApplyPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Signed out -- no account to look anything up against. Just render a
+  // blank, unprefilled form; there's nothing to gate on anymore.
   if (!user) {
-    redirect("/login?next=/apply");
+    return (
+      <ApplicationFormClient
+        prefill={{
+          firstName: "",
+          lastName: "",
+          email: "",
+          headshotUrl: "",
+          city: "",
+          country: "",
+          affiliations: [],
+          intendedCategory: null,
+          prospectSignupId: null,
+        }}
+      />
+    );
   }
 
   const { data: appUser, error: appUserError } = await supabase
@@ -52,13 +100,28 @@ export default async function ApplyPage() {
     );
   }
 
-  const { data: existingApplication } = await supabase
+  // Look up an existing application two ways: first by account (the
+  // normal case for someone who was signed in when they applied), then,
+  // if that comes up empty, by their verified email -- this is what
+  // catches someone who applied anonymously (no applicant_user_id set)
+  // and is now revisiting after clicking a magic link.
+  let existingApplication: ExistingApplicationRow | null = null;
+
+  const { data: byAccount } = await supabase
     .from("application")
-    .select(
-      "status, full_name, email, phone_or_whatsapp, city_country, affiliations, external_links, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source"
-    )
+    .select(APPLICATION_SUMMARY_COLUMNS)
     .eq("applicant_user_id", appUser.id)
     .maybeSingle();
+  existingApplication = byAccount as ExistingApplicationRow | null;
+
+  if (!existingApplication) {
+    const { data: byEmail } = await supabase
+      .from("application")
+      .select(APPLICATION_SUMMARY_COLUMNS)
+      .ilike("email", appUser.email)
+      .maybeSingle();
+    existingApplication = byEmail as ExistingApplicationRow | null;
+  }
 
   if (existingApplication) {
     const firstName = existingApplication.full_name?.trim().split(/\s+/)[0] ?? "";
@@ -75,9 +138,9 @@ export default async function ApplyPage() {
       expertiseNarrative: existingApplication.expertise_narrative ?? "",
       infrastructureNarrative: existingApplication.infrastructure_narrative ?? "",
       externalLinks: existingApplication.external_links ?? [],
-      workSamples: (existingApplication.work_samples ?? []).map(
-        (sample: { url?: string }) => sample?.url ?? ""
-      ).filter(Boolean),
+      workSamples: (existingApplication.work_samples ?? [])
+        .map((sample) => sample?.url ?? "")
+        .filter(Boolean),
       workSamplesExplanation: existingApplication.work_samples_explanation ?? "",
       referenceName: existingApplication.reference_name ?? "",
       referenceRelationship: existingApplication.reference_relationship ?? "",

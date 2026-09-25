@@ -20,6 +20,7 @@ import { submitApplication, type SubmitApplicationInput } from "./actions";
 import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, REFERENCE_CONTACT_METHOD_OPTIONS } from "./applicationOptions";
 import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
 import SessionControls from "@/app/components/SessionControls";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 // Design tokens pulled directly from design_template.html -- not all of
 // these exist in lib/colors.ts, so they're defined locally here rather
@@ -189,6 +190,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [reviewLinkSent, setReviewLinkSent] = useState(false);
+  const [sendingReviewLink, setSendingReviewLink] = useState(false);
 
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
@@ -270,6 +273,31 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     });
   }
 
+  // Applying no longer requires signing in first -- a magic link is only
+  // needed to come back and review what was submitted. This sends that
+  // link to whatever email was just used on this form, reusing the same
+  // signInWithOtp call /login uses.
+  async function handleSendReviewLink() {
+    if (!email.trim()) return;
+    setSendingReviewLink(true);
+    try {
+      const supabase = getSupabaseClient();
+      await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      setReviewLinkSent(true);
+    } catch {
+      // Best-effort -- their submission already succeeded and is showing
+      // on screen either way. They can also just go to /login later and
+      // request a link with the same email.
+    } finally {
+      setSendingReviewLink(false);
+    }
+  }
+
   if (submitted) {
     const summaryData: ApplicationSummaryData = {
       fullName: `${firstName} ${lastName}`.trim(),
@@ -296,7 +324,53 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       referralSource,
     };
 
-    return <ApplicationSummary firstName={firstName} data={summaryData} />;
+    return (
+      <ApplicationSummary
+        firstName={firstName}
+        data={summaryData}
+        showSignOut={false}
+        footer={
+          <div
+            style={{
+              marginTop: 30,
+              paddingTop: 26,
+              borderTop: "1px solid rgba(240,240,240,0.15)",
+            }}
+          >
+            {reviewLinkSent ? (
+              <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: 0, color: "rgba(240,240,240,0.65)" }}>
+                Check {email} for a one-time link -- click it any time to come back and review this
+                application.
+              </p>
+            ) : (
+              <>
+                <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 12px", color: "rgba(240,240,240,0.6)" }}>
+                  Want to come back to this later? We&apos;ll email you a one-time link.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSendReviewLink}
+                  disabled={sendingReviewLink}
+                  style={{
+                    background: "transparent",
+                    border: 0,
+                    borderBottom: `1px solid ${OFFWHITE}`,
+                    padding: "4px 0",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: sendingReviewLink ? "default" : "pointer",
+                    color: OFFWHITE,
+                    opacity: sendingReviewLink ? 0.6 : 1,
+                  }}
+                >
+                  {sendingReviewLink ? "sending..." : "email me a review link \u2192"}
+                </button>
+              </>
+            )}
+          </div>
+        }
+      />
+    );
   }
 
   return (
