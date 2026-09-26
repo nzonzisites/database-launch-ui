@@ -749,40 +749,38 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               </div>
             </TwoCol>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24, marginTop: 18 }}>
-              <div>
-                <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
-                  Contact by
-                  <Required />
-                </label>
-                <select
-                  style={{ ...underlineInputStyle(true), cursor: "pointer" }}
-                  value={referenceContactMethod}
-                  onChange={(e) => setReferenceContactMethod(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>
-                    Select one
+            <div style={{ marginTop: 18 }}>
+              <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                Contact by
+                <Required />
+              </label>
+              <select
+                style={{ ...underlineInputStyle(true), cursor: "pointer" }}
+                value={referenceContactMethod}
+                onChange={(e) => setReferenceContactMethod(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Select one
+                </option>
+                {REFERENCE_CONTACT_METHOD_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
+                    {opt.label}
                   </option>
-                  {REFERENCE_CONTACT_METHOD_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
-                  {referenceContactMethod === "phone" ? "Number" : "Email"}
-                  <Required />
-                </label>
-                <input
-                  style={underlineInputStyle(true)}
-                  value={referenceContactValue}
-                  onChange={(e) => setReferenceContactValue(e.target.value)}
-                  required
-                />
-              </div>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginTop: 18 }}>
+              <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                {referenceContactMethod === "phone" ? "Number" : "Email"}
+                <Required />
+              </label>
+              <input
+                style={underlineInputStyle(true)}
+                value={referenceContactValue}
+                onChange={(e) => setReferenceContactValue(e.target.value)}
+                required
+              />
             </div>
 
             {referenceContactMethod === "phone" && (
@@ -814,42 +812,40 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(true)}>How should we reach you?</label>
+            <label style={fieldLabelStyle(true)}>What&apos;s your preferred contact method?</label>
             <p style={helperTextStyle(true)}>Used for admin purposes. We won&apos;t publish it.</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24 }}>
-              <div>
-                <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
-                  Contact by
-                  <Required />
-                </label>
-                <select
-                  style={{ ...underlineInputStyle(true), cursor: "pointer" }}
-                  value={contactMethod}
-                  onChange={(e) => setContactMethod(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>
-                    Select one
+            <div>
+              <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                Contact by
+                <Required />
+              </label>
+              <select
+                style={{ ...underlineInputStyle(true), cursor: "pointer" }}
+                value={contactMethod}
+                onChange={(e) => setContactMethod(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Select one
+                </option>
+                {REFERENCE_CONTACT_METHOD_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
+                    {opt.label}
                   </option>
-                  {REFERENCE_CONTACT_METHOD_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
-                  {contactMethod === "phone" ? "Number" : "Email"}
-                  <Required />
-                </label>
-                <input
-                  style={underlineInputStyle(true)}
-                  value={contactValue}
-                  onChange={(e) => setContactValue(e.target.value)}
-                  required
-                />
-              </div>
+                ))}
+              </select>
+            </div>
+            <div style={{ marginTop: 18 }}>
+              <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                {contactMethod === "phone" ? "Number" : "Email"}
+                <Required />
+              </label>
+              <input
+                style={underlineInputStyle(true)}
+                value={contactValue}
+                onChange={(e) => setContactValue(e.target.value)}
+                required
+              />
             </div>
 
             {contactMethod === "phone" && (
