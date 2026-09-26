@@ -130,10 +130,9 @@ export default function ApplicationSummary({
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
-        {/* Mounted (not rendered) purely to keep the 5-minute inactivity
-            auto-sign-out running on this read-only page -- no visible
-            "sign out" link here, per Modupe's call. */}
-        <SessionControls showButton={false} />
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <SessionControls />
+        </div>
         <span style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: "0.02em", color: OCHRE }}>
           submitted
         </span>
