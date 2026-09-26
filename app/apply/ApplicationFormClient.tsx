@@ -692,12 +692,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <MultiValueField
-              label="Portfolio links"
+              label="Professional identity"
               onDark
               values={workSamples}
               onChange={setWorkSamples}
               placeholder="https://..."
-              helper="Links to a few pieces of work -- Drive, Dropbox, a site, etc."
+              helper="Provide links to publications / media coverage / or portfolio or otherwise to help the Nzonzi team learn more about you and your work"
             />
             <div style={{ marginTop: 18 }}>
               <label style={fieldLabelStyle(true)}>About these samples (optional)</label>
@@ -709,14 +709,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               />
             </div>
           </div>
-
-          <MultiValueField
-            label="Links"
-            onDark
-            values={externalLinks}
-            onChange={setExternalLinks}
-            placeholder="Publications, press, or a site"
-          />
 
           <div>
             <label style={fieldLabelStyle(true)}>Reference</label>
