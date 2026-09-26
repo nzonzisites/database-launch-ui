@@ -4,6 +4,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { sendApplicationConfirmationEmail } from "@/lib/email";
 
 export interface SubmitApplicationInput {
   fullName: string;
@@ -222,6 +223,41 @@ export async function submitApplication(
 
   if (insertError) {
     return { success: false, error: insertError.message };
+  }
+
+  // Best-effort confirmation email -- gives the applicant a copy of
+  // everything they just told us. Never blocks or fails the submission
+  // itself: a missing RESEND_API_KEY, a Resend outage, or any other
+  // send failure just means no email went out, not a broken apply flow.
+  try {
+    await sendApplicationConfirmationEmail({
+      fullName: input.fullName.trim(),
+      email: input.email.trim(),
+      phoneOrWhatsapp: input.phoneOrWhatsapp.trim(),
+      cityCountry: input.cityCountry.trim(),
+      affiliations: input.affiliations,
+      headshotUrl: input.headshotUrl.trim(),
+      intendedCategory: input.intendedCategory,
+      intendedCategoryOther:
+        input.intendedCategory === "other" ? input.intendedCategoryOther.trim() : "",
+      workModality: input.workModality,
+      infrastructureNarrative: input.infrastructureNarrative.trim(),
+      expertiseNarrative: input.expertiseNarrative.trim(),
+      externalLinks: input.externalLinks,
+      workSamples: input.workSamples.filter(Boolean),
+      workSamplesExplanation: input.workSamplesExplanation.trim(),
+      referenceName: input.referenceName.trim(),
+      referenceRelationship: input.referenceRelationship.trim(),
+      referenceContactMethod: input.referenceContactMethod,
+      referenceContactValue: input.referenceContactValue.trim(),
+      referenceWhatsappAvailable:
+        input.referenceContactMethod === "phone" ? input.referenceWhatsappAvailable : false,
+      referenceMayContact: input.referenceMayContact,
+      additionalNotes: input.additionalNotes.trim(),
+      referralSource: input.referralSource.trim(),
+    });
+  } catch {
+    // best-effort only -- ignore any failure here
   }
 
   // Keep app_user in sync with what they just told us (name, headshot),
