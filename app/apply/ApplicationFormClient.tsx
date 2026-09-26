@@ -661,7 +661,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(false)}>Headshot (link to a photo)</label>
+            <label style={fieldLabelStyle(false)}>Headshot</label>
+            <p style={helperTextStyle(false)}>
+              Please share a professional headshot that can be used for your listing should it
+              be approved. Upload to your preferred storage site (Google Drive, Drop Box, etc)
+              and share an accessible link.
+            </p>
             <input
               style={underlineInputStyle(false)}
               placeholder="https://..."
