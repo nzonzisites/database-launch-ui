@@ -24,7 +24,9 @@ const OFFWHITE = "#F0F0F0";
 export interface ApplicationSummaryData {
   fullName: string;
   email: string;
-  phoneOrWhatsapp: string;
+  contactMethod: string;
+  contactValue: string;
+  whatsappAvailable: boolean;
   cityCountry: string;
   affiliations: string[];
   headshotUrl: string;
@@ -158,7 +160,13 @@ export default function ApplicationSummary({
           <SectionLabel>Contact</SectionLabel>
           <Row label="Name" value={data.fullName} />
           <Row label="Email" value={data.email} />
-          <Row label="Phone / WhatsApp" value={data.phoneOrWhatsapp} />
+          <Row
+            label={data.contactMethod === "phone" ? "Number" : "Email"}
+            value={data.contactValue}
+          />
+          {data.contactMethod === "phone" && (
+            <Row label="Reachable on WhatsApp" value={data.whatsappAvailable ? "Yes" : "No"} />
+          )}
           <Row label="Location" value={data.cityCountry} />
           <ListRow label="Affiliations" values={data.affiliations} />
         </Section>

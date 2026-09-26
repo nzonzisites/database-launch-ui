@@ -84,7 +84,10 @@ export async function sendApplicationConfirmationEmail(
   const contactRows =
     row("Name", data.fullName) +
     row("Email", data.email) +
-    row("Phone / WhatsApp", data.phoneOrWhatsapp) +
+    row(data.contactMethod === "phone" ? "Number" : "Email", data.contactValue) +
+    (data.contactMethod === "phone"
+      ? row("Reachable on WhatsApp", data.whatsappAvailable ? "Yes" : "No")
+      : "") +
     row("Location", data.cityCountry) +
     listRow("Affiliations", data.affiliations);
 

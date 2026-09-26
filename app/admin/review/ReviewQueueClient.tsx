@@ -287,7 +287,12 @@ function ApplicationRow({
 
       {expanded && (
         <div style={{ padding: "0 14px 26px", display: "flex", flexDirection: "column", gap: 18 }}>
-          <Detail label="Phone / WhatsApp" value={a.phone_or_whatsapp} />
+          <Detail
+            label="Contact"
+            value={`${a.contact_value} via ${a.contact_method}${
+              a.contact_method === "phone" && a.whatsapp_available ? " (WhatsApp)" : ""
+            }`}
+          />
           <Detail label="Location" value={a.city_country} />
           <Detail label="Affiliations" value={a.affiliations?.join(", ") || "—"} />
           <Detail label="Links" value={a.external_links?.join(", ") || "—"} />

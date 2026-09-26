@@ -229,7 +229,9 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [referenceWhatsappAvailable, setReferenceWhatsappAvailable] = useState(false);
   const [referenceMayContact, setReferenceMayContact] = useState(false);
 
-  const [phoneOrWhatsapp, setPhoneOrWhatsapp] = useState("");
+  const [contactMethod, setContactMethod] = useState("");
+  const [contactValue, setContactValue] = useState("");
+  const [whatsappAvailable, setWhatsappAvailable] = useState(false);
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [referralSource, setReferralSource] = useState("");
 
@@ -288,7 +290,9 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     const input: SubmitApplicationInput = {
       fullName: `${firstName} ${lastName}`.trim(),
       email,
-      phoneOrWhatsapp,
+      contactMethod,
+      contactValue,
+      whatsappAvailable,
       cityCountry: [city, country].filter(Boolean).join(", "),
       affiliations,
       headshotUrl,
@@ -360,7 +364,9 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     const summaryData: ApplicationSummaryData = {
       fullName: `${firstName} ${lastName}`.trim(),
       email,
-      phoneOrWhatsapp,
+      contactMethod,
+      contactValue,
+      whatsappAvailable,
       cityCountry: [city, country].filter(Boolean).join(", "),
       affiliations,
       headshotUrl,
@@ -808,18 +814,57 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(true)}>
-              How should we reach you?
-              <Required />
-            </label>
+            <label style={fieldLabelStyle(true)}>How should we reach you?</label>
             <p style={helperTextStyle(true)}>Used for admin purposes. We won&apos;t publish it.</p>
-            <input
-              style={underlineInputStyle(true)}
-              placeholder="+1 555 234 5678, or a WhatsApp number"
-              value={phoneOrWhatsapp}
-              onChange={(e) => setPhoneOrWhatsapp(e.target.value)}
-              required
-            />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 24 }}>
+              <div>
+                <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                  Contact by
+                  <Required />
+                </label>
+                <select
+                  style={{ ...underlineInputStyle(true), cursor: "pointer" }}
+                  value={contactMethod}
+                  onChange={(e) => setContactMethod(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    Select one
+                  </option>
+                  {REFERENCE_CONTACT_METHOD_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                  {contactMethod === "phone" ? "Number" : "Email"}
+                  <Required />
+                </label>
+                <input
+                  style={underlineInputStyle(true)}
+                  value={contactValue}
+                  onChange={(e) => setContactValue(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            {contactMethod === "phone" && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16 }}>
+                <input
+                  type="checkbox"
+                  id="applicant-whatsapp"
+                  checked={whatsappAvailable}
+                  onChange={(e) => setWhatsappAvailable(e.target.checked)}
+                />
+                <label htmlFor="applicant-whatsapp" style={{ fontSize: 13, color: OFFWHITE }}>
+                  This number is reachable on WhatsApp
+                </label>
+              </div>
+            )}
           </div>
 
           <div>

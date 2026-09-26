@@ -9,7 +9,9 @@ import { sendApplicationConfirmationEmail } from "@/lib/email";
 export interface SubmitApplicationInput {
   fullName: string;
   email: string;
-  phoneOrWhatsapp: string;
+  contactMethod: string;
+  contactValue: string;
+  whatsappAvailable: boolean;
   cityCountry: string;
   affiliations: string[];
   headshotUrl: string;
@@ -151,7 +153,8 @@ export async function submitApplication(
   const required: [string, string][] = [
     ["full name", input.fullName],
     ["email", input.email],
-    ["phone or WhatsApp", input.phoneOrWhatsapp],
+    ["contact method", input.contactMethod],
+    ["contact info", input.contactValue],
     ["city and country", input.cityCountry],
     ["category", input.intendedCategory],
     ["work modality", input.workModality],
@@ -198,7 +201,9 @@ export async function submitApplication(
     prospect_signup_id: prospectSignupId,
     full_name: input.fullName.trim(),
     email: input.email.trim(),
-    phone_or_whatsapp: input.phoneOrWhatsapp.trim(),
+    contact_method: input.contactMethod,
+    contact_value: input.contactValue.trim(),
+    whatsapp_available: input.contactMethod === "phone" ? input.whatsappAvailable : null,
     city_country: input.cityCountry.trim(),
     affiliations: input.affiliations,
     external_links: input.externalLinks,
@@ -233,7 +238,9 @@ export async function submitApplication(
     await sendApplicationConfirmationEmail({
       fullName: input.fullName.trim(),
       email: input.email.trim(),
-      phoneOrWhatsapp: input.phoneOrWhatsapp.trim(),
+      contactMethod: input.contactMethod,
+      contactValue: input.contactValue.trim(),
+      whatsappAvailable: input.contactMethod === "phone" ? input.whatsappAvailable : false,
       cityCountry: input.cityCountry.trim(),
       affiliations: input.affiliations,
       headshotUrl: input.headshotUrl.trim(),

@@ -10,13 +10,15 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, phone_or_whatsapp, city_country, affiliations, external_links, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source";
+  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source";
 
 type ExistingApplicationRow = {
   status: string;
   full_name: string | null;
   email: string | null;
-  phone_or_whatsapp: string | null;
+  contact_method: "email" | "phone" | null;
+  contact_value: string | null;
+  whatsapp_available: boolean | null;
   city_country: string | null;
   affiliations: string[] | null;
   external_links: string[] | null;
@@ -127,7 +129,9 @@ export default async function ApplyPage() {
     const summaryData: ApplicationSummaryData = {
       fullName: existingApplication.full_name ?? "",
       email: existingApplication.email ?? "",
-      phoneOrWhatsapp: existingApplication.phone_or_whatsapp ?? "",
+      contactMethod: existingApplication.contact_method ?? "",
+      contactValue: existingApplication.contact_value ?? "",
+      whatsappAvailable: Boolean(existingApplication.whatsapp_available),
       cityCountry: existingApplication.city_country ?? "",
       affiliations: existingApplication.affiliations ?? [],
       headshotUrl: appUser.headshot_url ?? "",

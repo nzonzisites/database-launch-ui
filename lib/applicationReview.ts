@@ -6,7 +6,9 @@ export interface ApplicationForReview {
   id: string;
   full_name: string;
   email: string;
-  phone_or_whatsapp: string;
+  contact_method: "email" | "phone";
+  contact_value: string;
+  whatsapp_available: boolean | null;
   city_country: string;
   affiliations: string[];
   external_links: string[];
@@ -32,7 +34,7 @@ export interface ApplicationForReview {
 }
 
 const REVIEW_COLUMNS =
-  "id, full_name, email, phone_or_whatsapp, city_country, affiliations, external_links, " +
+  "id, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, " +
   "intended_category, intended_category_other, work_modality, infrastructure_narrative, " +
   "expertise_narrative, work_samples, work_samples_explanation, reference_name, " +
   "reference_relationship, reference_contact_method, reference_contact_value, " +
