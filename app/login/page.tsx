@@ -176,7 +176,7 @@ function LoginForm() {
                 textTransform: "lowercase",
               }}
             >
-              sign into your nzonzi listing
+              review your application
             </h1>
             <p
               style={{

@@ -116,16 +116,11 @@ export default function ApplicationSummary({
   status,
   data,
   footer,
-  showSignOut = true,
 }: {
   firstName: string;
   status?: string | null;
   data: ApplicationSummaryData;
   footer?: React.ReactNode;
-  /** Hide the "sign out" link when there's no session to sign out of yet
-   * (e.g. right after an anonymous submission, before anyone's clicked a
-   * magic link). Defaults to true for the normal, signed-in case. */
-  showSignOut?: boolean;
 }) {
   const categoryLabel =
     data.intendedCategory === "other" && data.intendedCategoryOther
@@ -135,11 +130,10 @@ export default function ApplicationSummary({
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
-        {showSignOut && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-            <SessionControls />
-          </div>
-        )}
+        {/* Mounted (not rendered) purely to keep the 5-minute inactivity
+            auto-sign-out running on this read-only page -- no visible
+            "sign out" link here, per Modupe's call. */}
+        <SessionControls showButton={false} />
         <span style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: "0.02em", color: OCHRE }}>
           submitted
         </span>

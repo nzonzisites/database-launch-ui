@@ -10,6 +10,10 @@
 // tab can throttle timers, so this tracks the last-activity time in a ref
 // and polls it periodically instead of trusting a single timer to fire
 // exactly on schedule.
+//
+// showButton=false keeps the inactivity watcher running (still mount
+// this) but renders nothing -- for a page that wants the auto-sign-out
+// without a visible "sign out" link.
 
 "use client";
 
@@ -24,9 +28,11 @@ const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "scroll", "touchst
 export default function SessionControls({
   textColor = "rgba(240,240,240,0.55)",
   hoverColor = "#F0F0F0",
+  showButton = true,
 }: {
   textColor?: string;
   hoverColor?: string;
+  showButton?: boolean;
 }) {
   const router = useRouter();
   const lastActivityRef = useRef(Date.now());
@@ -61,6 +67,8 @@ export default function SessionControls({
     // re-run on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!showButton) return null;
 
   return (
     <button

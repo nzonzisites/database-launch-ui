@@ -19,7 +19,6 @@ import { BROWN } from "@/lib/colors";
 import { submitApplication, lookupProspectPrefill, type SubmitApplicationInput } from "./actions";
 import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, REFERENCE_CONTACT_METHOD_OPTIONS } from "./applicationOptions";
 import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
-import SessionControls from "@/app/components/SessionControls";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
 // Design tokens pulled directly from design_template.html -- not all of
@@ -387,7 +386,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       <ApplicationSummary
         firstName={firstName}
         data={summaryData}
-        showSignOut={false}
         footer={
           <div
             style={{
@@ -435,9 +433,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
       <form onSubmit={handleSubmit} style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-          <SessionControls />
-        </div>
+        {/* No SessionControls here (unlike the submitted/recap view) --
+            most visitors reach this form signed out, and even a signed-in
+            one shouldn't risk losing an in-progress, unsaved application
+            to the 5-minute inactivity auto-sign-out while composing a
+            long answer. */}
         <h2
           style={{
             fontSize: 34,
