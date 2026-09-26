@@ -227,7 +227,7 @@ export default function LandingPage() {
                   maxWidth: 620,
                 }}
               >
-                knowledge producers, rigorous practitioners, and social
+                knowledge producers, rigorous practitioners, and community
                 leaders who foster positive social impact through
                 organizations, businesses, institutions, and communities
               </p>
@@ -339,8 +339,8 @@ export default function LandingPage() {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                     {(
                       [
-                        { key: "scholar" as const, label: "I'd like to become an Nzonzi", i: 0 },
-                        { key: "buyer" as const, label: "I'd like to hire an Nzonzi", i: 1 },
+                        { key: "scholar" as const, label: "I'd like to become a Nzonzi", i: 0 },
+                        { key: "buyer" as const, label: "I'd like to hire a Nzonzi", i: 1 },
                       ]
                     ).map((r) => {
                       const on = role === r.key;
@@ -526,8 +526,8 @@ export default function LandingPage() {
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   {(
                     [
-                      { key: "scholar" as const, label: "I'd like to become an Nzonzi" },
-                      { key: "buyer" as const, label: "I'd like to hire an Nzonzi" },
+                      { key: "scholar" as const, label: "I'd like to become a Nzonzi" },
+                      { key: "buyer" as const, label: "I'd like to hire a Nzonzi" },
                     ]
                   ).map((r) => (
                     <button
