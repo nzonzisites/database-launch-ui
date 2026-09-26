@@ -868,7 +868,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(true)}>Additional notes (optional)</label>
+            <label style={fieldLabelStyle(true)}>Is there anything else you&apos;d like to share with the application review team? (optional)</label>
             <textarea
               rows={2}
               style={{ ...underlineInputStyle(true), lineHeight: 1.5, resize: "vertical" }}
