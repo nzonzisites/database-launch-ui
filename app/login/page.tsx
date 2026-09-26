@@ -176,7 +176,7 @@ function LoginForm() {
                 textTransform: "lowercase",
               }}
             >
-              review your application
+              sign in
             </h1>
             <p
               style={{
