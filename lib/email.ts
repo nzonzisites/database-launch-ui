@@ -115,7 +115,6 @@ export async function sendApplicationConfirmationEmail(
 
   const html = `
     <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:${BROWN};background:#ffffff;">
-      <p style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:${OCHRE};margin:0 0 12px;">submitted</p>
       <h1 style="font-size:24px;font-weight:600;line-height:1.25;margin:0 0 16px;">${
         firstName ? `Hi ${escapeHtml(firstName)}, we've got your application.` : "We've got your application."
       }</h1>
