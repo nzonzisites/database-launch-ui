@@ -47,8 +47,7 @@ export default async function ReviewQueuePage() {
             <SessionControls />
           </div>
           <p style={{ fontSize: 18, fontWeight: 400, margin: 0 }}>
-            You&apos;re signed in, but this account isn&apos;t set up as a
-            platform reviewer.
+            Account verified, but you do not have admin permissions.
           </p>
           <p
             style={{
@@ -60,8 +59,12 @@ export default async function ReviewQueuePage() {
           >
             {/* NOTE: platform_agent rows aren't self-serve -- an existing
                 admin adds one via the database directly for now. */}
-            Ask an existing admin to add a platform_agent row for your
-            account.
+            To submit an Nzonzi application or review your application
+            responses, visit{" "}
+            <a href="/apply" style={{ color: WHITE, borderBottom: "1px solid currentColor" }}>
+              nzonzi.net/apply
+            </a>
+            .
           </p>
         </div>
       </div>
