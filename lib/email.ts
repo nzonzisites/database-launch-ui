@@ -29,7 +29,7 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 // Needs a domain verified in Resend (Resend dashboard -> Domains) that
 // matches whatever's set here -- see the setup notes delivered alongside
 // this change for exactly what to add in Resend and as an env var.
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Nzonzi <applications@nzonzi.net>";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Nzonzi <noreply@nzonzi.net>";
 
 export type ApplicationConfirmationData = Omit<SubmitApplicationInput, "prospectSignupId">;
 
