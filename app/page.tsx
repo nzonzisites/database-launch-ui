@@ -60,6 +60,12 @@ export default function LandingPage() {
   const [scholarDone, setScholarDone] = useState(false);
   const [buyerDone, setBuyerDone] = useState(false);
 
+  // Invisible-until-hover admin entry point -- deliberately not a visible
+  // "admin login" link on the public landing page, just a small hoverable
+  // corner an admin who already knows it's there can find. Per Modupe:
+  // the one deliberate exception to never touching this file otherwise.
+  const [adminLinkHover, setAdminLinkHover] = useState(false);
+
   const tellUsRef = useRef<HTMLDivElement>(null);
   const applyRef = useRef<HTMLDivElement>(null);
 
@@ -104,6 +110,31 @@ export default function LandingPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: SAND, color: BROWN }}>
+      <Link
+        href="/admin/review"
+        onMouseEnter={() => setAdminLinkHover(true)}
+        onMouseLeave={() => setAdminLinkHover(false)}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          zIndex: 50,
+          width: 84,
+          height: 44,
+          display: "flex",
+          alignItems: "flex-end",
+          padding: "0 0 14px 16px",
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.04em",
+          color: "rgba(31,14,3,0.55)",
+          opacity: adminLinkHover ? 1 : 0,
+          transition: "opacity 0.15s ease",
+          textDecoration: "none",
+        }}
+      >
+        admin
+      </Link>
       <div
         style={{
           minHeight: "100vh",
