@@ -28,6 +28,7 @@ async function requireReviewListingsPermission() {
 }
 
 export interface ScholarProfileEditableFields {
+  headshot_url: string; // "" clears it (stored as null)
   tagline: string;
   full_bio: string;
   background: string;
@@ -42,6 +43,7 @@ export async function updateScholarProfile(profileId: string, fields: ScholarPro
   const { error } = await supabase
     .from("scholar_profile")
     .update({
+      headshot_url: fields.headshot_url.trim() || null,
       tagline: fields.tagline.trim(),
       full_bio: fields.full_bio.trim(),
       background: fields.background.trim(),

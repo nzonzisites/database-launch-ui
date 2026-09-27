@@ -80,6 +80,7 @@ function ListingRow({
   const [actionError, setActionError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
+  const [headshotUrl, setHeadshotUrl] = useState(p.headshot_url ?? "");
   const [tagline, setTagline] = useState(p.tagline);
   const [fullBio, setFullBio] = useState(p.full_bio);
   const [background, setBackground] = useState(p.background);
@@ -92,6 +93,7 @@ function ListingRow({
       : optionLabel(CATEGORY_OPTIONS, p.intended_category);
 
   const fields = {
+    headshot_url: headshotUrl,
     tagline,
     full_bio: fullBio,
     background,
@@ -197,13 +199,6 @@ function ListingRow({
       {expanded && (
         <div style={{ padding: "0 14px 26px", display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
-            {p.headshot_url ? (
-              <a href={p.headshot_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: OCHRE }}>
-                View headshot
-              </a>
-            ) : (
-              <span style={monoLabel}>No headshot on file</span>
-            )}
             <a
               href={`/profile/${p.id}`}
               target="_blank"
@@ -216,6 +211,27 @@ function ListingRow({
               <span style={monoLabel}>Delivery (from application): {optionLabel(WORK_MODALITY_OPTIONS, p.work_modality)}</span>
             )}
           </div>
+
+          <Field label="Headshot URL">
+            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <input
+                value={headshotUrl}
+                onChange={(e) => setHeadshotUrl(e.target.value)}
+                style={fieldStyle}
+                placeholder="https://..."
+              />
+              {headshotUrl && (
+                <a
+                  href={headshotUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: 13, color: OCHRE, whiteSpace: "nowrap" }}
+                >
+                  View →
+                </a>
+              )}
+            </div>
+          </Field>
 
           <Field label="Tagline">
             <input
