@@ -72,32 +72,23 @@ export async function fetchScholarProfilesForReview(
   return (data ?? []) as unknown as ScholarProfileRow[];
 }
 
-/** A single profile by id, for the admin edit view / preview link. No status filter -- admins can open drafts. */
-export async function fetchScholarProfileForAdmin(
-  supabase: SupabaseClient,
-  id: string
-): Promise<ScholarProfileRow | null> {
-  const { data, error } = await supabase
-    .from("scholar_profile")
-    .select(COLUMNS)
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw error;
-  return (data as unknown as ScholarProfileRow) ?? null;
-}
-
 /**
- * A single PUBLISHED profile by id, for the public /profile/[id] page.
- * Returns null for a draft or missing id -- the public page treats that
- * as not-found rather than distinguishing "doesn't exist" from "not
- * published yet" (RLS already only allows reading published rows for a
- * non-admin caller, so this filter mostly documents that, but a
- * signed-in admin's client can see drafts too -- the explicit filter
- * keeps the public page's own behavior correct regardless of who's
- * viewing it).
+ * A single profile by id -- used by both the admin edit view / "Preview
+ * public page" link AND the public /profile/[id] page itself. No
+ * application-level status filter: visibility is left entirely to RLS,
+ * which already does exactly the right thing per caller --
+ * "anyone can read published scholar profiles" lets a public visitor see
+ * a published row, and "review_listings agents can read all scholar
+ * profiles" additionally lets a signed-in admin see a draft. An earlier
+ * version of this filtered to status = 'published' unconditionally,
+ * which meant the admin's own "Preview public page" link 404'd on any
+ * draft -- exactly the case a preview link exists for. A public visitor
+ * hitting an unpublished listing's URL still gets nothing back (RLS
+ * blocks it for them), so /profile/[id] correctly renders not-found
+ * either way -- it just no longer double-enforces what RLS already
+ * enforces, and in doing so no longer breaks admin previews.
  */
-export async function fetchPublishedScholarProfile(
+export async function fetchScholarProfile(
   supabase: SupabaseClient,
   id: string
 ): Promise<ScholarProfileRow | null> {
@@ -105,7 +96,6 @@ export async function fetchPublishedScholarProfile(
     .from("scholar_profile")
     .select(COLUMNS)
     .eq("id", id)
-    .eq("status", "published")
     .maybeSingle();
 
   if (error) throw error;

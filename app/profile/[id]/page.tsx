@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { fetchPublishedScholarProfile } from "@/lib/scholarProfile";
+import { fetchScholarProfile } from "@/lib/scholarProfile";
 import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
 import { BROWN, OCHRE, FOREST, SAND } from "@/lib/colors";
 import ProfilePortrait from "./ProfilePortrait";
@@ -37,7 +37,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const supabase = await getSupabaseServerClient();
-  const profile = await fetchPublishedScholarProfile(supabase, id);
+  const profile = await fetchScholarProfile(supabase, id);
   if (!profile) return { title: "Nzonzi" };
   return {
     title: `${profile.full_name} — Nzonzi`,
@@ -52,7 +52,7 @@ export default async function ScholarProfilePage({
 }) {
   const { id } = await params;
   const supabase = await getSupabaseServerClient();
-  const profile = await fetchPublishedScholarProfile(supabase, id);
+  const profile = await fetchScholarProfile(supabase, id);
 
   if (!profile) notFound();
 
