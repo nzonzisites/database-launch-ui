@@ -1,10 +1,13 @@
 "use client";
 
-// Client component only for the hover-reveal-full-bio interaction on the
-// portrait block (the rest of the profile page is a plain server
-// component). Mirrors the "portrait — hover for full bio" behaviour from
-// the design mockup: a placeholder image area that reveals the seller's
-// full bio text on hover/focus.
+// Client component only for the click-to-reveal-full-bio interaction on
+// the portrait block (the rest of the profile page is a plain server
+// component). The design mockup this was built from described a
+// "hover for full bio" label, but mouseenter/mouseleave don't reliably
+// fire here in practice (the label sits above an absolutely-positioned
+// image), so the label now says "click" to match what a visitor
+// actually has to do -- tap/click toggles it via onFocus/onBlur on the
+// focusable wrapper below.
 
 import { useState } from "react";
 import { SAND, WHITE } from "@/lib/colors";
@@ -84,7 +87,7 @@ export default function ProfilePortrait({
             padding: "4px 7px",
           }}
         >
-          portrait — hover for full bio
+          portrait — click for full bio
         </span>
       )}
       {fullBio && (

@@ -377,7 +377,7 @@ function ListingRow({
             />
           </Field>
 
-          <Field label="Full bio (shown on hover over their portrait)">
+          <Field label="Full bio (shown when a visitor clicks their portrait)">
             <textarea value={fullBio} onChange={(e) => setFullBio(e.target.value)} rows={5} style={fieldStyle} />
           </Field>
 
