@@ -33,7 +33,14 @@ export default function ProfilePortrait({
       tabIndex={0}
       style={{
         position: "relative",
-        height: 480,
+        // A fixed 1:1 aspect ratio rather than a fixed height -- the old
+        // fixed-480px-height/fluid-width box meant the crop shape changed
+        // with the viewer's screen width (and, worse, didn't match the
+        // fixed-size box used for the crop preview on the admin Listings
+        // tab, so the two could crop the same headshot differently).
+        // Pinning both to the same square ratio makes the shape
+        // deterministic and keeps admin's preview a true match.
+        aspectRatio: "1 / 1",
         backgroundImage: headshotUrl
           ? undefined
           : "repeating-linear-gradient(135deg, rgba(45,77,49,0.16) 0 7px, transparent 7px 14px)",

@@ -18,20 +18,20 @@ const thumbStyle: CSSProperties = {
   border: "1px solid rgba(230,222,210,0.25)",
 };
 
-// Mirrors ProfilePortrait on the public page: same 480px fixed height and
-// object-fit: cover, so what the admin sees here crops the same way it
-// will on the live listing. The live page's width is responsive (its
-// portrait column ranges from ~320px up to ~560px depending on screen
-// size), so this picks 340px as a representative middle ground rather
-// than an exact match -- close enough to judge a crop by, while the
-// height (where headshots actually get cut off) is exact.
-const PREVIEW_WIDTH = 340;
-const PREVIEW_HEIGHT = 480;
+// Mirrors ProfilePortrait on the public page exactly: same 1:1
+// aspect-ratio box and object-fit: cover, so a crop set here looks
+// identical on the live listing regardless of the admin's own screen
+// width. (An earlier version of this used a fixed 340x480 box, which
+// crops on a different axis than the live page's box -- for a
+// wider-than-tall headshot that meant this preview cropped the sides
+// while the real page cropped top/bottom, so the vertical "adjust crop"
+// slider visibly did nothing here even though it was working.)
+const PREVIEW_WIDTH = 320;
 
 const previewBoxStyle: CSSProperties = {
   position: "relative",
   width: PREVIEW_WIDTH,
-  height: PREVIEW_HEIGHT,
+  aspectRatio: "1 / 1",
   overflow: "hidden",
   border: "1px solid rgba(230,222,210,0.25)",
   background: "rgba(230,222,210,0.06)",
