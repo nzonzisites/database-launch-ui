@@ -35,6 +35,7 @@ export interface ScholarProfileRow {
   application_id: string;
   full_name: string;
   headshot_url: string | null;
+  submitted_headshot_url: string | null;
   intended_category: string | null;
   intended_category_other: string | null;
   city_country: string | null;
@@ -55,7 +56,7 @@ export interface ScholarProfileRow {
 export type ScholarProfileWithSeller = ScholarProfileRow;
 
 const COLUMNS =
-  "id, application_id, full_name, headshot_url, intended_category, intended_category_other, city_country, work_modality, " +
+  "id, application_id, full_name, headshot_url, submitted_headshot_url, intended_category, intended_category_other, city_country, work_modality, " +
   "tagline, full_bio, background, experience_label, vetted_date, status, reviewed_by, created_at";
 
 /** All scholar_profile rows, for the admin Listings tab. Requires review_listings (enforced by RLS). */

@@ -6,6 +6,17 @@ import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
 import { publishScholarProfile, unpublishScholarProfile, updateScholarProfile } from "./scholarProfileActions";
+import { getSupabaseClient } from "@/lib/supabaseClient";
+
+const HEADSHOT_BUCKET = "scholar-headshots";
+
+const thumbStyle: CSSProperties = {
+  width: 88,
+  height: 88,
+  objectFit: "cover",
+  display: "block",
+  border: "1px solid rgba(230,222,210,0.25)",
+};
 
 const monoLabel: CSSProperties = {
   fontFamily: "'JetBrains Mono', monospace",
@@ -79,6 +90,8 @@ function ListingRow({
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [headshotUrl, setHeadshotUrl] = useState(p.headshot_url ?? "");
   const [tagline, setTagline] = useState(p.tagline);
@@ -101,6 +114,47 @@ function ListingRow({
     vetted_date: vettedDate,
   };
   const readyToPublish = tagline.trim().length > 0 && fullBio.trim().length > 0;
+
+  /**
+   * Uploads a file straight to Supabase Storage from the browser (gated
+   * by the review_listings storage policies -- see
+   * sql/2026-09-27g-scholar-headshot-upload.sql), then saves the
+   * resulting public URL immediately rather than waiting for a separate
+   * "Save" click, so an upload can't be silently lost if the admin
+   * forgets to save afterward. This only ever touches headshot_url --
+   * submitted_headshot_url (the applicant's original) is never written
+   * here, so it stays available for comparison after this replaces it.
+   */
+  function handleHeadshotFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file again later
+    if (!file) return;
+
+    setUploadError(null);
+    setUploading(true);
+    (async () => {
+      try {
+        const supabase = getSupabaseClient();
+        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const path = `${p.id}-${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from(HEADSHOT_BUCKET)
+          .upload(path, file, { upsert: true, contentType: file.type || undefined });
+        if (uploadErr) throw uploadErr;
+
+        const { data } = supabase.storage.from(HEADSHOT_BUCKET).getPublicUrl(path);
+        const publicUrl = data.publicUrl;
+        setHeadshotUrl(publicUrl);
+
+        await updateScholarProfile(p.id, { ...fields, headshot_url: publicUrl });
+        setSaved(true);
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : "Couldn't upload that image.");
+      } finally {
+        setUploading(false);
+      }
+    })();
+  }
 
   function handleSave() {
     setActionError(null);
@@ -212,24 +266,54 @@ function ListingRow({
             )}
           </div>
 
-          <Field label="Headshot URL">
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <Field label="Headshot">
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginBottom: 14 }}>
+              <div>
+                <div style={{ ...monoLabel, marginBottom: 6, fontSize: 9 }}>Submitted by applicant</div>
+                {p.submitted_headshot_url ? (
+                  <a href={p.submitted_headshot_url} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.submitted_headshot_url} alt="" style={thumbStyle} />
+                  </a>
+                ) : (
+                  <div style={{ ...thumbStyle, display: "grid", placeItems: "center", border: "1px dashed rgba(230,222,210,0.25)" }}>
+                    <span style={{ ...monoLabel, fontSize: 8.5 }}>none</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <div style={{ ...monoLabel, marginBottom: 6, fontSize: 9 }}>Live on listing</div>
+                {headshotUrl ? (
+                  <a href={headshotUrl} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={headshotUrl} alt="" style={thumbStyle} />
+                  </a>
+                ) : (
+                  <div style={{ ...thumbStyle, display: "grid", placeItems: "center", border: "1px dashed rgba(230,222,210,0.25)" }}>
+                    <span style={{ ...monoLabel, fontSize: 8.5 }}>none</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleHeadshotFileChange}
+              disabled={uploading}
+              style={{ fontSize: 13, color: SAND }}
+            />
+            {uploading && <p style={{ fontSize: 12.5, color: SAND, opacity: 0.75, margin: "8px 0 0" }}>Uploading…</p>}
+            {uploadError && <p style={{ fontSize: 12.5, color: OCHRE, margin: "8px 0 0" }}>{uploadError}</p>}
+
+            <div style={{ marginTop: 12 }}>
+              <div style={{ ...monoLabel, marginBottom: 6, fontSize: 9 }}>Or paste a URL directly</div>
               <input
                 value={headshotUrl}
                 onChange={(e) => setHeadshotUrl(e.target.value)}
                 style={fieldStyle}
                 placeholder="https://..."
               />
-              {headshotUrl && (
-                <a
-                  href={headshotUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ fontSize: 13, color: OCHRE, whiteSpace: "nowrap" }}
-                >
-                  View →
-                </a>
-              )}
             </div>
           </Field>
 
