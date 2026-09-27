@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { PlatformAgentRow } from "@/lib/platformAgent";
 import type { ApplicationForReview, ApplicationStatus } from "@/lib/applicationReview";
-import { approveApplication, rejectApplication } from "./actions";
+import { approveApplication, rejectApplication, revokeDecision } from "./actions";
 import SessionControls from "@/app/components/SessionControls";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -221,6 +221,17 @@ function ApplicationRow({
     });
   }
 
+  function handleRevoke() {
+    setActionError(null);
+    startTransition(async () => {
+      try {
+        await revokeDecision(a.id);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Couldn't revoke this decision.");
+      }
+    });
+  }
+
   return (
     <div style={{ borderTop: "1px solid rgba(230,222,210,0.12)" }}>
       <div
@@ -413,6 +424,31 @@ function ApplicationRow({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {!canDecide && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 6 }}>
+              {actionError && (
+                <p style={{ color: OCHRE, fontSize: 13, margin: 0 }}>{actionError}</p>
+              )}
+              <button
+                onClick={handleRevoke}
+                disabled={isPending}
+                style={{
+                  background: "transparent",
+                  color: "rgba(230,222,210,0.7)",
+                  border: "1px solid rgba(230,222,210,0.25)",
+                  padding: "9px 16px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: isPending ? "default" : "pointer",
+                  opacity: isPending ? 0.6 : 1,
+                  width: "fit-content",
+                }}
+              >
+                Revoke decision
+              </button>
             </div>
           )}
         </div>

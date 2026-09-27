@@ -60,3 +60,24 @@ export async function rejectApplication(applicationId: string, reason: string) {
   if (error) throw error;
   revalidatePath("/admin/review");
 }
+
+/**
+ * Undoes an approve or reject decision, sending the application back to
+ * "under_review" so it can be decided again. Requires the same
+ * review_sellers permission as approving/rejecting.
+ */
+export async function revokeDecision(applicationId: string) {
+  const { supabase, agentId } = await requireReviewSellersPermission();
+
+  const { error } = await supabase
+    .from("application")
+    .update({
+      status: "under_review",
+      reviewed_by: agentId,
+      decision_reason: null,
+    })
+    .eq("id", applicationId);
+
+  if (error) throw error;
+  revalidatePath("/admin/review");
+}
