@@ -39,7 +39,7 @@ type Tab = (typeof TABS)[number];
 const TAB_LABEL: Record<Tab, string> = {
   all: "All",
   applications: "Applications",
-  listings: "Listing edits",
+  listings: "Listings",
   reports: "Reports",
 };
 
