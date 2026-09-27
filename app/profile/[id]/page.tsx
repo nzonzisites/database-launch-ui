@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchScholarProfile } from "@/lib/scholarProfile";
-import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
+import { CATEGORY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
 import { BROWN, OCHRE, FOREST, SAND } from "@/lib/colors";
 import ProfilePortrait from "./ProfilePortrait";
 
@@ -11,6 +11,19 @@ function categoryLabel(category: string | null, other: string | null): string {
   if (!category) return "";
   if (category === "other") return other || "Other";
   return optionLabel(CATEGORY_OPTIONS, category);
+}
+
+/**
+ * Turns work_modality into one or two small tags rather than a single
+ * line of text -- "both" genuinely means both are on the table, so it
+ * gets both tags rather than a combined "Remote or Open to Travel"
+ * string.
+ */
+function deliveryTags(workModality: string | null): string[] {
+  if (workModality === "remote_only") return ["Remote"];
+  if (workModality === "travel_flexible") return ["Open to Travel"];
+  if (workModality === "both") return ["Remote", "Open to Travel"];
+  return [];
 }
 
 function vettedLabel(vettedDate: string | null): string | null {
@@ -61,10 +74,10 @@ export default async function ScholarProfilePage({
 
   const facts = [
     profile.city_country ? { k: "Location", v: profile.city_country } : null,
-    profile.work_modality ? { k: "Delivery", v: optionLabel(WORK_MODALITY_OPTIONS, profile.work_modality) } : null,
     profile.experience_label ? { k: "Experience", v: profile.experience_label } : null,
     vetted ? { k: "Vetted", v: vetted } : null,
   ].filter((f): f is { k: string; v: string } => f !== null);
+  const deliveryTagList = deliveryTags(profile.work_modality);
 
   // Neither "message this scholar" nor "report this listing" has a real
   // backend yet -- these are simple mailto: placeholders routed to the
@@ -96,7 +109,11 @@ export default async function ScholarProfilePage({
           }}
         >
           <div style={{ position: "sticky", top: 24 }}>
-            <ProfilePortrait fullBio={profile.full_bio} headshotUrl={profile.headshot_url} />
+            <ProfilePortrait
+              fullBio={profile.full_bio}
+              headshotUrl={profile.headshot_url}
+              headshotFocalY={profile.headshot_focal_y}
+            />
           </div>
 
           <div>
@@ -141,7 +158,7 @@ export default async function ScholarProfilePage({
               </p>
             )}
 
-            {facts.length > 0 && (
+            {(facts.length > 0 || deliveryTagList.length > 0) && (
               <div
                 style={{
                   display: "flex",
@@ -152,7 +169,41 @@ export default async function ScholarProfilePage({
                   marginBottom: 34,
                 }}
               >
-                {facts.map((f) => (
+                {facts[0] && (
+                  <div key={facts[0].k}>
+                    <div style={{ fontSize: 12, fontWeight: 400, color: "rgba(31,14,3,0.5)", marginBottom: 5, textTransform: "lowercase" }}>
+                      {facts[0].k}
+                    </div>
+                    <div style={{ fontSize: 14.5, fontWeight: 400, lineHeight: 1.3 }}>{facts[0].v}</div>
+                  </div>
+                )}
+                {deliveryTagList.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 400, color: "rgba(31,14,3,0.5)", marginBottom: 5, textTransform: "lowercase" }}>
+                      Delivery
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {deliveryTagList.map((t) => (
+                        <span
+                          key={t}
+                          style={{
+                            display: "inline-block",
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            padding: "4px 11px",
+                            borderRadius: 999,
+                            background: "rgba(45,77,49,0.12)",
+                            color: FOREST,
+                            letterSpacing: "0.01em",
+                          }}
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {facts.slice(1).map((f) => (
                   <div key={f.k}>
                     <div style={{ fontSize: 12, fontWeight: 400, color: "rgba(31,14,3,0.5)", marginBottom: 5, textTransform: "lowercase" }}>
                       {f.k}
