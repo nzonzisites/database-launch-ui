@@ -10,7 +10,7 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source";
+  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source";
 
 type ExistingApplicationRow = {
   status: string;
@@ -28,6 +28,7 @@ type ExistingApplicationRow = {
   work_modality: string | null;
   infrastructure_narrative: string | null;
   expertise_narrative: string | null;
+  full_bio: string | null;
   work_samples: { url?: string }[] | null;
   work_samples_explanation: string | null;
   reference_name: string | null;
@@ -141,6 +142,7 @@ export default async function ApplyPage() {
       workModality: existingApplication.work_modality ?? "",
       expertiseNarrative: existingApplication.expertise_narrative ?? "",
       infrastructureNarrative: existingApplication.infrastructure_narrative ?? "",
+      fullBio: existingApplication.full_bio ?? "",
       externalLinks: existingApplication.external_links ?? [],
       workSamples: (existingApplication.work_samples ?? [])
         .map((sample) => sample?.url ?? "")

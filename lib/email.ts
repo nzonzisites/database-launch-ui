@@ -96,6 +96,7 @@ export async function sendApplicationConfirmationEmail(
     row("Delivery", optionLabel(WORK_MODALITY_OPTIONS, data.workModality)) +
     row("What you do", data.expertiseNarrative) +
     row("How failed or missing infrastructure guided you", data.infrastructureNarrative) +
+    row("Bio", data.fullBio) +
     row("Headshot", data.headshotUrl);
 
   const portfolioRows =

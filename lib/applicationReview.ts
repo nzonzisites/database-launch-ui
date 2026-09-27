@@ -18,6 +18,7 @@ export interface ApplicationForReview {
   work_modality: "remote_only" | "travel_flexible" | "both";
   infrastructure_narrative: string;
   expertise_narrative: string;
+  full_bio: string | null;
   work_samples: string[];
   work_samples_explanation: string | null;
   reference_name: string;
@@ -43,7 +44,7 @@ interface RawApplicationForReview extends Omit<ApplicationForReview, "work_sampl
 const REVIEW_COLUMNS =
   "id, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, " +
   "headshot_url, intended_category, intended_category_other, work_modality, infrastructure_narrative, " +
-  "expertise_narrative, work_samples, work_samples_explanation, reference_name, " +
+  "expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, " +
   "reference_relationship, reference_contact_method, reference_contact_value, " +
   "reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, " +
   "status, reviewed_by, decision_reason, created_at";

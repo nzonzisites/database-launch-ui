@@ -315,6 +315,7 @@ function ApplicationRow({
           <Detail label="Delivery" value={MODALITY_LABELS[a.work_modality] || a.work_modality} />
           <Detail label="What they do" value={a.expertise_narrative} />
           <Detail label="Failed infrastructure → innovation" value={a.infrastructure_narrative} />
+          <Detail label="Bio (submitted)" value={a.full_bio || "—"} />
           {a.headshot_url ? (
             <DetailLinks label="Headshot" urls={[a.headshot_url]} />
           ) : (

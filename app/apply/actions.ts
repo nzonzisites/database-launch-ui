@@ -20,6 +20,7 @@ export interface SubmitApplicationInput {
   workModality: string;
   infrastructureNarrative: string;
   expertiseNarrative: string;
+  fullBio: string;
   externalLinks: string[];
   workSamples: string[]; // pasted URLs -- stored as jsonb [{ url }]
   workSamplesExplanation: string;
@@ -160,6 +161,7 @@ export async function submitApplication(
     ["work modality", input.workModality],
     ['"what you do"', input.expertiseNarrative],
     ['"failed infrastructure" answer', input.infrastructureNarrative],
+    ["bio", input.fullBio],
     ["reference name", input.referenceName],
     ["reference relationship", input.referenceRelationship],
     ["reference contact method", input.referenceContactMethod],
@@ -214,6 +216,7 @@ export async function submitApplication(
     work_modality: input.workModality,
     infrastructure_narrative: input.infrastructureNarrative.trim(),
     expertise_narrative: input.expertiseNarrative.trim(),
+    full_bio: input.fullBio.trim(),
     work_samples: input.workSamples.filter(Boolean).map((url) => ({ url })),
     work_samples_explanation: input.workSamplesExplanation.trim() || null,
     reference_name: input.referenceName.trim(),
@@ -251,6 +254,7 @@ export async function submitApplication(
       workModality: input.workModality,
       infrastructureNarrative: input.infrastructureNarrative.trim(),
       expertiseNarrative: input.expertiseNarrative.trim(),
+      fullBio: input.fullBio.trim(),
       externalLinks: input.externalLinks,
       workSamples: input.workSamples.filter(Boolean),
       workSamplesExplanation: input.workSamplesExplanation.trim(),

@@ -217,6 +217,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [workModality, setWorkModality] = useState("");
   const [expertiseNarrative, setExpertiseNarrative] = useState("");
   const [infrastructureNarrative, setInfrastructureNarrative] = useState("");
+  const [fullBio, setFullBio] = useState("");
 
   const [externalLinks, setExternalLinks] = useState<string[]>([]);
   const [workSamples, setWorkSamples] = useState<string[]>([]);
@@ -301,6 +302,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       workModality,
       infrastructureNarrative,
       expertiseNarrative,
+      fullBio,
       externalLinks,
       workSamples,
       workSamplesExplanation,
@@ -375,6 +377,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       workModality,
       expertiseNarrative,
       infrastructureNarrative,
+      fullBio,
       externalLinks,
       workSamples,
       workSamplesExplanation,
@@ -663,6 +666,29 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             />
             <div style={{ textAlign: "right", fontSize: 11.5, fontWeight: 300, color: "rgba(31,14,3,0.5)", marginTop: 6 }}>
               {infrastructureNarrative.length} / 750
+            </div>
+          </div>
+
+          <div>
+            <label style={fieldLabelStyle(false)}>
+              Your bio
+              <Required />
+            </label>
+            <p style={helperTextStyle(false)}>
+              This is what will appear on your public listing if you&apos;re approved -- write it
+              in the third person, the way you&apos;d want it to read on your profile.
+            </p>
+            <textarea
+              rows={6}
+              maxLength={2000}
+              style={{ ...underlineInputStyle(false), lineHeight: 1.5, resize: "vertical" }}
+              placeholder="Dr. Jane Doe is a formulation scientist specialising in..."
+              value={fullBio}
+              onChange={(e) => setFullBio(e.target.value)}
+              required
+            />
+            <div style={{ textAlign: "right", fontSize: 11.5, fontWeight: 300, color: "rgba(31,14,3,0.5)", marginTop: 6 }}>
+              {fullBio.length} / 2000
             </div>
           </div>
 

@@ -35,6 +35,7 @@ export interface ApplicationSummaryData {
   workModality: string;
   expertiseNarrative: string;
   infrastructureNarrative: string;
+  fullBio: string;
   externalLinks: string[];
   workSamples: string[];
   workSamplesExplanation: string;
@@ -177,6 +178,7 @@ export default function ApplicationSummary({
           <Row label="Delivery" value={optionLabel(WORK_MODALITY_OPTIONS, data.workModality)} />
           <Row label="What you do" value={data.expertiseNarrative} />
           <Row label="How failed or missing infrastructure guided you" value={data.infrastructureNarrative} />
+          <Row label="Bio" value={data.fullBio} />
           {data.headshotUrl && <Row label="Headshot" value={data.headshotUrl} />}
         </Section>
 
