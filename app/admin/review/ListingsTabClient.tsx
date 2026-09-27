@@ -1,0 +1,331 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
+import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
+import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
+import { publishScholarProfile, unpublishScholarProfile, updateScholarProfile } from "./scholarProfileActions";
+
+const monoLabel: CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 9.5,
+  letterSpacing: "0.13em",
+  textTransform: "uppercase",
+  opacity: 0.55,
+};
+
+const fieldStyle: CSSProperties = {
+  width: "100%",
+  border: "1px solid rgba(230,222,210,0.35)",
+  background: "transparent",
+  color: SAND,
+  padding: 10,
+  fontSize: 14,
+  fontFamily: "inherit",
+};
+
+export default function ListingsTabClient({ profiles }: { profiles: ScholarProfileWithSeller[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  return (
+    <>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "2.2fr 1.4fr 1fr 1fr",
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 9.5,
+          letterSpacing: "0.13em",
+          textTransform: "uppercase",
+          opacity: 0.5,
+          padding: "16px 14px 12px",
+        }}
+      >
+        <span>Scholar</span>
+        <span>Category</span>
+        <span>Status</span>
+        <span style={{ textAlign: "right" }}>Action</span>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {profiles.length === 0 && (
+          <p style={{ ...monoLabel, padding: "16px 14px" }}>
+            No listings yet — one is created automatically the first time an application is approved.
+          </p>
+        )}
+        {profiles.map((p) => (
+          <ListingRow
+            key={p.id}
+            profile={p}
+            expanded={expandedId === p.id}
+            onToggle={() => setExpandedId(expandedId === p.id ? null : p.id)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function ListingRow({
+  profile: p,
+  expanded,
+  onToggle,
+}: {
+  profile: ScholarProfileWithSeller;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const [tagline, setTagline] = useState(p.tagline);
+  const [fullBio, setFullBio] = useState(p.full_bio);
+  const [background, setBackground] = useState(p.background);
+  const [experienceLabel, setExperienceLabel] = useState(p.experience_label ?? "");
+  const [vettedDate, setVettedDate] = useState(p.vetted_date ?? "");
+
+  const categoryLabel =
+    p.intended_category === "other"
+      ? p.intended_category_other || "Other"
+      : optionLabel(CATEGORY_OPTIONS, p.intended_category);
+
+  const fields = {
+    tagline,
+    full_bio: fullBio,
+    background,
+    experience_label: experienceLabel,
+    vetted_date: vettedDate,
+  };
+  const readyToPublish = tagline.trim().length > 0 && fullBio.trim().length > 0;
+
+  function handleSave() {
+    setActionError(null);
+    setSaved(false);
+    startTransition(async () => {
+      try {
+        await updateScholarProfile(p.id, fields);
+        setSaved(true);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Couldn't save this listing.");
+      }
+    });
+  }
+
+  function handlePublish() {
+    setActionError(null);
+    setSaved(false);
+    startTransition(async () => {
+      try {
+        await publishScholarProfile(p.id, fields);
+        setSaved(true);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Couldn't publish this listing.");
+      }
+    });
+  }
+
+  function handleUnpublish() {
+    setActionError(null);
+    startTransition(async () => {
+      try {
+        await unpublishScholarProfile(p.id);
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Couldn't unpublish this listing.");
+      }
+    });
+  }
+
+  return (
+    <div style={{ borderTop: "1px solid rgba(230,222,210,0.12)" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "2.2fr 1.4fr 1fr 1fr",
+          gap: 0,
+          alignItems: "center",
+          padding: "15px 14px",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 14.5,
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {p.full_name || "(no name on file)"}
+          </div>
+          {p.city_country && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{p.city_country}</div>}
+        </div>
+        <span style={{ fontSize: 13, opacity: 0.85 }}>{categoryLabel || "—"}</span>
+        <span
+          style={{
+            background: p.status === "published" ? "#3C6B3F" : MOSS,
+            color: p.status === "published" ? WHITE : BROWN,
+            fontSize: 11.5,
+            fontWeight: 600,
+            padding: "4px 9px",
+            borderRadius: 999,
+            width: "fit-content",
+          }}
+        >
+          {p.status === "published" ? "Published" : "Draft"}
+        </span>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button
+            onClick={onToggle}
+            style={{
+              background: MOSS,
+              color: BROWN,
+              border: 0,
+              padding: "8px 13px",
+              fontSize: 12.5,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            {expanded ? "Close" : "Open"}
+          </button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div style={{ padding: "0 14px 26px", display: "flex", flexDirection: "column", gap: 18 }}>
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
+            {p.headshot_url ? (
+              <a href={p.headshot_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: OCHRE }}>
+                View headshot
+              </a>
+            ) : (
+              <span style={monoLabel}>No headshot on file</span>
+            )}
+            <a
+              href={`/profile/${p.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 13, color: OCHRE, borderBottom: `1px solid ${OCHRE}` }}
+            >
+              Preview public page →
+            </a>
+            {p.work_modality && (
+              <span style={monoLabel}>Delivery (from application): {optionLabel(WORK_MODALITY_OPTIONS, p.work_modality)}</span>
+            )}
+          </div>
+
+          <Field label="Tagline">
+            <input
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              style={fieldStyle}
+              placeholder="One-line summary shown under their name"
+            />
+          </Field>
+
+          <Field label="Full bio (shown on hover over their portrait)">
+            <textarea value={fullBio} onChange={(e) => setFullBio(e.target.value)} rows={5} style={fieldStyle} />
+          </Field>
+
+          <Field label="Background">
+            <textarea
+              value={background}
+              onChange={(e) => setBackground(e.target.value)}
+              rows={5}
+              style={fieldStyle}
+              placeholder="Separate paragraphs with a blank line"
+            />
+          </Field>
+
+          <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+            <Field label="Experience label (e.g. '14 years')">
+              <input
+                value={experienceLabel}
+                onChange={(e) => setExperienceLabel(e.target.value)}
+                style={{ ...fieldStyle, width: 220 }}
+              />
+            </Field>
+            <Field label="Vetted date">
+              <input
+                type="date"
+                value={vettedDate}
+                onChange={(e) => setVettedDate(e.target.value)}
+                style={{ ...fieldStyle, width: 200 }}
+              />
+            </Field>
+          </div>
+
+          {actionError && <p style={{ color: OCHRE, fontSize: 13, margin: 0 }}>{actionError}</p>}
+          {saved && !actionError && <p style={{ color: MOSS, fontSize: 13, margin: 0 }}>Saved.</p>}
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              onClick={handleSave}
+              disabled={isPending}
+              style={{
+                background: MOSS,
+                color: BROWN,
+                border: 0,
+                padding: "9px 16px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: isPending ? "default" : "pointer",
+                opacity: isPending ? 0.6 : 1,
+              }}
+            >
+              Save
+            </button>
+            {p.status === "published" ? (
+              <button
+                onClick={handleUnpublish}
+                disabled={isPending}
+                style={{
+                  background: "transparent",
+                  color: OCHRE,
+                  border: `1px solid ${OCHRE}`,
+                  padding: "9px 16px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: isPending ? "default" : "pointer",
+                  opacity: isPending ? 0.6 : 1,
+                }}
+              >
+                Unpublish
+              </button>
+            ) : (
+              <button
+                onClick={handlePublish}
+                disabled={isPending || !readyToPublish}
+                title={readyToPublish ? undefined : "Tagline and full bio are required to publish"}
+                style={{
+                  background: "#3C6B3F",
+                  color: WHITE,
+                  border: 0,
+                  padding: "9px 16px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: isPending || !readyToPublish ? "default" : "pointer",
+                  opacity: isPending || !readyToPublish ? 0.5 : 1,
+                }}
+              >
+                Publish
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <div style={{ ...monoLabel, marginBottom: 6 }}>{label}</div>
+      {children}
+    </div>
+  );
+}

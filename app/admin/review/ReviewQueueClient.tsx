@@ -4,7 +4,9 @@ import { useMemo, useState, useTransition } from "react";
 import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { PlatformAgentRow } from "@/lib/platformAgent";
 import type { ApplicationForReview, ApplicationStatus } from "@/lib/applicationReview";
+import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import { approveApplication, rejectApplication, revokeDecision } from "./actions";
+import ListingsTabClient from "./ListingsTabClient";
 import SessionControls from "@/app/components/SessionControls";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -56,9 +58,11 @@ function formatDate(iso: string) {
 export default function ReviewQueueClient({
   agent,
   applications,
+  scholarProfiles,
 }: {
   agent: PlatformAgentRow;
   applications: ApplicationForReview[];
+  scholarProfiles: ScholarProfileWithSeller[];
 }) {
   const availableTabs = TABS.filter((t) => {
     if (t === "all" || t === "applications") return agent.permissions.includes("review_sellers");
@@ -130,11 +134,13 @@ export default function ReviewQueueClient({
           ))}
         </div>
 
-        {(tab === "listings" || tab === "reports") && (
+        {tab === "reports" && (
           <p style={{ ...monoLabel, margin: "24px 0 0" }}>
             {TAB_LABEL[tab]} isn&apos;t wired up yet — coming in a follow-up pass.
           </p>
         )}
+
+        {tab === "listings" && <ListingsTabClient profiles={scholarProfiles} />}
 
         {showApplications && (
           <>

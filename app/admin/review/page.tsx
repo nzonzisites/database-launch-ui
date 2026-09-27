@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getPlatformAgentRow } from "@/lib/platformAgent";
 import { fetchApplicationsForReview } from "@/lib/applicationReview";
+import { fetchScholarProfilesForReview } from "@/lib/scholarProfile";
 import { BROWN, WHITE } from "@/lib/colors";
 import ReviewQueueClient from "./ReviewQueueClient";
 import SessionControls from "@/app/components/SessionControls";
@@ -12,10 +13,9 @@ import SessionControls from "@/app/components/SessionControls";
  * plain "not authorized" message (not a redirect loop back to /login,
  * since they *are* signed in -- they just aren't a reviewer).
  *
- * Only the Applications tab (review_sellers) is wired up in this pass.
- * Listing edits (review_listings) and Reports (review_reports) need
- * app_user's schema + FK shape to join seller/reporter names, which
- * wasn't available yet when this was built -- see the TODO below.
+ * Applications (review_sellers) and Listing edits (review_listings) are
+ * wired up. Reports (review_reports) still needs a reports table/schema
+ * that doesn't exist yet.
  */
 export default async function ReviewQueuePage() {
   const supabase = await getSupabaseServerClient();
@@ -71,12 +71,16 @@ export default async function ReviewQueuePage() {
     );
   }
 
-  // TODO: once listing edits (review_listings) and reports (review_reports)
-  // tabs are wired up, fetch those here too and pass them down alongside
-  // applications.
+  // TODO: once reports (review_reports) is wired up, fetch that here too
+  // and pass it down alongside applications/scholarProfiles.
   const applications = agent.permissions.includes("review_sellers")
     ? await fetchApplicationsForReview(supabase)
     : [];
+  const scholarProfiles = agent.permissions.includes("review_listings")
+    ? await fetchScholarProfilesForReview(supabase)
+    : [];
 
-  return <ReviewQueueClient agent={agent} applications={applications} />;
+  return (
+    <ReviewQueueClient agent={agent} applications={applications} scholarProfiles={scholarProfiles} />
+  );
 }
