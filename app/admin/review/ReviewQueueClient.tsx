@@ -299,14 +299,11 @@ function ApplicationRow({
           <Detail label="Delivery" value={MODALITY_LABELS[a.work_modality] || a.work_modality} />
           <Detail label="What they do" value={a.expertise_narrative} />
           <Detail label="Failed infrastructure → innovation" value={a.infrastructure_narrative} />
-          <Detail
-            label="Work samples"
-            value={
-              Array.isArray(a.work_samples) && a.work_samples.length > 0
-                ? JSON.stringify(a.work_samples)
-                : a.work_samples_explanation || "—"
-            }
-          />
+          {Array.isArray(a.work_samples) && a.work_samples.length > 0 ? (
+            <DetailLinks label="Work samples" urls={a.work_samples} />
+          ) : (
+            <Detail label="Work samples" value={a.work_samples_explanation || "—"} />
+          )}
           <Detail
             label="Reference"
             value={`${a.reference_name} (${a.reference_relationship}) — ${a.reference_contact_value} via ${a.reference_contact_method}${
@@ -425,6 +422,33 @@ function Detail({ label, value }: { label: string; value: string }) {
     <div>
       <div style={{ ...monoLabel, marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 14, fontWeight: 300, lineHeight: 1.5, color: SAND }}>{value}</div>
+    </div>
+  );
+}
+
+function DetailLinks({ label, urls }: { label: string; urls: string[] }) {
+  return (
+    <div>
+      <div style={{ ...monoLabel, marginBottom: 4 }}>{label}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {urls.map((url, i) => (
+          <a
+            key={i}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 14,
+              fontWeight: 300,
+              lineHeight: 1.5,
+              color: OCHRE,
+              wordBreak: "break-all",
+            }}
+          >
+            {url}
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
