@@ -18,6 +18,25 @@ const thumbStyle: CSSProperties = {
   border: "1px solid rgba(230,222,210,0.25)",
 };
 
+// Mirrors ProfilePortrait on the public page: same 480px fixed height and
+// object-fit: cover, so what the admin sees here crops the same way it
+// will on the live listing. The live page's width is responsive (its
+// portrait column ranges from ~320px up to ~560px depending on screen
+// size), so this picks 340px as a representative middle ground rather
+// than an exact match -- close enough to judge a crop by, while the
+// height (where headshots actually get cut off) is exact.
+const PREVIEW_WIDTH = 340;
+const PREVIEW_HEIGHT = 480;
+
+const previewBoxStyle: CSSProperties = {
+  position: "relative",
+  width: PREVIEW_WIDTH,
+  height: PREVIEW_HEIGHT,
+  overflow: "hidden",
+  border: "1px solid rgba(230,222,210,0.25)",
+  background: "rgba(230,222,210,0.06)",
+};
+
 const monoLabel: CSSProperties = {
   fontFamily: "'JetBrains Mono', monospace",
   fontSize: 9.5,
@@ -94,6 +113,7 @@ function ListingRow({
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [headshotUrl, setHeadshotUrl] = useState(p.headshot_url ?? "");
+  const [headshotFocalY, setHeadshotFocalY] = useState(p.headshot_focal_y ?? 50);
   const [tagline, setTagline] = useState(p.tagline);
   const [fullBio, setFullBio] = useState(p.full_bio);
   const [background, setBackground] = useState(p.background);
@@ -107,6 +127,7 @@ function ListingRow({
 
   const fields = {
     headshot_url: headshotUrl,
+    headshot_focal_y: headshotFocalY,
     tagline,
     full_bio: fullBio,
     background,
@@ -282,15 +303,45 @@ function ListingRow({
                 )}
               </div>
               <div>
-                <div style={{ ...monoLabel, marginBottom: 6, fontSize: 9 }}>Live on listing</div>
+                <div style={{ ...monoLabel, marginBottom: 6, fontSize: 9 }}>Live on listing (crop preview)</div>
                 {headshotUrl ? (
-                  <a href={headshotUrl} target="_blank" rel="noopener noreferrer">
+                  <div style={previewBoxStyle}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={headshotUrl} alt="" style={thumbStyle} />
-                  </a>
+                    <img
+                      src={headshotUrl}
+                      alt=""
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: `center ${headshotFocalY}%`,
+                      }}
+                    />
+                  </div>
                 ) : (
-                  <div style={{ ...thumbStyle, display: "grid", placeItems: "center", border: "1px dashed rgba(230,222,210,0.25)" }}>
+                  <div style={{ ...previewBoxStyle, display: "grid", placeItems: "center", border: "1px dashed rgba(230,222,210,0.25)" }}>
                     <span style={{ ...monoLabel, fontSize: 8.5 }}>none</span>
+                  </div>
+                )}
+                {headshotUrl && (
+                  <div style={{ marginTop: 10, width: PREVIEW_WIDTH }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ ...monoLabel, fontSize: 8.5, whiteSpace: "nowrap" }}>Adjust crop</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={headshotFocalY}
+                        onChange={(e) => setHeadshotFocalY(Number(e.target.value))}
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                    <p style={{ fontSize: 11, opacity: 0.55, margin: "4px 0 0" }}>
+                      Drags the visible window up or down when the headshot is taller than this
+                      panel. Save (or Publish) to apply it to the live page.
+                    </p>
                   </div>
                 )}
               </div>

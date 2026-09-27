@@ -35,6 +35,10 @@ export interface ScholarProfileRow {
   application_id: string;
   full_name: string;
   headshot_url: string | null;
+  // 0-100 vertical crop position for headshot_url (see ProfilePortrait) --
+  // not_null with a default of 50 (centered) at the DB level, so this is
+  // never null once a row exists.
+  headshot_focal_y: number;
   submitted_headshot_url: string | null;
   intended_category: string | null;
   intended_category_other: string | null;
@@ -56,7 +60,7 @@ export interface ScholarProfileRow {
 export type ScholarProfileWithSeller = ScholarProfileRow;
 
 const COLUMNS =
-  "id, application_id, full_name, headshot_url, submitted_headshot_url, intended_category, intended_category_other, city_country, work_modality, " +
+  "id, application_id, full_name, headshot_url, headshot_focal_y, submitted_headshot_url, intended_category, intended_category_other, city_country, work_modality, " +
   "tagline, full_bio, background, experience_label, vetted_date, status, reviewed_by, created_at";
 
 /** All scholar_profile rows, for the admin Listings tab. Requires review_listings (enforced by RLS). */

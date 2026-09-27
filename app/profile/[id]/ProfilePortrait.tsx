@@ -9,7 +9,19 @@
 import { useState } from "react";
 import { SAND, WHITE } from "@/lib/colors";
 
-export default function ProfilePortrait({ fullBio, headshotUrl }: { fullBio: string; headshotUrl: string | null }) {
+export default function ProfilePortrait({
+  fullBio,
+  headshotUrl,
+  headshotFocalY,
+}: {
+  fullBio: string;
+  headshotUrl: string | null;
+  // Vertical crop position as a 0-100 percentage, admin-adjustable on the
+  // Listings tab so a headshot that would otherwise get its top or bottom
+  // cut off by this panel's fixed 480px height can be repositioned without
+  // re-uploading a differently-cropped image.
+  headshotFocalY: number;
+}) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -48,6 +60,7 @@ export default function ProfilePortrait({ fullBio, headshotUrl }: { fullBio: str
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            objectPosition: `center ${headshotFocalY}%`,
           }}
         />
       )}
