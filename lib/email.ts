@@ -99,7 +99,7 @@ export async function sendApplicationConfirmationEmail(
     row("Headshot", data.headshotUrl);
 
   const portfolioRows =
-    listRow("Portfolio links", data.workSamples) +
+    listRow("Professional identity", data.workSamples) +
     row("About these samples", data.workSamplesExplanation) +
     listRow("Links", data.externalLinks);
 

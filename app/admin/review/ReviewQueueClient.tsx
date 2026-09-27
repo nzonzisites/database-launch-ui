@@ -295,14 +295,18 @@ function ApplicationRow({
           />
           <Detail label="Location" value={a.city_country} />
           <Detail label="Affiliations" value={a.affiliations?.join(", ") || "—"} />
-          <Detail label="Links" value={a.external_links?.join(", ") || "—"} />
           <Detail label="Delivery" value={MODALITY_LABELS[a.work_modality] || a.work_modality} />
           <Detail label="What they do" value={a.expertise_narrative} />
           <Detail label="Failed infrastructure → innovation" value={a.infrastructure_narrative} />
-          {Array.isArray(a.work_samples) && a.work_samples.length > 0 ? (
-            <DetailLinks label="Work samples" urls={a.work_samples} />
+          {a.headshot_url ? (
+            <DetailLinks label="Headshot" urls={[a.headshot_url]} />
           ) : (
-            <Detail label="Work samples" value={a.work_samples_explanation || "—"} />
+            <Detail label="Headshot" value="—" />
+          )}
+          {Array.isArray(a.work_samples) && a.work_samples.length > 0 ? (
+            <DetailLinks label="Professional identity" urls={a.work_samples} />
+          ) : (
+            <Detail label="Professional identity" value={a.work_samples_explanation || "—"} />
           )}
           <Detail
             label="Reference"

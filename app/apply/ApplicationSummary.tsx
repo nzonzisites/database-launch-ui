@@ -183,7 +183,7 @@ export default function ApplicationSummary({
         {(data.workSamples.length > 0 || data.workSamplesExplanation || data.externalLinks.length > 0) && (
           <Section>
             <SectionLabel>Portfolio</SectionLabel>
-            <ListRow label="Portfolio links" values={data.workSamples} />
+            <ListRow label="Professional identity" values={data.workSamples} />
             <Row label="About these samples" value={data.workSamplesExplanation} />
             <ListRow label="Links" values={data.externalLinks} />
           </Section>

@@ -12,12 +12,13 @@ export interface ApplicationForReview {
   city_country: string;
   affiliations: string[];
   external_links: string[];
+  headshot_url: string | null;
   intended_category: string;
   intended_category_other: string | null;
   work_modality: "remote_only" | "travel_flexible" | "both";
   infrastructure_narrative: string;
   expertise_narrative: string;
-  work_samples: unknown;
+  work_samples: string[];
   work_samples_explanation: string | null;
   reference_name: string;
   reference_relationship: string;
@@ -33,13 +34,23 @@ export interface ApplicationForReview {
   created_at: string;
 }
 
+// Raw shape as it comes back from Supabase: work_samples is stored as
+// jsonb [{ url }] (see app/apply/actions.ts), and headshot_url lives on
+// app_user (person-level), joined in here through applicant_user_id --
+// it isn't a column on application itself.
+interface RawApplicationForReview
+  extends Omit<ApplicationForReview, "work_samples" | "headshot_url"> {
+  work_samples: { url?: string }[] | null;
+  app_user: { headshot_url: string | null } | null;
+}
+
 const REVIEW_COLUMNS =
   "id, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, " +
   "intended_category, intended_category_other, work_modality, infrastructure_narrative, " +
   "expertise_narrative, work_samples, work_samples_explanation, reference_name, " +
   "reference_relationship, reference_contact_method, reference_contact_value, " +
   "reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, " +
-  "status, reviewed_by, decision_reason, created_at";
+  "status, reviewed_by, decision_reason, created_at, app_user!applicant_user_id(headshot_url)";
 
 /**
  * All seller applications, newest first. The review queue UI splits these
@@ -58,5 +69,13 @@ export async function fetchApplicationsForReview(
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []) as unknown as ApplicationForReview[];
+
+  return ((data ?? []) as unknown as RawApplicationForReview[]).map((row) => {
+    const { app_user, work_samples, ...rest } = row;
+    return {
+      ...rest,
+      work_samples: (work_samples ?? []).map((sample) => sample?.url ?? "").filter(Boolean),
+      headshot_url: app_user?.headshot_url ?? null,
+    };
+  });
 }
