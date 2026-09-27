@@ -201,6 +201,7 @@ export async function submitApplication(
     prospect_signup_id: prospectSignupId,
     full_name: input.fullName.trim(),
     email: input.email.trim(),
+    headshot_url: input.headshotUrl.trim() || null,
     contact_method: input.contactMethod,
     contact_value: input.contactValue.trim(),
     whatsapp_available: input.contactMethod === "phone" ? input.whatsappAvailable : null,

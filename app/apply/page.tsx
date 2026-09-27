@@ -10,7 +10,7 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source";
+  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source";
 
 type ExistingApplicationRow = {
   status: string;
@@ -22,6 +22,7 @@ type ExistingApplicationRow = {
   city_country: string | null;
   affiliations: string[] | null;
   external_links: string[] | null;
+  headshot_url: string | null;
   intended_category: string | null;
   intended_category_other: string | null;
   work_modality: string | null;
@@ -134,7 +135,7 @@ export default async function ApplyPage() {
       whatsappAvailable: Boolean(existingApplication.whatsapp_available),
       cityCountry: existingApplication.city_country ?? "",
       affiliations: existingApplication.affiliations ?? [],
-      headshotUrl: appUser.headshot_url ?? "",
+      headshotUrl: existingApplication.headshot_url ?? appUser.headshot_url ?? "",
       intendedCategory: existingApplication.intended_category ?? "",
       intendedCategoryOther: existingApplication.intended_category_other ?? "",
       workModality: existingApplication.work_modality ?? "",
