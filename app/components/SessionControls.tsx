@@ -39,8 +39,20 @@ export default function SessionControls({
 
   async function signOut(reason?: "inactivity") {
     const supabase = getSupabaseClient();
+    // Preserve wherever they currently are (e.g. /admin/review) so
+    // re-authenticating after this sign-out -- whether manual or the
+    // 5-minute inactivity timeout below -- lands back on the same page
+    // instead of defaulting to home. Mirrors the ?next= handling in
+    // app/admin/review/page.tsx's own redirect to /login.
+    const next = window.location.pathname + window.location.search;
+
     await supabase.auth.signOut();
-    router.push(reason ? `/login?reason=${reason}` : "/login");
+
+    const params = new URLSearchParams();
+    if (reason) params.set("reason", reason);
+    if (next && next !== "/login") params.set("next", next);
+    const query = params.toString();
+    router.push(query ? `/login?${query}` : "/login");
     router.refresh();
   }
 

@@ -3,20 +3,27 @@
 // scholar_profile holds the public listing/profile page content -- name,
 // headshot, category/location/delivery, tagline, bio, background -- as a
 // denormalized snapshot taken from the application at approval time (see
-// the trigger in sql/2026-09-27c-scholar-profile.sql), not a live join
-// onto application/app_user. That's deliberate: application has fields
-// (references, contact info) that must never reach the public
-// /profile/[id] page, and RLS on application/app_user only allows
-// review_sellers agents or the row's own owner to read them at all -- an
-// anonymous visitor, or even a review_listings-only admin, couldn't join
-// through to get a name or category otherwise. An admin can correct
-// these copied fields by hand on the Listings tab if a seller's details
-// change later.
+// the trigger in sql/2026-09-27d-scholar-profile-drop-account-requirement.sql),
+// not a live join onto application/app_user. That's deliberate for two
+// reasons: application has fields (references, contact info) that must
+// never reach the public /profile/[id] page, and RLS on
+// application/app_user only allows review_sellers agents or the row's own
+// owner to read them at all -- an anonymous visitor, or even a
+// review_listings-only admin, couldn't join through to get a name or
+// category otherwise. An admin can correct these copied fields by hand on
+// the Listings tab if a seller's details change later.
+//
+// Keyed off application_id, not a seller/app_user account: applying
+// doesn't require signing in, so most applications never get an
+// applicant_user_id (same gap that caused the 2026-09-26 headshot_url
+// bug) -- application_id is always present, so this works for every
+// approved application regardless of whether the applicant ever created
+// an account.
 //
 // Distinct from the `listing` table, which is a priced-service posting
 // and stays unused for now (deferred per the decision to not do
-// fixed-price services in this phase). One row per seller, auto-created
-// in 'draft' status when an application is approved, then filled in and
+// fixed-price services in this phase). One row per application,
+// auto-created in 'draft' status when it's approved, then filled in and
 // published by an admin on the review page's Listings tab.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -25,7 +32,7 @@ export type ScholarProfileStatus = "draft" | "published";
 
 export interface ScholarProfileRow {
   id: string;
-  seller_id: string;
+  application_id: string;
   full_name: string;
   headshot_url: string | null;
   intended_category: string | null;
@@ -48,7 +55,7 @@ export interface ScholarProfileRow {
 export type ScholarProfileWithSeller = ScholarProfileRow;
 
 const COLUMNS =
-  "id, seller_id, full_name, headshot_url, intended_category, intended_category_other, city_country, work_modality, " +
+  "id, application_id, full_name, headshot_url, intended_category, intended_category_other, city_country, work_modality, " +
   "tagline, full_bio, background, experience_label, vetted_date, status, reviewed_by, created_at";
 
 /** All scholar_profile rows, for the admin Listings tab. Requires review_listings (enforced by RLS). */
