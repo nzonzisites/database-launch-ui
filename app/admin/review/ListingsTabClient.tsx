@@ -167,7 +167,7 @@ function ListingRow({
         const publicUrl = data.publicUrl;
         setHeadshotUrl(publicUrl);
 
-        await updateScholarProfile(p.id, { ...fields, headshot_url: publicUrl });
+        await updateScholarProfile(p.id, p.slug, { ...fields, headshot_url: publicUrl });
         setSaved(true);
       } catch (err) {
         setUploadError(err instanceof Error ? err.message : "Couldn't upload that image.");
@@ -182,7 +182,7 @@ function ListingRow({
     setSaved(false);
     startTransition(async () => {
       try {
-        await updateScholarProfile(p.id, fields);
+        await updateScholarProfile(p.id, p.slug, fields);
         setSaved(true);
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Couldn't save this listing.");
@@ -195,7 +195,7 @@ function ListingRow({
     setSaved(false);
     startTransition(async () => {
       try {
-        await publishScholarProfile(p.id, fields);
+        await publishScholarProfile(p.id, p.slug, fields);
         setSaved(true);
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Couldn't publish this listing.");
@@ -207,7 +207,7 @@ function ListingRow({
     setActionError(null);
     startTransition(async () => {
       try {
-        await unpublishScholarProfile(p.id);
+        await unpublishScholarProfile(p.id, p.slug);
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Couldn't unpublish this listing.");
       }
@@ -275,7 +275,7 @@ function ListingRow({
         <div style={{ padding: "0 14px 26px", display: "flex", flexDirection: "column", gap: 18 }}>
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "center" }}>
             <a
-              href={`/profile/${p.id}`}
+              href={`/profile/${p.slug}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ fontSize: 13, color: OCHRE, borderBottom: `1px solid ${OCHRE}` }}

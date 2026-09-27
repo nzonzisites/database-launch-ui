@@ -46,11 +46,11 @@ function paragraphs(text: string): string[] {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
   const supabase = await getSupabaseServerClient();
-  const profile = await fetchScholarProfile(supabase, id);
+  const profile = await fetchScholarProfile(supabase, slug);
   if (!profile) return { title: "Nzonzi" };
   return {
     title: `${profile.full_name} — Nzonzi`,
@@ -61,11 +61,11 @@ export async function generateMetadata({
 export default async function ScholarProfilePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
   const supabase = await getSupabaseServerClient();
-  const profile = await fetchScholarProfile(supabase, id);
+  const profile = await fetchScholarProfile(supabase, slug);
 
   if (!profile) notFound();
 

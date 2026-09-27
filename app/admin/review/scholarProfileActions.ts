@@ -37,8 +37,19 @@ export interface ScholarProfileEditableFields {
   vetted_date: string; // "" clears it (stored as null)
 }
 
-/** Saves the editable listing-page fields. Does not touch status. */
-export async function updateScholarProfile(profileId: string, fields: ScholarProfileEditableFields) {
+/**
+ * Saves the editable listing-page fields. Does not touch status.
+ *
+ * Takes `slug` alongside `profileId` purely so it can revalidate the
+ * right public route -- /profile/[slug], not /profile/[id] -- without an
+ * extra round-trip to look the slug up. The caller already has it (every
+ * ScholarProfileRow includes slug), so this just threads it through.
+ */
+export async function updateScholarProfile(
+  profileId: string,
+  slug: string,
+  fields: ScholarProfileEditableFields
+) {
   const { supabase, agentId } = await requireReviewListingsPermission();
 
   const { error } = await supabase
@@ -57,7 +68,7 @@ export async function updateScholarProfile(profileId: string, fields: ScholarPro
 
   if (error) throw error;
   revalidatePath("/admin/review");
-  revalidatePath(`/profile/${profileId}`);
+  revalidatePath(`/profile/${slug}`);
 }
 
 /**
@@ -65,8 +76,12 @@ export async function updateScholarProfile(profileId: string, fields: ScholarPro
  * published, so an admin can't end up with a published page that's
  * missing whatever they just typed but hadn't separately saved yet.
  */
-export async function publishScholarProfile(profileId: string, fields: ScholarProfileEditableFields) {
-  await updateScholarProfile(profileId, fields);
+export async function publishScholarProfile(
+  profileId: string,
+  slug: string,
+  fields: ScholarProfileEditableFields
+) {
+  await updateScholarProfile(profileId, slug, fields);
   const { supabase, agentId } = await requireReviewListingsPermission();
 
   const { error } = await supabase
@@ -76,10 +91,10 @@ export async function publishScholarProfile(profileId: string, fields: ScholarPr
 
   if (error) throw error;
   revalidatePath("/admin/review");
-  revalidatePath(`/profile/${profileId}`);
+  revalidatePath(`/profile/${slug}`);
 }
 
-export async function unpublishScholarProfile(profileId: string) {
+export async function unpublishScholarProfile(profileId: string, slug: string) {
   const { supabase, agentId } = await requireReviewListingsPermission();
 
   const { error } = await supabase
@@ -89,5 +104,5 @@ export async function unpublishScholarProfile(profileId: string) {
 
   if (error) throw error;
   revalidatePath("/admin/review");
-  revalidatePath(`/profile/${profileId}`);
+  revalidatePath(`/profile/${slug}`);
 }
