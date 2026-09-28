@@ -708,20 +708,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
         </div>
 
-        {/* Internal-review-only info -- stays on the dark background */}
         <div style={{ display: "flex", flexDirection: "column", gap: 30, marginTop: 30 }}>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "rgba(240,240,240,0.5)",
-            }}
-          >
-            For internal application review only
-          </div>
-
           <div>
             <MultiValueField
               label="Professional identity"
