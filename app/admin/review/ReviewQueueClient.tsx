@@ -249,23 +249,16 @@ function ApplicationRow({
           padding: "15px 14px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              flex: "none",
-              backgroundImage:
-                "repeating-linear-gradient(135deg, rgba(230,222,210,0.22) 0 4px, transparent 4px 8px)",
-              border: "1px solid rgba(230,222,210,0.2)",
-            }}
-          />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {a.full_name}
-            </div>
-            <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{a.email}</div>
+        {/* No headshot thumbnail here on purpose -- an application's
+            headshot_url is just whatever the applicant pasted in, not
+            reviewed or finalized yet. The real, admin-controlled image
+            lives on scholar_profile and shows up on the Listings tab
+            instead, once there's something legitimate to show. */}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {a.full_name}
           </div>
+          <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{a.email}</div>
         </div>
         <span style={{ fontSize: 13, opacity: 0.85 }}>{categoryLabel}</span>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, opacity: 0.65 }}>

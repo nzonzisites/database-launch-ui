@@ -18,6 +18,27 @@ const thumbStyle: CSSProperties = {
   border: "1px solid rgba(230,222,210,0.25)",
 };
 
+// Row-header thumbnail, shown collapsed -- unlike the Applications tab
+// (which never showed a real headshot, just a decorative placeholder),
+// this one is real: headshot_url is the admin-controlled, actually-live
+// image, so showing it here at a glance is meaningful in a way it
+// wasn't there.
+const miniThumbStyle: CSSProperties = {
+  width: 32,
+  height: 32,
+  flex: "none",
+  objectFit: "cover",
+  border: "1px solid rgba(230,222,210,0.2)",
+};
+
+const miniThumbPlaceholderStyle: CSSProperties = {
+  width: 32,
+  height: 32,
+  flex: "none",
+  backgroundImage: "repeating-linear-gradient(135deg, rgba(230,222,210,0.22) 0 4px, transparent 4px 8px)",
+  border: "1px solid rgba(230,222,210,0.2)",
+};
+
 // Mirrors ProfilePortrait on the public page exactly: same 1:1
 // aspect-ratio box and object-fit: cover, so a crop set here looks
 // identical on the live listing regardless of the admin's own screen
@@ -225,19 +246,27 @@ function ListingRow({
           padding: "15px 14px",
         }}
       >
-        <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 14.5,
-              fontWeight: 600,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {p.full_name || "(no name on file)"}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+          {headshotUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={headshotUrl} alt="" style={miniThumbStyle} />
+          ) : (
+            <div style={miniThumbPlaceholderStyle} />
+          )}
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 14.5,
+                fontWeight: 600,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {p.full_name || "(no name on file)"}
+            </div>
+            {p.city_country && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{p.city_country}</div>}
           </div>
-          {p.city_country && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{p.city_country}</div>}
         </div>
         <span style={{ fontSize: 13, opacity: 0.85 }}>{categoryLabel || "—"}</span>
         <span
