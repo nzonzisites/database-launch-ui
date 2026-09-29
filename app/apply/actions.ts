@@ -46,12 +46,17 @@ export interface ProspectPrefill {
   country: string;
   affiliation: string;
   category: string | null;
+  expertiseNarrative: string;
+  infrastructureNarrative: string;
 }
 
 /**
  * Looks up a "About You" prospect_signup row by email, for anonymous
  * /apply visitors who already filled that out elsewhere and shouldn't
- * have to retype their name, city, country, affiliation, or category.
+ * have to retype their name, city, country, affiliation, or category --
+ * or, for anyone who filled out the landing page back when it still
+ * asked the two narrative questions (since removed there), their prior
+ * "what do you do" / "failed infrastructure" answers either.
  * Signed-in visitors don't need this -- page.tsx already does the
  * equivalent lookup server-side, keyed off their verified account email.
  *
@@ -60,8 +65,7 @@ export interface ProspectPrefill {
  * readable by anonymous requests, and it shouldn't become broadly
  * readable just to support this -- the RPC only ever returns one
  * narrowly-scoped row for the exact email passed in, nothing you could
- * use to browse the table. Requires that RPC to exist in Supabase (SQL
- * delivered alongside this change) -- until then this just no-ops.
+ * use to browse the table.
  */
 export async function lookupProspectPrefill(email: string): Promise<ProspectPrefill | null> {
   const trimmed = email.trim();
@@ -81,6 +85,8 @@ export async function lookupProspectPrefill(email: string): Promise<ProspectPref
       country: (row.country as string) ?? "",
       affiliation: (row.affiliation as string) ?? "",
       category: (row.category as string) ?? null,
+      expertiseNarrative: (row.what_you_do as string) ?? "",
+      infrastructureNarrative: (row.failed_infrastructure_response as string) ?? "",
     };
   } catch {
     return null;

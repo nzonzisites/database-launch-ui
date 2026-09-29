@@ -79,6 +79,8 @@ export default async function ApplyPage() {
           affiliations: [],
           intendedCategory: null,
           prospectSignupId: null,
+          expertiseNarrative: "",
+          infrastructureNarrative: "",
         }}
       />
     );
@@ -179,11 +181,15 @@ export default async function ApplyPage() {
   let prefillCity = "";
   let prefillCountry = "";
   let prefillAffiliations: string[] = [];
+  let prefillExpertiseNarrative = "";
+  let prefillInfrastructureNarrative = "";
 
   try {
     const { data: prospectSignup } = await supabase
       .from("prospect_signup")
-      .select("id, category, first_name, last_name, city, country, affiliation")
+      .select(
+        "id, category, first_name, last_name, city, country, affiliation, what_you_do, failed_infrastructure_response"
+      )
       .eq("email", appUser.email)
       .maybeSingle();
     if (prospectSignup) {
@@ -196,6 +202,10 @@ export default async function ApplyPage() {
       if (prospectSignup.affiliation) {
         prefillAffiliations = [prospectSignup.affiliation as string];
       }
+      prefillExpertiseNarrative = ((prospectSignup.what_you_do as string) ?? "").slice(0, 250);
+      prefillInfrastructureNarrative = (
+        (prospectSignup.failed_infrastructure_response as string) ?? ""
+      ).slice(0, 750);
     }
   } catch {
     // best-effort only -- ignore any failure here
@@ -222,6 +232,8 @@ export default async function ApplyPage() {
         affiliations: prefillAffiliations,
         intendedCategory: prefillCategory,
         prospectSignupId,
+        expertiseNarrative: prefillExpertiseNarrative,
+        infrastructureNarrative: prefillInfrastructureNarrative,
       }}
     />
   );

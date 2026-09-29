@@ -825,8 +825,6 @@ function ScholarApplicationSection({
   const [country, setCountry] = useState("");
   const [affiliation, setAffiliation] = useState("");
   const [categoryOther, setCategoryOther] = useState("");
-  const [whatYouDo, setWhatYouDo] = useState("");
-  const [failedInfrastructureResponse, setFailedInfrastructureResponse] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -894,8 +892,6 @@ function ScholarApplicationSection({
                 affiliation,
                 category: scholarCategory,
                 categoryOther: scholarCategory === "Other" ? categoryOther : null,
-                whatYouDo,
-                failedInfrastructureResponse,
               });
               onSubmit();
             } catch (err) {
@@ -993,28 +989,6 @@ function ScholarApplicationSection({
                 />
               </div>
             )}
-            <div>
-              <label style={fieldLabelStyle}>What do you do, in a sentence?</label>
-              <textarea
-                rows={3}
-                value={whatYouDo}
-                onChange={(e) => setWhatYouDo(e.target.value)}
-                placeholder="Formulation scientist working on high-oil-phase emulsions and shelf stability."
-                style={{ ...fieldInputStyle, lineHeight: 1.5, resize: "vertical" }}
-              />
-            </div>
-            <div>
-              <label style={fieldLabelStyle}>
-                How has failed infrastructure guided you towards innovation?
-              </label>
-              <textarea
-                rows={4}
-                value={failedInfrastructureResponse}
-                onChange={(e) => setFailedInfrastructureResponse(e.target.value)}
-                placeholder="What didn't work where you are, and what you built or changed because of it."
-                style={{ ...fieldInputStyle, lineHeight: 1.5, resize: "vertical" }}
-              />
-            </div>
           </div>
 
           {submitError && (

@@ -9,8 +9,15 @@ export interface ScholarApplicationInput {
   affiliation: string;
   category: string;
   categoryOther?: string | null;
-  whatYouDo: string;
-  failedInfrastructureResponse: string;
+  // Optional: the landing page ("About You") no longer asks these two
+  // narrative questions -- they moved to /apply, per the 2026-09-21 field
+  // split decision. Left optional (rather than dropped) so this function
+  // still works for any other caller that has real narrative text to
+  // attach. Omitted here means the RPC leaves whatever was already on
+  // the row alone (see submit_scholar_application's coalesce), so a
+  // returning submitter's earlier answer is never blanked out.
+  whatYouDo?: string;
+  failedInfrastructureResponse?: string;
 }
 
 /**
@@ -22,6 +29,12 @@ export interface ScholarApplicationInput {
  * and falls back to inserting a fresh row if no matching signup exists,
  * so an application is never silently dropped even if someone reaches
  * this form without having signed up first.
+ *
+ * whatYouDo/failedInfrastructureResponse are no longer collected by the
+ * landing page itself (see /apply for where those questions live now),
+ * so callers typically omit them -- the RPC's coalesce logic means that
+ * leaves any existing answer on the row untouched rather than clearing
+ * it.
  */
 export async function submitScholarApplication({
   email,
@@ -45,8 +58,8 @@ export async function submitScholarApplication({
     p_affiliation: affiliation,
     p_category: category,
     p_category_other: categoryOther ?? null,
-    p_what_you_do: whatYouDo,
-    p_failed_infrastructure_response: failedInfrastructureResponse,
+    p_what_you_do: whatYouDo ?? null,
+    p_failed_infrastructure_response: failedInfrastructureResponse ?? null,
   });
 
   if (error) throw error;

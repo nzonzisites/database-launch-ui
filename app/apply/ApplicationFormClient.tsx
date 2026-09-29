@@ -39,6 +39,8 @@ interface Prefill {
   affiliations: string[];
   intendedCategory: string | null;
   prospectSignupId: string | null;
+  expertiseNarrative: string;
+  infrastructureNarrative: string;
 }
 
 function Required() {
@@ -203,7 +205,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [hasPrefill, setHasPrefill] = useState(
     Boolean(prefill.firstName || prefill.lastName || prefill.city || prefill.country) ||
       prefill.affiliations.length > 0 ||
-      Boolean(prefill.intendedCategory)
+      Boolean(prefill.intendedCategory) ||
+      Boolean(prefill.expertiseNarrative || prefill.infrastructureNarrative)
   );
   // Only relevant for a signed-out visitor (prefill.email is blank in
   // that case -- page.tsx already did this lookup server-side for a
@@ -215,8 +218,10 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [intendedCategory, setIntendedCategory] = useState(prefill.intendedCategory ?? "");
   const [intendedCategoryOther, setIntendedCategoryOther] = useState("");
   const [workModality, setWorkModality] = useState("");
-  const [expertiseNarrative, setExpertiseNarrative] = useState("");
-  const [infrastructureNarrative, setInfrastructureNarrative] = useState("");
+  const [expertiseNarrative, setExpertiseNarrative] = useState(prefill.expertiseNarrative);
+  const [infrastructureNarrative, setInfrastructureNarrative] = useState(
+    prefill.infrastructureNarrative
+  );
   const [fullBio, setFullBio] = useState("");
 
   const [externalLinks, setExternalLinks] = useState<string[]>([]);
@@ -274,6 +279,14 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     }
     if (!intendedCategory && match.category) {
       setIntendedCategory(match.category);
+      filledSomething = true;
+    }
+    if (!expertiseNarrative && match.expertiseNarrative) {
+      setExpertiseNarrative(match.expertiseNarrative.slice(0, 250));
+      filledSomething = true;
+    }
+    if (!infrastructureNarrative && match.infrastructureNarrative) {
+      setInfrastructureNarrative(match.infrastructureNarrative.slice(0, 750));
       filledSomething = true;
     }
     if (filledSomething) setHasPrefill(true);
