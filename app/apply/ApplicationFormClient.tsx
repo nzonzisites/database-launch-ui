@@ -813,8 +813,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
             <div>
               <label style={fieldLabelStyle(true)}>
-                Have you been paid directly by a company for your expertise, outside an employer
-                or institution?
+                Outside of a regular job, have you been paid directly by a company for your
+                expertise — consulting, freelance, or similar?
                 <Required />
               </label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
