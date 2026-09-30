@@ -6,6 +6,10 @@
 // ApplicationSummary.tsx) can turn a raw enum value like
 // "cosmetic_chemistry_formulation_science" back into a human-readable
 // label without duplicating the option lists.
+//
+// CATEGORY_OPTIONS is kept, unchanged, purely for display of applications
+// submitted before 2026-09-30 -- new applications no longer ask Category
+// at all; FUNCTION_OPTIONS (below) replaced it as the intake question.
 
 export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: "cosmetic_chemistry_formulation_science", label: "Cosmetic chemistry / formulation science" },
@@ -15,6 +19,20 @@ export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: "industrial_design", label: "Industrial design" },
   { value: "applied_quant_qual_research", label: "Applied quant / qual research" },
   { value: "arts_cultural_research", label: "Arts & cultural research" },
+  { value: "other", label: "Other" },
+];
+
+export const FUNCTION_OPTIONS: { value: string; label: string }[] = [
+  { value: "research_development", label: "Research & development" },
+  { value: "research_policy", label: "Research & policy" },
+  { value: "product_development", label: "Product development" },
+  { value: "production", label: "Production" },
+  { value: "supply_chain", label: "Supply chain, procurement & sourcing" },
+  { value: "marketing_brand", label: "Marketing & brand building" },
+  { value: "sales_client_relations", label: "Sales & client relations" },
+  { value: "administration", label: "Administration" },
+  { value: "management", label: "Management / leadership" },
+  { value: "program_management", label: "Program / project management" },
   { value: "other", label: "Other" },
 ];
 

@@ -9,6 +9,7 @@ import { approveApplication, rejectApplication, revokeDecision } from "./actions
 import ListingsTabClient from "./ListingsTabClient";
 import SessionControls from "@/app/components/SessionControls";
 import {
+  FUNCTION_OPTIONS,
   SECTOR_OPTIONS,
   RATE_BAND_OPTIONS,
   CAPACITY_OPTIONS,
@@ -164,7 +165,7 @@ export default function ReviewQueueClient({
               }}
             >
               <span>Applicant</span>
-              <span>Category</span>
+              <span>Function</span>
               <span>Submitted</span>
               <span>Status</span>
               <span style={{ textAlign: "right" }}>Action</span>
@@ -202,19 +203,28 @@ function ApplicationRow({
   const [isPending, startTransition] = useTransition();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
+  const [approving, setApproving] = useState(false);
+  const [listingDescriptor, setListingDescriptor] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const statusStyle = STATUS_STYLE[a.status];
   const canDecide = a.status === "applied" || a.status === "under_review";
-  const categoryLabel =
-    a.intended_category === "other"
-      ? a.intended_category_other || "Other"
-      : CATEGORY_LABELS[a.intended_category] || a.intended_category;
+  const categoryLabel = a.intended_function
+    ? a.intended_function === "other"
+      ? a.intended_function_other || "Other"
+      : optionLabel(FUNCTION_OPTIONS, a.intended_function)
+    : a.intended_category
+      ? a.intended_category === "other"
+        ? a.intended_category_other || "Other"
+        : CATEGORY_LABELS[a.intended_category] || a.intended_category
+      : "—";
 
   function handleApprove() {
     setActionError(null);
     startTransition(async () => {
       try {
-        await approveApplication(a.id);
+        await approveApplication(a.id, listingDescriptor);
+        setApproving(false);
+        setListingDescriptor("");
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Couldn't approve this application.");
       }
@@ -312,6 +322,7 @@ function ApplicationRow({
           />
           <Detail label="Location" value={a.city_country} />
           <Detail label="Affiliations" value={a.affiliations?.join(", ") || "—"} />
+          <Detail label="Function" value={categoryLabel} />
           <Detail label="Delivery" value={MODALITY_LABELS[a.work_modality] || a.work_modality} />
           <Detail label="What they do" value={a.expertise_narrative} />
           <Detail label="Failed infrastructure → innovation" value={a.infrastructure_narrative} />
@@ -369,10 +380,10 @@ function ApplicationRow({
               {actionError && (
                 <p style={{ color: OCHRE, fontSize: 13, margin: 0 }}>{actionError}</p>
               )}
-              {!rejecting ? (
+              {!rejecting && !approving ? (
                 <div style={{ display: "flex", gap: 10 }}>
                   <button
-                    onClick={handleApprove}
+                    onClick={() => setApproving(true)}
                     disabled={isPending}
                     style={{
                       background: "#3C6B3F",
@@ -403,6 +414,65 @@ function ApplicationRow({
                   >
                     Reject
                   </button>
+                </div>
+              ) : approving ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 480 }}>
+                  <p style={{ fontSize: 12.5, opacity: 0.65, margin: 0 }}>
+                    This is shown publicly on their listing in place of the Category/Function they
+                    answered -- write it the way a buy-side client would expect to see it, and edit
+                    it any time from the Listings tab afterward.
+                  </p>
+                  <textarea
+                    placeholder="Public listing descriptor (e.g. Cosmetic chemist & formulation scientist)"
+                    value={listingDescriptor}
+                    onChange={(e) => setListingDescriptor(e.target.value)}
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      border: "1px solid rgba(230,222,210,0.35)",
+                      background: "transparent",
+                      color: SAND,
+                      padding: 10,
+                      fontSize: 14,
+                      fontFamily: "inherit",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button
+                      onClick={handleApprove}
+                      disabled={isPending || !listingDescriptor.trim()}
+                      style={{
+                        background: "#3C6B3F",
+                        color: WHITE,
+                        border: 0,
+                        padding: "9px 16px",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: isPending || !listingDescriptor.trim() ? "default" : "pointer",
+                        opacity: isPending || !listingDescriptor.trim() ? 0.6 : 1,
+                      }}
+                    >
+                      Confirm approve
+                    </button>
+                    <button
+                      onClick={() => {
+                        setApproving(false);
+                        setListingDescriptor("");
+                      }}
+                      disabled={isPending}
+                      style={{
+                        background: "transparent",
+                        color: "rgba(230,222,210,0.7)",
+                        border: "1px solid rgba(230,222,210,0.25)",
+                        padding: "9px 16px",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 480 }}>

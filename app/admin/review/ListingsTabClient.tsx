@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
-import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
+import { WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
 import { publishScholarProfile, unpublishScholarProfile, updateScholarProfile } from "./scholarProfileActions";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
@@ -94,7 +94,7 @@ export default function ListingsTabClient({ profiles }: { profiles: ScholarProfi
         }}
       >
         <span>Scholar</span>
-        <span>Category</span>
+        <span>Listing descriptor</span>
         <span>Status</span>
         <span style={{ textAlign: "right" }}>Action</span>
       </div>
@@ -135,20 +135,17 @@ function ListingRow({
 
   const [headshotUrl, setHeadshotUrl] = useState(p.headshot_url ?? "");
   const [headshotFocalY, setHeadshotFocalY] = useState(p.headshot_focal_y ?? 50);
+  const [listingDescriptor, setListingDescriptor] = useState(p.intended_category ?? "");
   const [tagline, setTagline] = useState(p.tagline);
   const [fullBio, setFullBio] = useState(p.full_bio);
   const [background, setBackground] = useState(p.background);
   const [experienceLabel, setExperienceLabel] = useState(p.experience_label ?? "");
   const [vettedDate, setVettedDate] = useState(p.vetted_date ?? "");
 
-  const categoryLabel =
-    p.intended_category === "other"
-      ? p.intended_category_other || "Other"
-      : optionLabel(CATEGORY_OPTIONS, p.intended_category);
-
   const fields = {
     headshot_url: headshotUrl,
     headshot_focal_y: headshotFocalY,
+    intended_category: listingDescriptor,
     tagline,
     full_bio: fullBio,
     background,
@@ -268,7 +265,7 @@ function ListingRow({
             {p.city_country && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{p.city_country}</div>}
           </div>
         </div>
-        <span style={{ fontSize: 13, opacity: 0.85 }}>{categoryLabel || "—"}</span>
+        <span style={{ fontSize: 13, opacity: 0.85 }}>{p.intended_category || "—"}</span>
         <span
           style={{
             background: p.status === "published" ? "#3C6B3F" : MOSS,
@@ -395,6 +392,15 @@ function ListingRow({
                 placeholder="https://..."
               />
             </div>
+          </Field>
+
+          <Field label="Listing descriptor (shown publicly as this scholar's category)">
+            <input
+              value={listingDescriptor}
+              onChange={(e) => setListingDescriptor(e.target.value)}
+              style={fieldStyle}
+              placeholder="e.g. Cosmetic chemist & formulation scientist"
+            />
           </Field>
 
           <Field label="Tagline">

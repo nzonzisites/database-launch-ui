@@ -15,8 +15,8 @@ export interface SubmitApplicationInput {
   cityCountry: string;
   affiliations: string[];
   headshotUrl: string;
-  intendedCategory: string;
-  intendedCategoryOther: string;
+  intendedFunction: string;
+  intendedFunctionOther: string;
   workModality: string;
   infrastructureNarrative: string;
   expertiseNarrative: string;
@@ -171,7 +171,7 @@ export async function submitApplication(
     ["contact method", input.contactMethod],
     ["contact info", input.contactValue],
     ["city and country", input.cityCountry],
-    ["category", input.intendedCategory],
+    ["function", input.intendedFunction],
     ["work modality", input.workModality],
     ['"what you do"', input.expertiseNarrative],
     ['"failed infrastructure" answer', input.infrastructureNarrative],
@@ -192,8 +192,8 @@ export async function submitApplication(
   }
   // Affiliations is optional (2026-09-30 -- previously required); no
   // length check here on purpose.
-  if (input.intendedCategory === "other" && !input.intendedCategoryOther.trim()) {
-    return { success: false, error: 'Describe your category since you selected "other".' };
+  if (input.intendedFunction === "other" && !input.intendedFunctionOther.trim()) {
+    return { success: false, error: 'Describe your function since you selected "other".' };
   }
   if (input.sector.length === 0) {
     return { success: false, error: "Select at least one industry." };
@@ -233,9 +233,9 @@ export async function submitApplication(
     city_country: input.cityCountry.trim(),
     affiliations: input.affiliations,
     external_links: input.externalLinks,
-    intended_category: input.intendedCategory,
-    intended_category_other:
-      input.intendedCategory === "other" ? input.intendedCategoryOther.trim() : null,
+    intended_function: input.intendedFunction,
+    intended_function_other:
+      input.intendedFunction === "other" ? input.intendedFunctionOther.trim() : null,
     work_modality: input.workModality,
     infrastructure_narrative: input.infrastructureNarrative.trim(),
     expertise_narrative: input.expertiseNarrative.trim(),
@@ -278,9 +278,9 @@ export async function submitApplication(
       cityCountry: input.cityCountry.trim(),
       affiliations: input.affiliations,
       headshotUrl: input.headshotUrl.trim(),
-      intendedCategory: input.intendedCategory,
-      intendedCategoryOther:
-        input.intendedCategory === "other" ? input.intendedCategoryOther.trim() : "",
+      intendedFunction: input.intendedFunction,
+      intendedFunctionOther:
+        input.intendedFunction === "other" ? input.intendedFunctionOther.trim() : "",
       workModality: input.workModality,
       infrastructureNarrative: input.infrastructureNarrative.trim(),
       expertiseNarrative: input.expertiseNarrative.trim(),

@@ -14,7 +14,7 @@
 import { Resend } from "resend";
 import type { SubmitApplicationInput } from "@/app/apply/actions";
 import {
-  CATEGORY_OPTIONS,
+  FUNCTION_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
@@ -80,10 +80,10 @@ export async function sendApplicationConfirmationEmail(
   }
 
   const firstName = data.fullName.trim().split(/\s+/)[0] || "";
-  const categoryLabel =
-    data.intendedCategory === "other" && data.intendedCategoryOther
-      ? data.intendedCategoryOther
-      : optionLabel(CATEGORY_OPTIONS, data.intendedCategory);
+  const functionLabel =
+    data.intendedFunction === "other" && data.intendedFunctionOther
+      ? data.intendedFunctionOther
+      : optionLabel(FUNCTION_OPTIONS, data.intendedFunction);
 
   const contactRows =
     row("Name", data.fullName) +
@@ -96,7 +96,7 @@ export async function sendApplicationConfirmationEmail(
     listRow("Affiliations", data.affiliations);
 
   const applicationRows =
-    row("Category", categoryLabel) +
+    row("Function", functionLabel) +
     row("Delivery", optionLabel(WORK_MODALITY_OPTIONS, data.workModality)) +
     row("What you do", data.expertiseNarrative) +
     row("How failed or missing infrastructure guided you", data.infrastructureNarrative) +

@@ -17,6 +17,7 @@
 import { BROWN } from "@/lib/colors";
 import {
   CATEGORY_OPTIONS,
+  FUNCTION_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
@@ -39,8 +40,15 @@ export interface ApplicationSummaryData {
   cityCountry: string;
   affiliations: string[];
   headshotUrl: string;
-  intendedCategory: string;
-  intendedCategoryOther: string;
+  // Category -- legacy: only ever set on applications submitted before
+  // 2026-09-30. Optional because a freshly-submitted application (built
+  // from ApplicationFormClient's own state right after submit) never has
+  // it; page.tsx still fills it in for an existing DB row.
+  intendedCategory?: string;
+  intendedCategoryOther?: string;
+  // Function -- replaced Category as the intake question on 2026-09-30.
+  intendedFunction: string;
+  intendedFunctionOther: string;
   workModality: string;
   expertiseNarrative: string;
   infrastructureNarrative: string;
@@ -141,10 +149,17 @@ export default function ApplicationSummary({
   data: ApplicationSummaryData;
   footer?: React.ReactNode;
 }) {
-  const categoryLabel =
-    data.intendedCategory === "other" && data.intendedCategoryOther
+  const categoryLabel = data.intendedCategory
+    ? data.intendedCategory === "other" && data.intendedCategoryOther
       ? data.intendedCategoryOther
-      : optionLabel(CATEGORY_OPTIONS, data.intendedCategory);
+      : optionLabel(CATEGORY_OPTIONS, data.intendedCategory)
+    : "";
+
+  const functionLabel = data.intendedFunction
+    ? data.intendedFunction === "other" && data.intendedFunctionOther
+      ? data.intendedFunctionOther
+      : optionLabel(FUNCTION_OPTIONS, data.intendedFunction)
+    : "";
 
   const sectorLabels = data.sector.map((value) =>
     value === "other" && data.sectorOther ? data.sectorOther : optionLabel(SECTOR_OPTIONS, value)
@@ -194,6 +209,7 @@ export default function ApplicationSummary({
 
         <Section>
           <SectionLabel>Application</SectionLabel>
+          <Row label="Function" value={functionLabel} />
           <Row label="Category" value={categoryLabel} />
           <Row label="Delivery" value={optionLabel(WORK_MODALITY_OPTIONS, data.workModality)} />
           <Row label="What you do" value={data.expertiseNarrative} />

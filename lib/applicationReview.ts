@@ -13,8 +13,12 @@ export interface ApplicationForReview {
   affiliations: string[];
   external_links: string[];
   headshot_url: string | null;
-  intended_category: string;
+  // Category -- legacy: null on every application from 2026-09-30
+  // onward, replaced by Function as the intake question.
+  intended_category: string | null;
   intended_category_other: string | null;
+  intended_function: string | null;
+  intended_function_other: string | null;
   work_modality: "remote_only" | "travel_flexible" | "both";
   infrastructure_narrative: string;
   expertise_narrative: string;
@@ -50,7 +54,7 @@ interface RawApplicationForReview extends Omit<ApplicationForReview, "work_sampl
 
 const REVIEW_COLUMNS =
   "id, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, " +
-  "headshot_url, intended_category, intended_category_other, work_modality, infrastructure_narrative, " +
+  "headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, work_modality, infrastructure_narrative, " +
   "expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, " +
   "reference_relationship, reference_contact_method, reference_contact_value, " +
   "reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, " +

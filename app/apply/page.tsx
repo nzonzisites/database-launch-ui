@@ -10,7 +10,7 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_band, rate_scope, capacity";
+  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_band, rate_scope, capacity";
 
 type ExistingApplicationRow = {
   status: string;
@@ -25,6 +25,11 @@ type ExistingApplicationRow = {
   headshot_url: string | null;
   intended_category: string | null;
   intended_category_other: string | null;
+  // "Function" -- added 2026-09-30, replaces Category as the intake
+  // question. Both stay on the row: Category for applications from
+  // before this date, Function for everything after.
+  intended_function: string | null;
+  intended_function_other: string | null;
   work_modality: string | null;
   infrastructure_narrative: string | null;
   expertise_narrative: string | null;
@@ -86,7 +91,6 @@ export default async function ApplyPage() {
           city: "",
           country: "",
           affiliations: [],
-          intendedCategory: null,
           prospectSignupId: null,
           expertiseNarrative: "",
           infrastructureNarrative: "",
@@ -150,6 +154,8 @@ export default async function ApplyPage() {
       headshotUrl: existingApplication.headshot_url ?? appUser.headshot_url ?? "",
       intendedCategory: existingApplication.intended_category ?? "",
       intendedCategoryOther: existingApplication.intended_category_other ?? "",
+      intendedFunction: existingApplication.intended_function ?? "",
+      intendedFunctionOther: existingApplication.intended_function_other ?? "",
       workModality: existingApplication.work_modality ?? "",
       expertiseNarrative: existingApplication.expertise_narrative ?? "",
       infrastructureNarrative: existingApplication.infrastructure_narrative ?? "",
@@ -190,7 +196,6 @@ export default async function ApplyPage() {
   // or RLS/grants block this select, it silently no-ops rather than
   // breaking the page. Worth double-checking once you're able to test
   // this.
-  let prefillCategory: string | null = null;
   let prospectSignupId: string | null = null;
   let prefillFirstName = "";
   let prefillLastName = "";
@@ -204,13 +209,12 @@ export default async function ApplyPage() {
     const { data: prospectSignup } = await supabase
       .from("prospect_signup")
       .select(
-        "id, category, first_name, last_name, city, country, affiliation, what_you_do, failed_infrastructure_response"
+        "id, first_name, last_name, city, country, affiliation, what_you_do, failed_infrastructure_response"
       )
       .eq("email", appUser.email)
       .maybeSingle();
     if (prospectSignup) {
       prospectSignupId = prospectSignup.id as string;
-      prefillCategory = (prospectSignup.category as string) ?? null;
       prefillFirstName = (prospectSignup.first_name as string) ?? "";
       prefillLastName = (prospectSignup.last_name as string) ?? "";
       prefillCity = (prospectSignup.city as string) ?? "";
@@ -246,7 +250,6 @@ export default async function ApplyPage() {
         city: prefillCity,
         country: prefillCountry,
         affiliations: prefillAffiliations,
-        intendedCategory: prefillCategory,
         prospectSignupId,
         expertiseNarrative: prefillExpertiseNarrative,
         infrastructureNarrative: prefillInfrastructureNarrative,

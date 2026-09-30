@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { BROWN } from "@/lib/colors";
 import { submitApplication, lookupProspectPrefill, type SubmitApplicationInput } from "./actions";
 import {
-  CATEGORY_OPTIONS,
+  FUNCTION_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
@@ -45,7 +45,6 @@ interface Prefill {
   city: string;
   country: string;
   affiliations: string[];
-  intendedCategory: string | null;
   prospectSignupId: string | null;
   expertiseNarrative: string;
   infrastructureNarrative: string;
@@ -213,7 +212,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [hasPrefill, setHasPrefill] = useState(
     Boolean(prefill.firstName || prefill.lastName || prefill.city || prefill.country) ||
       prefill.affiliations.length > 0 ||
-      Boolean(prefill.intendedCategory) ||
       Boolean(prefill.expertiseNarrative || prefill.infrastructureNarrative)
   );
   // Only relevant for a signed-out visitor (prefill.email is blank in
@@ -223,8 +221,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   // they've been filled in, whether by the lookup or typed by hand.
   const [prefillLookupDone, setPrefillLookupDone] = useState(false);
 
-  const [intendedCategory, setIntendedCategory] = useState(prefill.intendedCategory ?? "");
-  const [intendedCategoryOther, setIntendedCategoryOther] = useState("");
+  const [intendedFunction, setIntendedFunction] = useState("");
+  const [intendedFunctionOther, setIntendedFunctionOther] = useState("");
   const [workModality, setWorkModality] = useState("");
   const [expertiseNarrative, setExpertiseNarrative] = useState(prefill.expertiseNarrative);
   const [infrastructureNarrative, setInfrastructureNarrative] = useState(
@@ -302,10 +300,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       setAffiliations([match.affiliation]);
       filledSomething = true;
     }
-    if (!intendedCategory && match.category) {
-      setIntendedCategory(match.category);
-      filledSomething = true;
-    }
     if (!expertiseNarrative && match.expertiseNarrative) {
       setExpertiseNarrative(match.expertiseNarrative.slice(0, 250));
       filledSomething = true;
@@ -365,8 +359,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       cityCountry: [city, country].filter(Boolean).join(", "),
       affiliations,
       headshotUrl,
-      intendedCategory,
-      intendedCategoryOther,
+      intendedFunction,
+      intendedFunctionOther,
       workModality,
       infrastructureNarrative,
       expertiseNarrative,
@@ -447,8 +441,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       cityCountry: [city, country].filter(Boolean).join(", "),
       affiliations,
       headshotUrl,
-      intendedCategory,
-      intendedCategoryOther,
+      intendedFunction,
+      intendedFunctionOther,
       workModality,
       expertiseNarrative,
       infrastructureNarrative,
@@ -644,19 +638,20 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              Category
+              Function
               <Required />
             </label>
+            <p style={helperTextStyle(false)}>Which best describes what you do day to day?</p>
             <select
               style={{ ...underlineInputStyle(false), cursor: "pointer" }}
-              value={intendedCategory}
-              onChange={(e) => setIntendedCategory(e.target.value)}
+              value={intendedFunction}
+              onChange={(e) => setIntendedFunction(e.target.value)}
               required
             >
               <option value="" disabled>
-                Select a category
+                Select a function
               </option>
-              {CATEGORY_OPTIONS.map((opt) => (
+              {FUNCTION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
                   {opt.label}
                 </option>
@@ -664,17 +659,17 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </select>
           </div>
 
-          {intendedCategory === "other" && (
+          {intendedFunction === "other" && (
             <div>
               <label style={fieldLabelStyle(false)}>
-                Tell us your category
+                Tell us your function
                 <Required />
               </label>
               <input
                 style={underlineInputStyle(false)}
                 placeholder="e.g. Public health researcher"
-                value={intendedCategoryOther}
-                onChange={(e) => setIntendedCategoryOther(e.target.value)}
+                value={intendedFunctionOther}
+                onChange={(e) => setIntendedFunctionOther(e.target.value)}
                 required
               />
             </div>

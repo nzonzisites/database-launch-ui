@@ -30,6 +30,12 @@ async function requireReviewListingsPermission() {
 export interface ScholarProfileEditableFields {
   headshot_url: string; // "" clears it (stored as null)
   headshot_focal_y: number; // 0-100 vertical crop position, clamped on save
+  // The public listing descriptor -- same column the approval gate
+  // (app/admin/review/actions.ts's approveApplication) requires a value
+  // for before an application can be approved. Editable here afterward
+  // so it can keep being refined to match buyer-side language over
+  // time, without needing to revoke and re-approve the application.
+  intended_category: string;
   tagline: string;
   full_bio: string;
   background: string;
@@ -57,6 +63,7 @@ export async function updateScholarProfile(
     .update({
       headshot_url: fields.headshot_url.trim() || null,
       headshot_focal_y: Math.round(Math.min(100, Math.max(0, fields.headshot_focal_y))),
+      intended_category: fields.intended_category.trim(),
       tagline: fields.tagline.trim(),
       full_bio: fields.full_bio.trim(),
       background: fields.background.trim(),
