@@ -10,7 +10,7 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source";
+  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_band, rate_scope, capacity";
 
 type ExistingApplicationRow = {
   status: string;
@@ -39,6 +39,15 @@ type ExistingApplicationRow = {
   reference_may_contact: boolean | null;
   additional_notes: string | null;
   referral_source: string | null;
+  // "Paid work" questions -- added 2026-09-30, nullable since rows from
+  // before that date were never asked them.
+  prior_paid_work: string | null;
+  sector: string[] | null;
+  sector_other: string | null;
+  deliverables: string | null;
+  rate_band: string | null;
+  rate_scope: string | null;
+  capacity: string | null;
 };
 
 /**
@@ -158,6 +167,13 @@ export default async function ApplyPage() {
       referenceMayContact: Boolean(existingApplication.reference_may_contact),
       additionalNotes: existingApplication.additional_notes ?? "",
       referralSource: existingApplication.referral_source ?? "",
+      priorPaidWork: existingApplication.prior_paid_work ?? "",
+      sector: existingApplication.sector ?? [],
+      sectorOther: existingApplication.sector_other ?? "",
+      deliverables: existingApplication.deliverables ?? "",
+      rateBand: existingApplication.rate_band ?? "",
+      rateScope: existingApplication.rate_scope ?? "",
+      capacity: existingApplication.capacity ?? "",
     };
 
     return (

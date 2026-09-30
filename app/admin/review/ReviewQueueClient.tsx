@@ -8,6 +8,13 @@ import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import { approveApplication, rejectApplication, revokeDecision } from "./actions";
 import ListingsTabClient from "./ListingsTabClient";
 import SessionControls from "@/app/components/SessionControls";
+import {
+  SECTOR_OPTIONS,
+  RATE_BAND_OPTIONS,
+  CAPACITY_OPTIONS,
+  PRIOR_PAID_WORK_OPTIONS,
+  optionLabel,
+} from "@/app/apply/applicationOptions";
 
 const CATEGORY_LABELS: Record<string, string> = {
   cosmetic_chemistry_formulation_science: "Cosmetic Chemistry & Formulation",
@@ -318,6 +325,34 @@ function ApplicationRow({
             <DetailLinks label="Professional identity" urls={a.work_samples} />
           ) : (
             <Detail label="Professional identity" value={a.work_samples_explanation || "—"} />
+          )}
+          {(a.prior_paid_work || (a.sector && a.sector.length > 0) || a.deliverables || a.rate_band || a.capacity) && (
+            <>
+              <Detail
+                label="Been paid directly by a company before"
+                value={a.prior_paid_work ? optionLabel(PRIOR_PAID_WORK_OPTIONS, a.prior_paid_work) : "—"}
+              />
+              <Detail
+                label="Industries paid to work in"
+                value={
+                  a.sector && a.sector.length > 0
+                    ? a.sector
+                        .map((v) => (v === "other" && a.sector_other ? a.sector_other : optionLabel(SECTOR_OPTIONS, v)))
+                        .join(", ")
+                    : "—"
+                }
+              />
+              <Detail label="Deliverables produced" value={a.deliverables || "—"} />
+              <Detail
+                label="Most recent paid engagement"
+                value={a.rate_band ? optionLabel(RATE_BAND_OPTIONS, a.rate_band) : "—"}
+              />
+              {a.rate_scope && <Detail label="Scope of that payment" value={a.rate_scope} />}
+              <Detail
+                label="Capacity per month"
+                value={a.capacity ? optionLabel(CAPACITY_OPTIONS, a.capacity) : "—"}
+              />
+            </>
           )}
           <Detail
             label="Reference"

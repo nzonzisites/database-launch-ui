@@ -17,7 +17,15 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BROWN } from "@/lib/colors";
 import { submitApplication, lookupProspectPrefill, type SubmitApplicationInput } from "./actions";
-import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, REFERENCE_CONTACT_METHOD_OPTIONS } from "./applicationOptions";
+import {
+  CATEGORY_OPTIONS,
+  WORK_MODALITY_OPTIONS,
+  REFERENCE_CONTACT_METHOD_OPTIONS,
+  SECTOR_OPTIONS,
+  RATE_BAND_OPTIONS,
+  CAPACITY_OPTIONS,
+  PRIOR_PAID_WORK_OPTIONS,
+} from "./applicationOptions";
 import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
@@ -241,6 +249,23 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [referralSource, setReferralSource] = useState("");
 
+  // "Paid work" section -- added 2026-09-30, placed after Bio + Portfolio
+  // (see the form JSX below) since money-adjacent questions land better
+  // once someone's already invested effort in the rest of the form.
+  const [priorPaidWork, setPriorPaidWork] = useState("");
+  const [sector, setSector] = useState<string[]>([]);
+  const [sectorOther, setSectorOther] = useState("");
+  const [deliverables, setDeliverables] = useState("");
+  const [rateBand, setRateBand] = useState("");
+  const [rateScope, setRateScope] = useState("");
+  const [capacity, setCapacity] = useState("");
+
+  function toggleSector(value: string) {
+    setSector((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  }
+
   // Fires when the (signed-out, blank-form) visitor finishes typing their
   // email -- looks up any "About You" answers filed under that email and
   // fills in whatever's still blank, so they don't retype what they
@@ -301,6 +326,36 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     // so there's no client-side block on it beyond letting them submit
     // whichever value they chose.
 
+    // The "paid work" questions below aren't native form controls (pill
+    // toggles, a checkbox group), so they don't get free browser-native
+    // required validation the way a plain <input required> does --
+    // checked here instead. Server-side validation in actions.ts is the
+    // real backstop either way.
+    if (sector.length === 0) {
+      setError("Select at least one industry you've been paid to work in.");
+      return;
+    }
+    if (sector.includes("other") && !sectorOther.trim()) {
+      setError('Describe the industry since you selected "other".');
+      return;
+    }
+    if (!deliverables.trim()) {
+      setError("Let us know what deliverables you've been paid to produce.");
+      return;
+    }
+    if (!rateBand) {
+      setError("Select an answer for the rate question.");
+      return;
+    }
+    if (!capacity) {
+      setError("Select your current capacity.");
+      return;
+    }
+    if (!priorPaidWork) {
+      setError("Answer whether you've been paid directly by a company before.");
+      return;
+    }
+
     const input: SubmitApplicationInput = {
       fullName: `${firstName} ${lastName}`.trim(),
       email,
@@ -327,6 +382,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       referenceMayContact,
       additionalNotes,
       referralSource,
+      priorPaidWork,
+      sector,
+      sectorOther,
+      deliverables,
+      rateBand,
+      rateScope,
+      capacity,
       prospectSignupId: prefill.prospectSignupId,
     };
 
@@ -402,6 +464,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       referenceMayContact,
       additionalNotes,
       referralSource,
+      priorPaidWork,
+      sector,
+      sectorOther,
+      deliverables,
+      rateBand,
+      rateScope,
+      capacity,
     };
 
     return (
@@ -566,8 +635,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </TwoCol>
 
           <MultiValueField
-            label="Affiliations"
-            required
+            label="Affiliations, if any"
             onDark={false}
             values={affiliations}
             onChange={setAffiliations}
@@ -739,6 +807,162 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                 value={workSamplesExplanation}
                 onChange={(e) => setWorkSamplesExplanation(e.target.value)}
               />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
+            <div>
+              <label style={fieldLabelStyle(true)}>
+                Have you been paid directly by a company for your expertise, outside an employer
+                or institution?
+                <Required />
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
+                {PRIOR_PAID_WORK_OPTIONS.map((opt) => {
+                  const active = priorPaidWork === opt.value;
+                  return (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => setPriorPaidWork(opt.value)}
+                      style={{
+                        background: active ? OCHRE : "transparent",
+                        border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                        borderRadius: 999,
+                        padding: "9px 18px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: active ? OFFWHITE : OFFWHITE,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label style={fieldLabelStyle(true)}>
+                Which industries have you been paid to work in? Select all that apply.
+                <Required />
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
+                {SECTOR_OPTIONS.map((opt) => {
+                  const active = sector.includes(opt.value);
+                  return (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => toggleSector(opt.value)}
+                      style={{
+                        background: active ? OCHRE : "transparent",
+                        border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                        borderRadius: 999,
+                        padding: "9px 18px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: OFFWHITE,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {sector.includes("other") && (
+                <input
+                  style={{ ...underlineInputStyle(true), marginTop: 14 }}
+                  placeholder="Tell us the industry"
+                  value={sectorOther}
+                  onChange={(e) => setSectorOther(e.target.value)}
+                  required
+                />
+              )}
+            </div>
+
+            <div>
+              <label style={fieldLabelStyle(true)}>
+                What deliverables have you been paid to produce?
+                <Required />
+              </label>
+              <textarea
+                rows={3}
+                maxLength={300}
+                style={{ ...underlineInputStyle(true), lineHeight: 1.5, resize: "vertical" }}
+                value={deliverables}
+                onChange={(e) => setDeliverables(e.target.value)}
+              />
+              <div style={{ textAlign: "right", fontSize: 11.5, fontWeight: 300, color: "rgba(240,240,240,0.4)", marginTop: 6 }}>
+                {deliverables.length} / 300
+              </div>
+            </div>
+
+            <div>
+              <label style={fieldLabelStyle(true)}>
+                Thinking of your most recent paid engagement in your primary area, roughly what
+                did it pay?
+                <Required />
+              </label>
+              <select
+                style={{ ...underlineInputStyle(true), cursor: "pointer" }}
+                value={rateBand}
+                onChange={(e) => setRateBand(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  Select an answer
+                </option>
+                {RATE_BAND_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <div style={{ marginTop: 14 }}>
+                <label style={fieldLabelStyle(true)}>
+                  Briefly, what was your scope of work for this payment? (optional)
+                </label>
+                <input
+                  style={underlineInputStyle(true)}
+                  value={rateScope}
+                  onChange={(e) => setRateScope(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={fieldLabelStyle(true)}>
+                Roughly how many client engagements could you take on per month alongside your
+                current commitments?
+                <Required />
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
+                {CAPACITY_OPTIONS.map((opt) => {
+                  const active = capacity === opt.value;
+                  return (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => setCapacity(opt.value)}
+                      style={{
+                        background: active ? OCHRE : "transparent",
+                        border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                        borderRadius: 999,
+                        padding: "9px 18px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: OFFWHITE,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

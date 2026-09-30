@@ -35,6 +35,42 @@ export const REFERENCE_CONTACT_METHOD_OPTIONS: { value: string; label: string }[
   { value: "phone", label: "Phone number" },
 ];
 
+export const SECTOR_OPTIONS: { value: string; label: string }[] = [
+  { value: "food_beverage", label: "Food and beverage" },
+  { value: "agriculture_botanicals", label: "Agriculture and botanicals" },
+  { value: "beauty_personal_care", label: "Beauty and personal care" },
+  { value: "household_products", label: "Household products" },
+  { value: "packaging", label: "Packaging" },
+  { value: "apparel_textiles", label: "Apparel and textiles" },
+  { value: "pharmaceuticals", label: "Pharmaceuticals" },
+  { value: "industrial_manufacturing", label: "Industrial and manufacturing" },
+  { value: "cultural_heritage_institutions", label: "Cultural and heritage institutions" },
+  { value: "other", label: "Other" },
+];
+
+export const RATE_BAND_OPTIONS: { value: string; label: string }[] = [
+  { value: "under_250", label: "Under $250" },
+  { value: "250_1000", label: "$250 – $1,000" },
+  { value: "1000_5000", label: "$1,000 – $5,000" },
+  { value: "5000_15000", label: "$5,000 – $15,000" },
+  { value: "15000_plus", label: "$15,000+" },
+  { value: "first_paid_engagement", label: "This was my first paid engagement" },
+  { value: "prefer_not_to_say", label: "Prefer not to say" },
+];
+
+export const CAPACITY_OPTIONS: { value: string; label: string }[] = [
+  { value: "none_currently", label: "None currently" },
+  { value: "one", label: "One" },
+  { value: "two_to_three", label: "Two to three" },
+  { value: "four_or_more", label: "Four or more" },
+];
+
+export const PRIOR_PAID_WORK_OPTIONS: { value: string; label: string }[] = [
+  { value: "yes_regularly", label: "Yes, regularly" },
+  { value: "yes_once_or_twice", label: "Yes, once or twice" },
+  { value: "not_yet", label: "Not yet" },
+];
+
 /** Looks up the human-readable label for a raw enum value; falls back to
  * the raw value itself (with underscores turned into spaces) if it's not
  * in the option list, so an unexpected/legacy value still renders as

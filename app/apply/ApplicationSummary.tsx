@@ -15,7 +15,16 @@
 // not a generic templated status line.
 
 import { BROWN } from "@/lib/colors";
-import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, REFERENCE_CONTACT_METHOD_OPTIONS, optionLabel } from "./applicationOptions";
+import {
+  CATEGORY_OPTIONS,
+  WORK_MODALITY_OPTIONS,
+  REFERENCE_CONTACT_METHOD_OPTIONS,
+  SECTOR_OPTIONS,
+  RATE_BAND_OPTIONS,
+  CAPACITY_OPTIONS,
+  PRIOR_PAID_WORK_OPTIONS,
+  optionLabel,
+} from "./applicationOptions";
 import SessionControls from "@/app/components/SessionControls";
 
 const OCHRE = "#C2561A";
@@ -47,6 +56,13 @@ export interface ApplicationSummaryData {
   referenceMayContact: boolean;
   additionalNotes: string;
   referralSource: string;
+  priorPaidWork: string;
+  sector: string[];
+  sectorOther: string;
+  deliverables: string;
+  rateBand: string;
+  rateScope: string;
+  capacity: string;
 }
 
 function Section({ children }: { children: React.ReactNode }) {
@@ -130,6 +146,10 @@ export default function ApplicationSummary({
       ? data.intendedCategoryOther
       : optionLabel(CATEGORY_OPTIONS, data.intendedCategory);
 
+  const sectorLabels = data.sector.map((value) =>
+    value === "other" && data.sectorOther ? data.sectorOther : optionLabel(SECTOR_OPTIONS, value)
+  );
+
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
@@ -188,6 +208,18 @@ export default function ApplicationSummary({
             <ListRow label="Professional identity" values={data.workSamples} />
             <Row label="About these samples" value={data.workSamplesExplanation} />
             <ListRow label="Links" values={data.externalLinks} />
+          </Section>
+        )}
+
+        {(sectorLabels.length > 0 || data.deliverables || data.rateBand || data.capacity || data.priorPaidWork) && (
+          <Section>
+            <SectionLabel>Paid work</SectionLabel>
+            <Row label="Been paid directly by a company before" value={optionLabel(PRIOR_PAID_WORK_OPTIONS, data.priorPaidWork)} />
+            <ListRow label="Industries paid to work in" values={sectorLabels} />
+            <Row label="Deliverables produced" value={data.deliverables} />
+            <Row label="Most recent paid engagement" value={optionLabel(RATE_BAND_OPTIONS, data.rateBand)} />
+            <Row label="Scope of that payment" value={data.rateScope} />
+            <Row label="Capacity per month" value={optionLabel(CAPACITY_OPTIONS, data.capacity)} />
           </Section>
         )}
 

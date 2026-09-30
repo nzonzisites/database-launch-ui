@@ -32,6 +32,14 @@ export interface SubmitApplicationInput {
   referenceMayContact: boolean;
   additionalNotes: string;
   referralSource: string;
+  // "Paid work" questions -- added 2026-09-30.
+  priorPaidWork: string;
+  sector: string[];
+  sectorOther: string;
+  deliverables: string;
+  rateBand: string;
+  rateScope: string;
+  capacity: string;
   prospectSignupId: string | null;
 }
 
@@ -172,17 +180,26 @@ export async function submitApplication(
     ["reference relationship", input.referenceRelationship],
     ["reference contact method", input.referenceContactMethod],
     ["reference contact value", input.referenceContactValue],
+    ["deliverables", input.deliverables],
+    ["rate", input.rateBand],
+    ["capacity", input.capacity],
+    ["prior paid work", input.priorPaidWork],
   ];
   for (const [label, value] of required) {
     if (!value || value.trim().length === 0) {
       return { success: false, error: `Missing required field: ${label}.` };
     }
   }
-  if (input.affiliations.length === 0) {
-    return { success: false, error: "Add at least one affiliation." };
-  }
+  // Affiliations is optional (2026-09-30 -- previously required); no
+  // length check here on purpose.
   if (input.intendedCategory === "other" && !input.intendedCategoryOther.trim()) {
     return { success: false, error: 'Describe your category since you selected "other".' };
+  }
+  if (input.sector.length === 0) {
+    return { success: false, error: "Select at least one industry." };
+  }
+  if (input.sector.includes("other") && !input.sectorOther.trim()) {
+    return { success: false, error: 'Describe the industry since you selected "other".' };
   }
 
   // Best-effort: an anonymous submission has no session to look up an
@@ -234,6 +251,13 @@ export async function submitApplication(
     reference_may_contact: input.referenceMayContact,
     additional_notes: input.additionalNotes.trim() || null,
     referral_source: input.referralSource.trim() || null,
+    prior_paid_work: input.priorPaidWork,
+    sector: input.sector,
+    sector_other: input.sector.includes("other") ? input.sectorOther.trim() : null,
+    deliverables: input.deliverables.trim(),
+    rate_band: input.rateBand,
+    rate_scope: input.rateScope.trim() || null,
+    capacity: input.capacity,
   });
 
   if (insertError) {
@@ -273,6 +297,13 @@ export async function submitApplication(
       referenceMayContact: input.referenceMayContact,
       additionalNotes: input.additionalNotes.trim(),
       referralSource: input.referralSource.trim(),
+      priorPaidWork: input.priorPaidWork,
+      sector: input.sector,
+      sectorOther: input.sector.includes("other") ? input.sectorOther.trim() : "",
+      deliverables: input.deliverables.trim(),
+      rateBand: input.rateBand,
+      rateScope: input.rateScope.trim(),
+      capacity: input.capacity,
     });
   } catch {
     // best-effort only -- ignore any failure here

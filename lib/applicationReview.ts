@@ -29,6 +29,13 @@ export interface ApplicationForReview {
   reference_may_contact: boolean;
   additional_notes: string | null;
   referral_source: string | null;
+  prior_paid_work: string | null;
+  sector: string[] | null;
+  sector_other: string | null;
+  deliverables: string | null;
+  rate_band: string | null;
+  rate_scope: string | null;
+  capacity: string | null;
   status: ApplicationStatus;
   reviewed_by: string | null;
   decision_reason: string | null;
@@ -47,6 +54,7 @@ const REVIEW_COLUMNS =
   "expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, " +
   "reference_relationship, reference_contact_method, reference_contact_value, " +
   "reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, " +
+  "prior_paid_work, sector, sector_other, deliverables, rate_band, rate_scope, capacity, " +
   "status, reviewed_by, decision_reason, created_at";
 
 /**

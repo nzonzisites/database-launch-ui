@@ -17,6 +17,10 @@ import {
   CATEGORY_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
+  SECTOR_OPTIONS,
+  RATE_BAND_OPTIONS,
+  CAPACITY_OPTIONS,
+  PRIOR_PAID_WORK_OPTIONS,
   optionLabel,
 } from "@/app/apply/applicationOptions";
 
@@ -104,6 +108,20 @@ export async function sendApplicationConfirmationEmail(
     row("About these samples", data.workSamplesExplanation) +
     listRow("Links", data.externalLinks);
 
+  const sectorLabel =
+    data.sector
+      .map((value) => (value === "other" && data.sectorOther ? data.sectorOther : optionLabel(SECTOR_OPTIONS, value)))
+      .join(", ") || "";
+  const rateLabel = optionLabel(RATE_BAND_OPTIONS, data.rateBand);
+
+  const paidWorkRows =
+    row("Been paid directly by a company before", optionLabel(PRIOR_PAID_WORK_OPTIONS, data.priorPaidWork)) +
+    row("Industries paid to work in", sectorLabel) +
+    row("Deliverables produced", data.deliverables) +
+    row("Most recent paid engagement", rateLabel) +
+    row("Scope of that payment", data.rateScope) +
+    row("Capacity per month", optionLabel(CAPACITY_OPTIONS, data.capacity));
+
   const referenceRows =
     row("Name", data.referenceName) +
     row("Relationship to you", data.referenceRelationship) +
@@ -130,6 +148,7 @@ export async function sendApplicationConfirmationEmail(
       ${section("Contact", contactRows)}
       ${section("Application", applicationRows)}
       ${section("Portfolio", portfolioRows)}
+      ${section("Paid work", paidWorkRows)}
       ${section("Reference", referenceRows)}
       ${section("Other", otherRows)}
       <p style="font-size:13px;color:#888;margin-top:32px;">
