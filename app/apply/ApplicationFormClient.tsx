@@ -22,7 +22,9 @@ import {
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
-  RATE_BAND_OPTIONS,
+  RATE_TYPE_OPTIONS,
+  CURRENCY_OPTIONS,
+  RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
 } from "./applicationOptions";
@@ -254,7 +256,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [sector, setSector] = useState<string[]>([]);
   const [sectorOther, setSectorOther] = useState("");
   const [deliverables, setDeliverables] = useState("");
-  const [rateBand, setRateBand] = useState("");
+  const [rateType, setRateType] = useState("");
+  const [rateAmount, setRateAmount] = useState("");
+  const [rateCurrency, setRateCurrency] = useState("");
+  const [rateCurrencyOther, setRateCurrencyOther] = useState("");
+  const [rateRelativeToMarket, setRateRelativeToMarket] = useState("");
   const [rateScope, setRateScope] = useState("");
   const [capacity, setCapacity] = useState("");
 
@@ -337,9 +343,27 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       setError("Let us know what deliverables you've been paid to produce.");
       return;
     }
-    if (!rateBand) {
+    if (!rateType) {
       setError("Select an answer for the rate question.");
       return;
+    }
+    if (rateType === "amount") {
+      if (!rateAmount.trim() || Number(rateAmount) <= 0) {
+        setError("Enter an amount for the rate question, or choose one of the other options.");
+        return;
+      }
+      if (!rateCurrency) {
+        setError("Select a currency for the rate you gave.");
+        return;
+      }
+      if (rateCurrency === "other" && !rateCurrencyOther.trim()) {
+        setError('Name the currency since you selected "other".');
+        return;
+      }
+      if (!rateRelativeToMarket) {
+        setError("Select whether that payment was typical for your market.");
+        return;
+      }
     }
     if (!capacity) {
       setError("Select your current capacity.");
@@ -380,7 +404,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       sector,
       sectorOther,
       deliverables,
-      rateBand,
+      rateType,
+      rateAmount,
+      rateCurrency,
+      rateCurrencyOther,
+      rateRelativeToMarket,
       rateScope,
       capacity,
       prospectSignupId: prefill.prospectSignupId,
@@ -462,7 +490,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       sector,
       sectorOther,
       deliverables,
-      rateBand,
+      rateType,
+      rateAmount,
+      rateCurrency,
+      rateCurrencyOther,
+      rateRelativeToMarket,
       rateScope,
       capacity,
     };
@@ -901,21 +933,85 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                 did it pay?
                 <Required />
               </label>
-              <select
-                style={{ ...underlineInputStyle(true), cursor: "pointer" }}
-                value={rateBand}
-                onChange={(e) => setRateBand(e.target.value)}
-                required
-              >
-                <option value="" disabled>
-                  Select an answer
-                </option>
-                {RATE_BAND_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
+                {RATE_TYPE_OPTIONS.map((opt) => {
+                  const active = rateType === opt.value;
+                  return (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => setRateType(opt.value)}
+                      style={{
+                        background: active ? OCHRE : "transparent",
+                        border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                        borderRadius: 999,
+                        padding: "9px 18px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: OFFWHITE,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {rateType === "amount" && (
+                <div style={{ marginTop: 14 }}>
+                  <TwoCol>
+                    <div>
+                      <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                        Amount
+                        <Required />
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        style={underlineInputStyle(true)}
+                        placeholder="e.g. 450"
+                        value={rateAmount}
+                        onChange={(e) => setRateAmount(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                        Currency
+                        <Required />
+                      </label>
+                      <select
+                        style={{ ...underlineInputStyle(true), cursor: "pointer" }}
+                        value={rateCurrency}
+                        onChange={(e) => setRateCurrency(e.target.value)}
+                        required
+                      >
+                        <option value="" disabled>
+                          Select one
+                        </option>
+                        {CURRENCY_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </TwoCol>
+
+                  {rateCurrency === "other" && (
+                    <input
+                      style={{ ...underlineInputStyle(true), marginTop: 14 }}
+                      placeholder="Name the currency"
+                      value={rateCurrencyOther}
+                      onChange={(e) => setRateCurrencyOther(e.target.value)}
+                      required
+                    />
+                  )}
+                </div>
+              )}
+
               <div style={{ marginTop: 14 }}>
                 <label style={fieldLabelStyle(true)}>
                   Briefly, what was your scope of work for this payment? (optional)
@@ -926,6 +1022,40 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                   onChange={(e) => setRateScope(e.target.value)}
                 />
               </div>
+
+              {rateType === "amount" && (
+                <div style={{ marginTop: 14 }}>
+                  <label style={fieldLabelStyle(true)}>
+                    Relative to typical rates in your market for someone at your level, was that
+                    payment:
+                    <Required />
+                  </label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
+                    {RATE_RELATIVE_OPTIONS.map((opt) => {
+                      const active = rateRelativeToMarket === opt.value;
+                      return (
+                        <button
+                          type="button"
+                          key={opt.value}
+                          onClick={() => setRateRelativeToMarket(opt.value)}
+                          style={{
+                            background: active ? OCHRE : "transparent",
+                            border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                            borderRadius: 999,
+                            padding: "9px 18px",
+                            fontSize: 14,
+                            fontWeight: 500,
+                            color: OFFWHITE,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>

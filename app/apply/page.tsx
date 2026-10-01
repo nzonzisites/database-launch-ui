@@ -10,7 +10,7 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_band, rate_scope, capacity";
+  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity";
 
 type ExistingApplicationRow = {
   status: string;
@@ -50,7 +50,10 @@ type ExistingApplicationRow = {
   sector: string[] | null;
   sector_other: string | null;
   deliverables: string | null;
-  rate_band: string | null;
+  rate_type: string | null;
+  rate_amount: number | null;
+  rate_currency: string | null;
+  rate_relative_to_market: string | null;
   rate_scope: string | null;
   capacity: string | null;
 };
@@ -177,7 +180,11 @@ export default async function ApplyPage() {
       sector: existingApplication.sector ?? [],
       sectorOther: existingApplication.sector_other ?? "",
       deliverables: existingApplication.deliverables ?? "",
-      rateBand: existingApplication.rate_band ?? "",
+      rateType: existingApplication.rate_type ?? "",
+      rateAmount: existingApplication.rate_amount != null ? String(existingApplication.rate_amount) : "",
+      rateCurrency: existingApplication.rate_currency ?? "",
+      rateCurrencyOther: "",
+      rateRelativeToMarket: existingApplication.rate_relative_to_market ?? "",
       rateScope: existingApplication.rate_scope ?? "",
       capacity: existingApplication.capacity ?? "",
     };

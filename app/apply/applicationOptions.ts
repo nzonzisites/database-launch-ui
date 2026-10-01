@@ -66,14 +66,44 @@ export const SECTOR_OPTIONS: { value: string; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
-export const RATE_BAND_OPTIONS: { value: string; label: string }[] = [
-  { value: "under_250", label: "Under $250" },
-  { value: "250_1000", label: "$250 – $1,000" },
-  { value: "1000_5000", label: "$1,000 – $5,000" },
-  { value: "5000_15000", label: "$5,000 – $15,000" },
-  { value: "15000_plus", label: "$15,000+" },
+// Replaced fixed USD bands (2026-10-01) -- a dollar band collapsed
+// everyone paid in a weaker currency into "under $250" regardless of
+// whether that payment was a strong, professional-market rate locally,
+// while conflating purchasing-power differences with actual differences
+// in expertise. Collecting the raw amount + currency instead keeps a
+// real number Nzonzi can normalize to USD at review time (using the
+// rate at time of application), rather than losing that signal to
+// whatever band the applicant's mental FX conversion happened to land
+// in.
+export const RATE_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "amount", label: "I can give an amount" },
   { value: "first_paid_engagement", label: "This was my first paid engagement" },
   { value: "prefer_not_to_say", label: "Prefer not to say" },
+];
+
+export const CURRENCY_OPTIONS: { value: string; label: string }[] = [
+  { value: "USD", label: "USD" },
+  { value: "NGN", label: "NGN (Naira)" },
+  { value: "GBP", label: "GBP" },
+  { value: "EUR", label: "EUR" },
+  { value: "GHS", label: "GHS (Cedi)" },
+  { value: "KES", label: "KES (Shilling)" },
+  { value: "ZAR", label: "ZAR (Rand)" },
+  { value: "other", label: "Other" },
+];
+
+// The follow-up question discussed alongside the amount/currency
+// redesign: a self-assessed relative-to-market data point, distinct
+// from (and no substitute for) the actual amount -- it's meant to
+// surface scholars who are underpriced locally relative to their peers
+// and could command more from a buyer, not to replace the hard number
+// above. Only asked when an amount was actually given -- there's
+// nothing to size up against "typical" otherwise.
+export const RATE_RELATIVE_OPTIONS: { value: string; label: string }[] = [
+  { value: "below_typical", label: "Below typical for my market" },
+  { value: "typical", label: "About typical for my market" },
+  { value: "above_typical", label: "Above typical for my market" },
+  { value: "not_sure", label: "Not sure" },
 ];
 
 export const CAPACITY_OPTIONS: { value: string; label: string }[] = [

@@ -37,7 +37,11 @@ export interface SubmitApplicationInput {
   sector: string[];
   sectorOther: string;
   deliverables: string;
-  rateBand: string;
+  rateType: string;
+  rateAmount: string;
+  rateCurrency: string;
+  rateCurrencyOther: string;
+  rateRelativeToMarket: string;
   rateScope: string;
   capacity: string;
   prospectSignupId: string | null;
@@ -181,7 +185,7 @@ export async function submitApplication(
     ["reference contact method", input.referenceContactMethod],
     ["reference contact value", input.referenceContactValue],
     ["deliverables", input.deliverables],
-    ["rate", input.rateBand],
+    ["rate", input.rateType],
     ["capacity", input.capacity],
     ["prior paid work", input.priorPaidWork],
   ];
@@ -200,6 +204,20 @@ export async function submitApplication(
   }
   if (input.sector.includes("other") && !input.sectorOther.trim()) {
     return { success: false, error: 'Describe the industry since you selected "other".' };
+  }
+  if (input.rateType === "amount") {
+    if (!input.rateAmount.trim() || Number(input.rateAmount) <= 0) {
+      return { success: false, error: "Enter a valid amount for the rate question." };
+    }
+    if (!input.rateCurrency.trim()) {
+      return { success: false, error: "Select a currency for the rate you gave." };
+    }
+    if (input.rateCurrency === "other" && !input.rateCurrencyOther.trim()) {
+      return { success: false, error: 'Name the currency since you selected "other".' };
+    }
+    if (!input.rateRelativeToMarket.trim()) {
+      return { success: false, error: "Select whether that payment was typical for your market." };
+    }
   }
 
   // Best-effort: an anonymous submission has no session to look up an
@@ -255,7 +273,15 @@ export async function submitApplication(
     sector: input.sector,
     sector_other: input.sector.includes("other") ? input.sectorOther.trim() : null,
     deliverables: input.deliverables.trim(),
-    rate_band: input.rateBand,
+    rate_type: input.rateType,
+    rate_amount: input.rateType === "amount" ? Number(input.rateAmount) : null,
+    rate_currency:
+      input.rateType === "amount"
+        ? input.rateCurrency === "other"
+          ? input.rateCurrencyOther.trim()
+          : input.rateCurrency
+        : null,
+    rate_relative_to_market: input.rateType === "amount" ? input.rateRelativeToMarket : null,
     rate_scope: input.rateScope.trim() || null,
     capacity: input.capacity,
   });
@@ -301,7 +327,11 @@ export async function submitApplication(
       sector: input.sector,
       sectorOther: input.sector.includes("other") ? input.sectorOther.trim() : "",
       deliverables: input.deliverables.trim(),
-      rateBand: input.rateBand,
+      rateType: input.rateType,
+      rateAmount: input.rateAmount.trim(),
+      rateCurrency: input.rateCurrency,
+      rateCurrencyOther: input.rateType === "amount" && input.rateCurrency === "other" ? input.rateCurrencyOther.trim() : "",
+      rateRelativeToMarket: input.rateType === "amount" ? input.rateRelativeToMarket : "",
       rateScope: input.rateScope.trim(),
       capacity: input.capacity,
     });

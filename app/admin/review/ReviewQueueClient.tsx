@@ -11,7 +11,8 @@ import SessionControls from "@/app/components/SessionControls";
 import {
   FUNCTION_OPTIONS,
   SECTOR_OPTIONS,
-  RATE_BAND_OPTIONS,
+  RATE_TYPE_OPTIONS,
+  RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
   optionLabel,
@@ -337,7 +338,7 @@ function ApplicationRow({
           ) : (
             <Detail label="Professional identity" value={a.work_samples_explanation || "—"} />
           )}
-          {(a.prior_paid_work || (a.sector && a.sector.length > 0) || a.deliverables || a.rate_band || a.capacity) && (
+          {(a.prior_paid_work || (a.sector && a.sector.length > 0) || a.deliverables || a.rate_type || a.capacity) && (
             <>
               <Detail
                 label="Been paid directly by a company before"
@@ -356,9 +357,21 @@ function ApplicationRow({
               <Detail label="Deliverables produced" value={a.deliverables || "—"} />
               <Detail
                 label="Most recent paid engagement"
-                value={a.rate_band ? optionLabel(RATE_BAND_OPTIONS, a.rate_band) : "—"}
+                value={
+                  a.rate_type === "amount"
+                    ? `${a.rate_amount ?? ""} ${a.rate_currency ?? ""}`.trim()
+                    : a.rate_type
+                      ? optionLabel(RATE_TYPE_OPTIONS, a.rate_type)
+                      : "—"
+                }
               />
               {a.rate_scope && <Detail label="Scope of that payment" value={a.rate_scope} />}
+              {a.rate_type === "amount" && a.rate_relative_to_market && (
+                <Detail
+                  label="Relative to typical for their market"
+                  value={optionLabel(RATE_RELATIVE_OPTIONS, a.rate_relative_to_market)}
+                />
+              )}
               <Detail
                 label="Capacity per month"
                 value={a.capacity ? optionLabel(CAPACITY_OPTIONS, a.capacity) : "—"}

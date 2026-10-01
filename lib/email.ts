@@ -18,7 +18,8 @@ import {
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
-  RATE_BAND_OPTIONS,
+  RATE_TYPE_OPTIONS,
+  RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
   optionLabel,
@@ -112,7 +113,12 @@ export async function sendApplicationConfirmationEmail(
     data.sector
       .map((value) => (value === "other" && data.sectorOther ? data.sectorOther : optionLabel(SECTOR_OPTIONS, value)))
       .join(", ") || "";
-  const rateLabel = optionLabel(RATE_BAND_OPTIONS, data.rateBand);
+  const rateLabel =
+    data.rateType === "amount"
+      ? `${data.rateAmount} ${data.rateCurrency === "other" ? data.rateCurrencyOther : data.rateCurrency}`
+      : optionLabel(RATE_TYPE_OPTIONS, data.rateType);
+  const rateRelativeLabel =
+    data.rateType === "amount" ? optionLabel(RATE_RELATIVE_OPTIONS, data.rateRelativeToMarket) : "";
 
   const paidWorkRows =
     row("Been paid directly by a company before", optionLabel(PRIOR_PAID_WORK_OPTIONS, data.priorPaidWork)) +
@@ -120,6 +126,7 @@ export async function sendApplicationConfirmationEmail(
     row("Deliverables produced", data.deliverables) +
     row("Most recent paid engagement", rateLabel) +
     row("Scope of that payment", data.rateScope) +
+    row("Relative to typical for their market", rateRelativeLabel) +
     row("Capacity per month", optionLabel(CAPACITY_OPTIONS, data.capacity));
 
   const referenceRows =

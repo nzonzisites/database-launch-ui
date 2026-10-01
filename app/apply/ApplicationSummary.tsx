@@ -21,7 +21,8 @@ import {
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
-  RATE_BAND_OPTIONS,
+  RATE_TYPE_OPTIONS,
+  RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
   optionLabel,
@@ -68,7 +69,11 @@ export interface ApplicationSummaryData {
   sector: string[];
   sectorOther: string;
   deliverables: string;
-  rateBand: string;
+  rateType: string;
+  rateAmount: string;
+  rateCurrency: string;
+  rateCurrencyOther: string;
+  rateRelativeToMarket: string;
   rateScope: string;
   capacity: string;
 }
@@ -227,14 +232,27 @@ export default function ApplicationSummary({
           </Section>
         )}
 
-        {(sectorLabels.length > 0 || data.deliverables || data.rateBand || data.capacity || data.priorPaidWork) && (
+        {(sectorLabels.length > 0 || data.deliverables || data.rateType || data.capacity || data.priorPaidWork) && (
           <Section>
             <SectionLabel>Paid work</SectionLabel>
             <Row label="Been paid directly by a company before" value={optionLabel(PRIOR_PAID_WORK_OPTIONS, data.priorPaidWork)} />
             <ListRow label="Industries paid to work in" values={sectorLabels} />
             <Row label="Deliverables produced" value={data.deliverables} />
-            <Row label="Most recent paid engagement" value={optionLabel(RATE_BAND_OPTIONS, data.rateBand)} />
+            <Row
+              label="Most recent paid engagement"
+              value={
+                data.rateType === "amount"
+                  ? `${data.rateAmount} ${data.rateCurrency === "other" ? data.rateCurrencyOther : data.rateCurrency}`
+                  : optionLabel(RATE_TYPE_OPTIONS, data.rateType)
+              }
+            />
             <Row label="Scope of that payment" value={data.rateScope} />
+            {data.rateType === "amount" && (
+              <Row
+                label="Relative to typical for their market"
+                value={optionLabel(RATE_RELATIVE_OPTIONS, data.rateRelativeToMarket)}
+              />
+            )}
             <Row label="Capacity per month" value={optionLabel(CAPACITY_OPTIONS, data.capacity)} />
           </Section>
         )}
