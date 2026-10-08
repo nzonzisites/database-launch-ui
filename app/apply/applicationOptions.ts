@@ -23,17 +23,17 @@ export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
 ];
 
 export const FUNCTION_OPTIONS: { value: string; label: string }[] = [
-  { value: "research_development", label: "Research & development" },
-  { value: "research_policy", label: "Research & policy" },
-  { value: "healthcare_medicine", label: "Healthcare & Medicine (general)" },
+  { value: "research_development", label: "Research & Development" },
+  { value: "research_policy", label: "Research & Policy" },
+  { value: "healthcare_medicine", label: "Healthcare & Medicine (General)" },
   { value: "public_health", label: "Public Health" },
-  { value: "product_development", label: "Product development" },
+  { value: "product_development", label: "Product Development" },
   { value: "production", label: "Production" },
-  { value: "supply_chain", label: "Supply chain, procurement & sourcing" },
-  { value: "marketing_brand", label: "Marketing & brand building" },
-  { value: "sales", label: "Sales and Negotiations" },
+  { value: "supply_chain", label: "Supply Chain, Procurement & Sourcing" },
+  { value: "marketing_brand", label: "Marketing & Brand Building" },
+  { value: "sales", label: "Sales & Negotiations" },
   { value: "administration", label: "Administration" },
-  { value: "management", label: "Management / leadership" },
+  { value: "management", label: "Management / Leadership" },
   { value: "other", label: "Other" },
 ];
 
