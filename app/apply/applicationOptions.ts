@@ -31,7 +31,7 @@ export const FUNCTION_OPTIONS: { value: string; label: string }[] = [
   { value: "production", label: "Production" },
   { value: "supply_chain", label: "Supply chain, procurement & sourcing" },
   { value: "marketing_brand", label: "Marketing & brand building" },
-  { value: "sales", label: "Sales" },
+  { value: "sales", label: "Sales and Negotiations" },
   { value: "administration", label: "Administration" },
   { value: "management", label: "Management / leadership" },
   { value: "other", label: "Other" },
