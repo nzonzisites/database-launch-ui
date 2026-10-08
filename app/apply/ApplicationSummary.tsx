@@ -18,6 +18,7 @@ import { BROWN } from "@/lib/colors";
 import {
   CATEGORY_OPTIONS,
   FUNCTION_OPTIONS,
+  EXPERIENCE_AREA_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
@@ -50,6 +51,7 @@ export interface ApplicationSummaryData {
   // Function -- replaced Category as the intake question on 2026-09-30.
   intendedFunction: string;
   intendedFunctionOther: string;
+  experienceAreas: string[];
   workModality: string;
   expertiseNarrative: string;
   infrastructureNarrative: string;
@@ -165,6 +167,9 @@ export default function ApplicationSummary({
       ? data.intendedFunctionOther
       : optionLabel(FUNCTION_OPTIONS, data.intendedFunction)
     : "";
+  const experienceAreasLabel = data.experienceAreas
+    .map((value) => optionLabel(EXPERIENCE_AREA_OPTIONS, value))
+    .join(", ");
 
   const sectorLabels = data.sector.map((value) =>
     value === "other" && data.sectorOther ? data.sectorOther : optionLabel(SECTOR_OPTIONS, value)
@@ -215,6 +220,7 @@ export default function ApplicationSummary({
         <Section>
           <SectionLabel>Application</SectionLabel>
           <Row label="Function" value={functionLabel} />
+          <Row label="Experience" value={experienceAreasLabel} />
           <Row label="Category" value={categoryLabel} />
           <Row label="Delivery" value={optionLabel(WORK_MODALITY_OPTIONS, data.workModality)} />
           <Row label="What you do" value={data.expertiseNarrative} />

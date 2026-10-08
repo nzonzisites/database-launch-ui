@@ -15,6 +15,7 @@ import { Resend } from "resend";
 import type { SubmitApplicationInput } from "@/app/apply/actions";
 import {
   FUNCTION_OPTIONS,
+  EXPERIENCE_AREA_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
@@ -85,6 +86,9 @@ export async function sendApplicationConfirmationEmail(
     data.intendedFunction === "other" && data.intendedFunctionOther
       ? data.intendedFunctionOther
       : optionLabel(FUNCTION_OPTIONS, data.intendedFunction);
+  const experienceAreasLabel = data.experienceAreas
+    .map((value) => optionLabel(EXPERIENCE_AREA_OPTIONS, value))
+    .join(", ");
 
   const contactRows =
     row("Name", data.fullName) +
@@ -98,6 +102,7 @@ export async function sendApplicationConfirmationEmail(
 
   const applicationRows =
     row("Function", functionLabel) +
+    row("Experience", experienceAreasLabel) +
     row("Delivery", optionLabel(WORK_MODALITY_OPTIONS, data.workModality)) +
     row("What you do", data.expertiseNarrative) +
     row("How failed or missing infrastructure guided you", data.infrastructureNarrative) +

@@ -10,6 +10,7 @@ import ListingsTabClient from "./ListingsTabClient";
 import SessionControls from "@/app/components/SessionControls";
 import {
   FUNCTION_OPTIONS,
+  EXPERIENCE_AREA_OPTIONS,
   SECTOR_OPTIONS,
   RATE_TYPE_OPTIONS,
   RATE_RELATIVE_OPTIONS,
@@ -324,6 +325,12 @@ function ApplicationRow({
           <Detail label="Location" value={a.city_country} />
           <Detail label="Affiliations" value={a.affiliations?.join(", ") || "—"} />
           <Detail label="Function" value={categoryLabel} />
+          {a.experience_areas && a.experience_areas.length > 0 && (
+            <Detail
+              label="Experience"
+              value={a.experience_areas.map((v) => optionLabel(EXPERIENCE_AREA_OPTIONS, v)).join(", ")}
+            />
+          )}
           <Detail label="Delivery" value={MODALITY_LABELS[a.work_modality] || a.work_modality} />
           <Detail label="What they do" value={a.expertise_narrative} />
           <Detail label="Failed infrastructure → innovation" value={a.infrastructure_narrative} />

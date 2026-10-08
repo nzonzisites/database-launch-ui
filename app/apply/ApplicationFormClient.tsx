@@ -19,6 +19,7 @@ import { BROWN } from "@/lib/colors";
 import { submitApplication, lookupProspectPrefill, type SubmitApplicationInput } from "./actions";
 import {
   FUNCTION_OPTIONS,
+  EXPERIENCE_AREA_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
   SECTOR_OPTIONS,
@@ -225,6 +226,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
   const [intendedFunction, setIntendedFunction] = useState("");
   const [intendedFunctionOther, setIntendedFunctionOther] = useState("");
+  const [experienceAreas, setExperienceAreas] = useState<string[]>([]);
   const [workModality, setWorkModality] = useState("");
   const [expertiseNarrative, setExpertiseNarrative] = useState(prefill.expertiseNarrative);
   const [infrastructureNarrative, setInfrastructureNarrative] = useState(
@@ -266,6 +268,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
   function toggleSector(value: string) {
     setSector((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  }
+
+  function toggleExperienceArea(value: string) {
+    setExperienceAreas((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   }
@@ -385,6 +393,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       headshotUrl,
       intendedFunction,
       intendedFunctionOther,
+      experienceAreas,
       workModality,
       infrastructureNarrative,
       expertiseNarrative,
@@ -471,6 +480,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       headshotUrl,
       intendedFunction,
       intendedFunctionOther,
+      experienceAreas,
       workModality,
       expertiseNarrative,
       infrastructureNarrative,
@@ -706,6 +716,35 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               />
             </div>
           )}
+
+          <div>
+            <label style={fieldLabelStyle(false)}>Experience (optional)</label>
+            <p style={helperTextStyle(false)}>Do you have experience with either of these?</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {EXPERIENCE_AREA_OPTIONS.map((opt) => {
+                const active = experienceAreas.includes(opt.value);
+                return (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => toggleExperienceArea(opt.value)}
+                    style={{
+                      background: active ? FOREST : "transparent",
+                      border: `1px solid ${active ? FOREST : "rgba(31,14,3,0.35)"}`,
+                      borderRadius: 999,
+                      padding: "9px 18px",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: active ? OFFWHITE : "#1F0E03",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <div>
             <label style={fieldLabelStyle(false)}>

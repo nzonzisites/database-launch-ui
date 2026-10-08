@@ -17,6 +17,7 @@ export interface SubmitApplicationInput {
   headshotUrl: string;
   intendedFunction: string;
   intendedFunctionOther: string;
+  experienceAreas: string[];
   workModality: string;
   infrastructureNarrative: string;
   expertiseNarrative: string;
@@ -254,6 +255,7 @@ export async function submitApplication(
     intended_function: input.intendedFunction,
     intended_function_other:
       input.intendedFunction === "other" ? input.intendedFunctionOther.trim() : null,
+    experience_areas: input.experienceAreas.length > 0 ? input.experienceAreas : null,
     work_modality: input.workModality,
     infrastructure_narrative: input.infrastructureNarrative.trim(),
     expertise_narrative: input.expertiseNarrative.trim(),
@@ -307,6 +309,7 @@ export async function submitApplication(
       intendedFunction: input.intendedFunction,
       intendedFunctionOther:
         input.intendedFunction === "other" ? input.intendedFunctionOther.trim() : "",
+      experienceAreas: input.experienceAreas,
       workModality: input.workModality,
       infrastructureNarrative: input.infrastructureNarrative.trim(),
       expertiseNarrative: input.expertiseNarrative.trim(),

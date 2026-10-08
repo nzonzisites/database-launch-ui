@@ -25,15 +25,26 @@ export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
 export const FUNCTION_OPTIONS: { value: string; label: string }[] = [
   { value: "research_development", label: "Research & development" },
   { value: "research_policy", label: "Research & policy" },
+  { value: "healthcare_medicine", label: "Healthcare & Medicine (general)" },
+  { value: "public_health", label: "Public Health" },
   { value: "product_development", label: "Product development" },
   { value: "production", label: "Production" },
   { value: "supply_chain", label: "Supply chain, procurement & sourcing" },
   { value: "marketing_brand", label: "Marketing & brand building" },
-  { value: "sales_client_relations", label: "Sales & client relations" },
+  { value: "sales", label: "Sales" },
   { value: "administration", label: "Administration" },
   { value: "management", label: "Management / leadership" },
-  { value: "program_management", label: "Program / project management" },
   { value: "other", label: "Other" },
+];
+
+// Added 2026-10-08 alongside removing Project Management and Client
+// Relations from FUNCTION_OPTIONS above -- those described a skill
+// someone has, not their primary function, so they're better asked as
+// their own (optional, multi-select) question than as mutually-exclusive
+// Function options.
+export const EXPERIENCE_AREA_OPTIONS: { value: string; label: string }[] = [
+  { value: "project_management", label: "Project management" },
+  { value: "client_relations", label: "Client relations" },
 ];
 
 export const WORK_MODALITY_OPTIONS: { value: string; label: string }[] = [

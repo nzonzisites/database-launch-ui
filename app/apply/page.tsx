@@ -10,7 +10,7 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity";
+  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, experience_areas, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity";
 
 type ExistingApplicationRow = {
   status: string;
@@ -30,6 +30,7 @@ type ExistingApplicationRow = {
   // before this date, Function for everything after.
   intended_function: string | null;
   intended_function_other: string | null;
+  experience_areas: string[] | null;
   work_modality: string | null;
   infrastructure_narrative: string | null;
   expertise_narrative: string | null;
@@ -159,6 +160,7 @@ export default async function ApplyPage() {
       intendedCategoryOther: existingApplication.intended_category_other ?? "",
       intendedFunction: existingApplication.intended_function ?? "",
       intendedFunctionOther: existingApplication.intended_function_other ?? "",
+      experienceAreas: existingApplication.experience_areas ?? [],
       workModality: existingApplication.work_modality ?? "",
       expertiseNarrative: existingApplication.expertise_narrative ?? "",
       infrastructureNarrative: existingApplication.infrastructure_narrative ?? "",
