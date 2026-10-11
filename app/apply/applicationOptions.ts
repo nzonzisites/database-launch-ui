@@ -24,27 +24,35 @@ export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
 
 export const FUNCTION_OPTIONS: { value: string; label: string }[] = [
   { value: "research_development", label: "Research & Development" },
-  { value: "research_policy", label: "Research & Policy" },
-  { value: "healthcare_medicine", label: "Healthcare & Medicine (General)" },
+  { value: "policy", label: "Policy" },
+  { value: "healthcare_medicine", label: "Healthcare & Medicine" },
   { value: "public_health", label: "Public Health" },
   { value: "product_development", label: "Product Development" },
-  { value: "production", label: "Production" },
-  { value: "supply_chain", label: "Supply Chain, Procurement & Sourcing" },
+  { value: "arts_design", label: "Arts & Design" },
+  { value: "procurement_sourcing_negotiation", label: "Procurement, Sourcing & Negotiations" },
   { value: "marketing_brand", label: "Marketing & Brand Building" },
-  { value: "sales", label: "Sales & Negotiations" },
-  { value: "administration", label: "Administration" },
-  { value: "management", label: "Management / Leadership" },
+  { value: "sales", label: "Sales & Account Management" },
   { value: "other", label: "Other" },
 ];
 
-// Added 2026-10-08 alongside removing Project Management and Client
-// Relations from FUNCTION_OPTIONS above -- those described a skill
-// someone has, not their primary function, so they're better asked as
-// their own (optional, multi-select) question than as mutually-exclusive
-// Function options.
+// Rebuilt 2026-10-11 against the actual locked-in Function list from
+// 2026-09-30 (the 2026-10-08 version had drifted from it -- see that
+// commit's discussion). Production, Supply Chain (on its own),
+// Administration, and Management/Leadership are gone as standalone
+// Functions; Policy no longer implies "paired with Research"; Arts &
+// Design was added after real scholar profiles (sculpture, design,
+// digital storytelling) had no home in the list. Experience Areas
+// below was expanded at the same time to recapture the "direct
+// service experience" signal that dropping Consulting/Advisory,
+// Teaching/Training, Design/Engineering, and Operations as Functions
+// would otherwise lose.
 export const EXPERIENCE_AREA_OPTIONS: { value: string; label: string }[] = [
   { value: "project_management", label: "Project management" },
-  { value: "client_relations", label: "Client relations" },
+  { value: "client_relations", label: "Client relationship management" },
+  { value: "consulting_advising", label: "Consulting and advising" },
+  { value: "vendor_supplier_negotiation", label: "Vendor or supplier negotiation" },
+  { value: "workshop_delivery", label: "Workshop delivery" },
+  { value: "technical_engineering_delivery", label: "Technical or engineering delivery" },
 ];
 
 export const WORK_MODALITY_OPTIONS: { value: string; label: string }[] = [
