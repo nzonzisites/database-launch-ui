@@ -23,14 +23,14 @@ export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
 ];
 
 export const FUNCTION_OPTIONS: { value: string; label: string }[] = [
-  { value: "research_development", label: "Research & Development" },
-  { value: "policy", label: "Policy" },
-  { value: "healthcare_medicine", label: "Healthcare & Medicine" },
-  { value: "public_health", label: "Public Health" },
-  { value: "product_development", label: "Product Development" },
   { value: "arts_design", label: "Arts & Design" },
-  { value: "procurement_sourcing_negotiation", label: "Procurement, Sourcing & Negotiations" },
+  { value: "healthcare_medicine", label: "Healthcare & Medicine" },
   { value: "marketing_brand", label: "Marketing & Brand Building" },
+  { value: "policy", label: "Policy" },
+  { value: "procurement_sourcing_negotiation", label: "Procurement, Sourcing & Negotiations" },
+  { value: "product_development", label: "Product Development" },
+  { value: "public_health", label: "Public Health" },
+  { value: "research_development", label: "Research & Development" },
   { value: "sales", label: "Sales & Account Management" },
   { value: "other", label: "Other" },
 ];
