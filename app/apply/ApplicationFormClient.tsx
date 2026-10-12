@@ -593,7 +593,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
         <div style={{ display: "flex", flexDirection: "column", gap: 30, background: CREAM, padding: 32 }}>
           <div>
             <label style={fieldLabelStyle(false)}>
-              Email
+              1. Email
               <Required />
             </label>
             <input
@@ -615,7 +615,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           <TwoCol>
             <div>
               <label style={fieldLabelStyle(false)}>
-                First name
+                2. First name
                 <Required />
               </label>
               <input
@@ -628,7 +628,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </div>
             <div>
               <label style={fieldLabelStyle(false)}>
-                Last name
+                3. Last name
                 <Required />
               </label>
               <input
@@ -644,7 +644,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           <TwoCol>
             <div>
               <label style={fieldLabelStyle(false)}>
-                City
+                4. City
                 <Required />
               </label>
               <input
@@ -657,7 +657,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </div>
             <div>
               <label style={fieldLabelStyle(false)}>
-                Country
+                5. Country
                 <Required />
               </label>
               <input
@@ -671,7 +671,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </TwoCol>
 
           <MultiValueField
-            label="Affiliations, if any"
+            label="6. Affiliations, if any"
             onDark={false}
             values={affiliations}
             onChange={setAffiliations}
@@ -680,7 +680,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              Industry
+              7. Industry
               <Required />
             </label>
             <p style={helperTextStyle(false)}>Which best describes what you do day to day?</p>
@@ -704,7 +704,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           {intendedFunction === "other" && (
             <div>
               <label style={fieldLabelStyle(false)}>
-                Tell us your industry
+                8. Tell us your industry
                 <Required />
               </label>
               <input
@@ -718,7 +718,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           )}
 
           <div>
-            <label style={fieldLabelStyle(false)}>Experience (optional)</label>
+            <label style={fieldLabelStyle(false)}>9. Experience (optional)</label>
             <p style={helperTextStyle(false)}>Do you have experience with any of these?</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               {EXPERIENCE_AREA_OPTIONS.map((opt) => {
@@ -748,7 +748,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              Delivery
+              10. Delivery
               <Required />
             </label>
             <p style={helperTextStyle(false)}>Which of these are you open to?</p>
@@ -780,7 +780,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              What do you do, in a sentence?
+              11. What do you do, in a sentence?
               <Required />
             </label>
             <textarea
@@ -799,7 +799,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              How has failed or missing infrastructure guided you towards innovation?
+              12. How has failed or missing infrastructure guided you towards innovation?
               <Required />
             </label>
             <textarea
@@ -818,7 +818,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              Your bio
+              13. Your bio
               <Required />
             </label>
             <p style={helperTextStyle(false)}>
@@ -840,7 +840,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(false)}>Headshot</label>
+            <label style={fieldLabelStyle(false)}>14. Headshot</label>
             <p style={helperTextStyle(false)}>
               Please share a professional headshot that can be used for your listing should it
               be approved. Upload to your preferred storage site (Google Drive, Drop Box, etc)
@@ -855,7 +855,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
           <div>
             <MultiValueField
-              label="Professional identity"
+              label="15. Professional identity"
               onDark={false}
               values={workSamples}
               onChange={setWorkSamples}
@@ -863,7 +863,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               helper="Provide links to publications / media coverage / or portfolio or otherwise to help the Nzonzi team learn more about you and your work"
             />
             <div style={{ marginTop: 18 }}>
-              <label style={fieldLabelStyle(false)}>About these samples (optional)</label>
+              <label style={fieldLabelStyle(false)}>16. About these samples (optional)</label>
               <textarea
                 rows={2}
                 style={{ ...underlineInputStyle(false), lineHeight: 1.5, resize: "vertical" }}
@@ -876,7 +876,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
             <div>
               <label style={fieldLabelStyle(false)}>
-                Outside of a regular job, have you been paid directly by a company for your
+                17. Outside of a regular job, have you been paid directly by a company for your
                 expertise — consulting, freelance, or similar?
                 <Required />
               </label>
@@ -908,7 +908,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
             <div>
               <label style={fieldLabelStyle(false)}>
-                Which industries have you been paid to work in? Select all that apply.
+                18. Which industries have you been paid to work in? Select all that apply.
                 <Required />
               </label>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
@@ -948,7 +948,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
             <div>
               <label style={fieldLabelStyle(false)}>
-                What deliverables have you been paid to produce?
+                19. What deliverables have you been paid to produce?
                 <Required />
               </label>
               <textarea
@@ -965,7 +965,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
             <div>
               <label style={fieldLabelStyle(false)}>
-                Thinking of your most recent paid engagement in your primary area of expertise, roughly what
+                20. Thinking of your most recent paid engagement in your primary area of expertise, roughly what
                 did it pay?
                 <Required />
               </label>
@@ -1096,7 +1096,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
             <div>
               <label style={fieldLabelStyle(false)}>
-                Roughly how many client engagements could you take on per month alongside your
+                21. Roughly how many client engagements could you take on per month alongside your
                 current commitments?
                 <Required />
               </label>
@@ -1128,7 +1128,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(false)}>Reference</label>
+            <label style={fieldLabelStyle(false)}>22. Reference</label>
             <p style={helperTextStyle(false)}>
               One person who has paid for or supervised your work. We only contact them if you&apos;re
               selected, and only with your permission below.
@@ -1223,7 +1223,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(false)}>What&apos;s your preferred contact method?</label>
+            <label style={fieldLabelStyle(false)}>23. What&apos;s your preferred contact method?</label>
             <p style={helperTextStyle(false)}>Used for admin purposes. We won&apos;t publish it.</p>
             <div>
               <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
@@ -1275,7 +1275,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(false)}>Is there anything else you&apos;d like to share with the application review team? (optional)</label>
+            <label style={fieldLabelStyle(false)}>24. Is there anything else you&apos;d like to share with the application review team? (optional)</label>
             <textarea
               rows={2}
               style={{ ...underlineInputStyle(false), lineHeight: 1.5, resize: "vertical" }}
@@ -1285,7 +1285,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(false)}>How did you hear about us? (optional)</label>
+            <label style={fieldLabelStyle(false)}>25. How did you hear about us? (optional)</label>
             <input
               style={underlineInputStyle(false)}
               value={referralSource}
