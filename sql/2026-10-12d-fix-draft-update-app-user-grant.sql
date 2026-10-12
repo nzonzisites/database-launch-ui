@@ -1,0 +1,26 @@
+-- DESTINATION: sql/2026-10-12d-fix-draft-update-app-user-grant.sql
+--
+-- Fixes "permission denied for table app_user", seen live on an anonymous
+-- test of autosave/continue.
+--
+-- The new "applicants can update their own draft application" policy
+-- (2026-10-12a, block 4) references app_user in its USING clause:
+--
+--   applicant_user_id is null
+--   or applicant_user_id in (select id from app_user where auth_provider_id = auth.uid())
+--
+-- Postgres checks table-level privileges for every relation a query
+-- touches at parse time, before it evaluates anything -- including a
+-- table only reached through the right-hand side of an "or" that never
+-- actually runs. So even an anonymous applicant updating their own
+-- (applicant_user_id is null) draft needs SELECT privilege on app_user
+-- for the "anon" role, or the whole query is rejected before the "or"
+-- ever gets a chance to short-circuit.
+--
+-- Nothing anonymous previously touched app_user, so this gap was never
+-- hit before. The existing "users can read their own app_user row" RLS
+-- policy (auth_provider_id = auth.uid()) already limits what an anon
+-- role can actually see to zero rows -- this grant only lets the planner
+-- past the privilege check, it doesn't expose anyone's data.
+
+grant select on public.app_user to anon;
