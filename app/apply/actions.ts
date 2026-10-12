@@ -67,28 +67,12 @@ export interface ProspectPrefill {
   infrastructureNarrative: string;
 }
 
-export interface SaveDraftInput {
-  // The id returned from a prior saveApplicationDraft call this session,
-  // if any -- lets repeat calls (e.g. going back to page 1, editing, and
-  // hitting "continue" again) update the same row instead of creating a
-  // new draft every time. When null, the lookup below falls back to
-  // matching by account/email, same as submitApplication's duplicate
-  // check.
-  draftId: string | null;
-  fullName: string;
-  email: string;
-  cityCountry: string;
-  affiliations: string[];
-  headshotUrl: string;
-  intendedFunction: string;
-  intendedFunctionOther: string;
-  experienceAreas: string[];
-  workModality: string;
-  infrastructureNarrative: string;
-  expertiseNarrative: string;
-  fullBio: string;
-  prospectSignupId: string | null;
-}
+// Autosave sends the WHOLE form (both pages) on every debounced save, not
+// just page 1 -- once a draft exists, wandering off midway through page 2
+// should leave those answers saved too, not just whatever page 1 had.
+// Same shape as submitApplication's input; the two differ only in what
+// they validate and what status they write.
+export type SaveDraftInput = SubmitApplicationInput;
 
 export type SaveDraftResult =
   | { success: true; draftId: string; resumeCode: string }
@@ -108,26 +92,39 @@ function generateResumeCode(length = 8): string {
 }
 
 /**
- * Saves (inserts or updates) a "draft" application row holding just the
- * page-1 answers -- fired from the page-1 "continue" button, so an
- * applicant who fills out page 1 and then abandons before finishing page
- * 2 still leaves Nzonzi a usable partial record instead of nothing at
- * all. submitApplication (below) finds and finishes this same row at
- * final submit, rather than inserting a second one.
+ * Saves (inserts or updates) a "draft" application row -- fired both from
+ * the page-1 "continue" button and from the form's autosave timer (a few
+ * seconds after any change, on either page), so an applicant who
+ * abandons at any point still leaves Nzonzi a usable partial record
+ * instead of nothing at all. submitApplication (below) finds and
+ * finishes this same row at final submit, rather than inserting a
+ * second one.
+ *
+ * Deliberately does NOT validate completeness the way submitApplication
+ * does -- autosave has to accept a row that's only half-filled-in, often
+ * genuinely incomplete (an enum field not chosen yet, a number field not
+ * typed yet), so those are coalesced to null below rather than rejected.
+ * The one thing still required is an email, since that's what an
+ * anonymous draft is identified and matched by; the client doesn't
+ * attempt any save, autosave or "continue", before one is typed.
  *
  * A brand-new draft gets a short "continue your application" code
  * (resume_code), handed back to the client to show the applicant --
  * resumeApplicationDraft (below) is how they use it to come back later.
  * An existing draft keeps its original code rather than getting a new
- * one each time "continue" is hit again.
+ * one each time this fires again.
  *
  * Requires the matching DB migrations: a "draft" application_status
- * value, the page-2 NOT NULL constraints loosened, an UPDATE policy
- * letting the applicant (anon or authenticated) update their own draft
- * row, and the resume_code column + lookup function -- see the SQL
- * delivered alongside this change.
+ * value, the page-1 and page-2 NOT NULL constraints loosened (email
+ * stays required), an UPDATE policy letting the applicant (anon or
+ * authenticated) update their own draft row, and the resume_code column
+ * + lookup function -- see the SQL delivered alongside this change.
  */
 export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveDraftResult> {
+  if (!input.email.trim()) {
+    return { success: false, error: "Enter an email before saving." };
+  }
+
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
@@ -143,45 +140,58 @@ export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveD
     if (appUser) applicantUserId = appUser.id as string;
   }
 
-  // Mirrors the page-1 `required` fields -- this only ever fires from the
-  // page-1 "continue" button, once native browser validation on those
-  // same fields has already passed, so these checks are a server-side
-  // backstop rather than the primary gate.
-  const required: [string, string][] = [
-    ["full name", input.fullName],
-    ["email", input.email],
-    ["city and country", input.cityCountry],
-    ["industry", input.intendedFunction],
-    ["delivery", input.workModality],
-    ['"what you do"', input.expertiseNarrative],
-    ['"failed infrastructure" answer', input.infrastructureNarrative],
-    ["bio", input.fullBio],
-  ];
-  for (const [label, value] of required) {
-    if (!value || value.trim().length === 0) {
-      return { success: false, error: `Missing required field: ${label}.` };
-    }
-  }
-  if (input.intendedFunction === "other" && !input.intendedFunctionOther.trim()) {
-    return { success: false, error: 'Describe your industry since you selected "other".' };
-  }
-
   const row = {
     applicant_user_id: applicantUserId,
     prospect_signup_id: input.prospectSignupId,
-    full_name: input.fullName.trim(),
+    full_name: input.fullName.trim() || null,
     email: input.email.trim(),
     headshot_url: input.headshotUrl.trim() || null,
-    city_country: input.cityCountry.trim(),
+    contact_method: input.contactMethod || null,
+    contact_value: input.contactValue.trim() || null,
+    whatsapp_available: input.contactMethod === "phone" ? input.whatsappAvailable : null,
+    city_country: input.cityCountry.trim() || null,
     affiliations: input.affiliations,
-    intended_function: input.intendedFunction,
+    external_links: input.externalLinks,
+    // intended_function is a strict enum column -- an empty string isn't
+    // a valid value the way it is for a plain text column, so this has
+    // to be null, not "", when nothing's chosen yet.
+    intended_function: input.intendedFunction || null,
     intended_function_other:
       input.intendedFunction === "other" ? input.intendedFunctionOther.trim() : null,
     experience_areas: input.experienceAreas.length > 0 ? input.experienceAreas : null,
-    work_modality: input.workModality,
-    infrastructure_narrative: input.infrastructureNarrative.trim(),
-    expertise_narrative: input.expertiseNarrative.trim(),
-    full_bio: input.fullBio.trim(),
+    work_modality: input.workModality || null,
+    infrastructure_narrative: input.infrastructureNarrative.trim() || null,
+    expertise_narrative: input.expertiseNarrative.trim() || null,
+    full_bio: input.fullBio.trim() || null,
+    work_samples: input.workSamples.filter(Boolean).map((url) => ({ url })),
+    work_samples_explanation: input.workSamplesExplanation.trim() || null,
+    reference_name: input.referenceName.trim() || null,
+    reference_relationship: input.referenceRelationship.trim() || null,
+    reference_contact_method: input.referenceContactMethod || null,
+    reference_contact_value: input.referenceContactValue.trim() || null,
+    reference_whatsapp_available:
+      input.referenceContactMethod === "phone" ? input.referenceWhatsappAvailable : null,
+    reference_may_contact: input.referenceMayContact,
+    additional_notes: input.additionalNotes.trim() || null,
+    referral_source: input.referralSource.trim() || null,
+    prior_paid_work: input.priorPaidWork || null,
+    sector: input.sector.length > 0 ? input.sector : null,
+    sector_other: input.sector.includes("other") ? input.sectorOther.trim() : null,
+    deliverables: input.deliverables.trim() || null,
+    rate_type: input.rateType || null,
+    // rate_amount is numeric -- Number("") is 0, not "not answered yet",
+    // so this only converts once something's actually been typed.
+    rate_amount:
+      input.rateType === "amount" && input.rateAmount.trim() ? Number(input.rateAmount) : null,
+    rate_currency:
+      input.rateType === "amount"
+        ? input.rateCurrency === "other"
+          ? input.rateCurrencyOther.trim()
+          : input.rateCurrency || null
+        : null,
+    rate_relative_to_market: input.rateType === "amount" ? input.rateRelativeToMarket || null : null,
+    rate_scope: input.rateScope.trim() || null,
+    capacity: input.capacity || null,
     status: "draft" as const,
   };
 

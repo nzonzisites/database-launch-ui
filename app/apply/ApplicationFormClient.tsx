@@ -13,7 +13,7 @@
 
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   submitApplication,
@@ -21,6 +21,7 @@ import {
   resumeApplicationDraft,
   lookupProspectPrefill,
   type SubmitApplicationInput,
+  type SaveDraftInput,
 } from "./actions";
 import { BROWN } from "@/lib/colors";
 import {
@@ -345,27 +346,60 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // The full current state of the form, in the shape saveApplicationDraft
+  // (and submitApplication) expect. Shared by "continue", the autosave
+  // timer below, and final submit, so there's exactly one place that
+  // knows how form state maps to that shape.
+  function buildDraftInput(): SaveDraftInput {
+    return {
+      draftId,
+      fullName: `${firstName} ${lastName}`.trim(),
+      email,
+      contactMethod,
+      contactValue,
+      whatsappAvailable,
+      cityCountry: [city, country].filter(Boolean).join(", "),
+      affiliations,
+      headshotUrl,
+      intendedFunction,
+      intendedFunctionOther,
+      experienceAreas,
+      workModality,
+      infrastructureNarrative,
+      expertiseNarrative,
+      fullBio,
+      externalLinks,
+      workSamples,
+      workSamplesExplanation,
+      referenceName,
+      referenceRelationship,
+      referenceContactMethod,
+      referenceContactValue,
+      referenceWhatsappAvailable,
+      referenceMayContact,
+      additionalNotes,
+      referralSource,
+      priorPaidWork,
+      sector,
+      sectorOther,
+      deliverables,
+      rateType,
+      rateAmount,
+      rateCurrency,
+      rateCurrencyOther,
+      rateRelativeToMarket,
+      rateScope,
+      capacity,
+      prospectSignupId: prefill.prospectSignupId,
+    };
+  }
+
   async function handleContinue() {
     if (!formRef.current?.reportValidity()) return;
     setError(null);
     setSavingDraft(true);
     try {
-      const result = await saveApplicationDraft({
-        draftId,
-        fullName: `${firstName} ${lastName}`.trim(),
-        email,
-        cityCountry: [city, country].filter(Boolean).join(", "),
-        affiliations,
-        headshotUrl,
-        intendedFunction,
-        intendedFunctionOther,
-        experienceAreas,
-        workModality,
-        infrastructureNarrative,
-        expertiseNarrative,
-        fullBio,
-        prospectSignupId: prefill.prospectSignupId,
-      });
+      const result = await saveApplicationDraft(buildDraftInput());
       if (!result.success) {
         setError(result.error);
         return;
@@ -377,6 +411,81 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       setSavingDraft(false);
     }
   }
+
+  // Autosave: a couple of seconds after any change on either page, save
+  // whatever's currently filled in -- no validation, so a genuinely
+  // incomplete answer is fine. Waits for an email before the very first
+  // save (nothing else to identify/match a brand-new draft by), then
+  // keeps saving on every further change, including ones made after
+  // "continue" or a resumed draft. Quiet by design: failures (e.g. a
+  // flaky connection) just mean the next change retries a few seconds
+  // later, same as any other autosave.
+  const autosaveMountedRef = useRef(false);
+  useEffect(() => {
+    // Skip the very first run -- it fires on mount/prefill too (a
+    // signed-in visitor's email is already filled in before they've
+    // touched anything), and merely loading the page shouldn't create a
+    // draft row. Only an actual change, after that, schedules a save.
+    if (!autosaveMountedRef.current) {
+      autosaveMountedRef.current = true;
+      return;
+    }
+    if (submitted) return;
+    if (!email.trim()) return;
+
+    const timer = setTimeout(() => {
+      saveApplicationDraft(buildDraftInput()).then((result) => {
+        if (result.success) {
+          setDraftId(result.draftId);
+          setResumeCode(result.resumeCode);
+        }
+      });
+    }, 2500);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    submitted,
+    firstName,
+    lastName,
+    email,
+    contactMethod,
+    contactValue,
+    whatsappAvailable,
+    city,
+    country,
+    affiliations,
+    headshotUrl,
+    intendedFunction,
+    intendedFunctionOther,
+    experienceAreas,
+    workModality,
+    infrastructureNarrative,
+    expertiseNarrative,
+    fullBio,
+    externalLinks,
+    workSamples,
+    workSamplesExplanation,
+    referenceName,
+    referenceRelationship,
+    referenceContactMethod,
+    referenceContactValue,
+    referenceWhatsappAvailable,
+    referenceMayContact,
+    additionalNotes,
+    referralSource,
+    priorPaidWork,
+    sector,
+    sectorOther,
+    deliverables,
+    rateType,
+    rateAmount,
+    rateCurrency,
+    rateCurrencyOther,
+    rateRelativeToMarket,
+    rateScope,
+    capacity,
+  ]);
 
   // Lets someone who saved a draft earlier (page 1 only, or page 1 then
   // abandoned) come back without an account -- just the short code shown
@@ -473,47 +582,9 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       return;
     }
 
-    const input: SubmitApplicationInput = {
-      fullName: `${firstName} ${lastName}`.trim(),
-      email,
-      contactMethod,
-      contactValue,
-      whatsappAvailable,
-      cityCountry: [city, country].filter(Boolean).join(", "),
-      affiliations,
-      headshotUrl,
-      intendedFunction,
-      intendedFunctionOther,
-      experienceAreas,
-      workModality,
-      infrastructureNarrative,
-      expertiseNarrative,
-      fullBio,
-      externalLinks,
-      workSamples,
-      workSamplesExplanation,
-      referenceName,
-      referenceRelationship,
-      referenceContactMethod,
-      referenceContactValue,
-      referenceWhatsappAvailable,
-      referenceMayContact,
-      additionalNotes,
-      referralSource,
-      priorPaidWork,
-      sector,
-      sectorOther,
-      deliverables,
-      rateType,
-      rateAmount,
-      rateCurrency,
-      rateCurrencyOther,
-      rateRelativeToMarket,
-      rateScope,
-      capacity,
-      prospectSignupId: prefill.prospectSignupId,
-      draftId,
-    };
+    // Same shape buildDraftInput() returns -- reuse it rather than
+    // listing every field a second time.
+    const input: SubmitApplicationInput = buildDraftInput();
 
     startTransition(async () => {
       const result = await submitApplication(input);
@@ -1071,7 +1142,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             style={{
               background: "transparent",
               border: 0,
-              borderBottom: "1px solid #1F0E03",
               padding: "5px 0",
               marginTop: 40,
               fontSize: 16,
