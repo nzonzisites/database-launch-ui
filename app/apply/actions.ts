@@ -91,8 +91,21 @@ export interface SaveDraftInput {
 }
 
 export type SaveDraftResult =
-  | { success: true; draftId: string }
+  | { success: true; draftId: string; resumeCode: string }
   | { success: false; error: string };
+
+// Avoids 0/O/1/I/L -- easy to misread, especially handwritten or over the
+// phone. 8 chars from this 32-char alphabet is ~40 bits, plenty for a
+// low-stakes "don't lose your draft" code rather than an auth credential.
+const RESUME_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+function generateResumeCode(length = 8): string {
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += RESUME_CODE_ALPHABET[Math.floor(Math.random() * RESUME_CODE_ALPHABET.length)];
+  }
+  return code;
+}
 
 /**
  * Saves (inserts or updates) a "draft" application row holding just the
@@ -102,10 +115,17 @@ export type SaveDraftResult =
  * all. submitApplication (below) finds and finishes this same row at
  * final submit, rather than inserting a second one.
  *
- * Requires the matching DB migration: a "draft" application_status
- * value, the page-2 NOT NULL constraints loosened, and an UPDATE policy
+ * A brand-new draft gets a short "continue your application" code
+ * (resume_code), handed back to the client to show the applicant --
+ * resumeApplicationDraft (below) is how they use it to come back later.
+ * An existing draft keeps its original code rather than getting a new
+ * one each time "continue" is hit again.
+ *
+ * Requires the matching DB migrations: a "draft" application_status
+ * value, the page-2 NOT NULL constraints loosened, an UPDATE policy
  * letting the applicant (anon or authenticated) update their own draft
- * row -- see the SQL delivered alongside this change.
+ * row, and the resume_code column + lookup function -- see the SQL
+ * delivered alongside this change.
  */
 export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveDraftResult> {
   const supabase = await getSupabaseServerClient();
@@ -189,22 +209,121 @@ export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveD
   }
 
   if (existingDraftId) {
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("application")
       .update(row)
       .eq("id", existingDraftId)
-      .eq("status", "draft");
+      .eq("status", "draft")
+      .select("id, resume_code")
+      .single();
     if (error) return { success: false, error: error.message };
-    return { success: true, draftId: existingDraftId };
+    return {
+      success: true,
+      draftId: updated.id as string,
+      resumeCode: updated.resume_code as string,
+    };
   }
 
-  const { data: inserted, error } = await supabase
-    .from("application")
-    .insert(row)
-    .select("id")
-    .single();
-  if (error) return { success: false, error: error.message };
-  return { success: true, draftId: inserted.id as string };
+  // New draft -- generate a code, retrying with a fresh one only on an
+  // actual collision (unique_violation, Postgres code 23505); anything
+  // else is a real error, not worth retrying.
+  let lastError: string | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: inserted, error } = await supabase
+      .from("application")
+      .insert({ ...row, resume_code: generateResumeCode() })
+      .select("id, resume_code")
+      .single();
+    if (!error) {
+      return {
+        success: true,
+        draftId: inserted.id as string,
+        resumeCode: inserted.resume_code as string,
+      };
+    }
+    lastError = error.message;
+    if ((error as { code?: string }).code !== "23505") break;
+  }
+  return { success: false, error: lastError ?? "Could not save your draft. Please try again." };
+}
+
+export type ResumeDraftResult =
+  | {
+      success: true;
+      draftId: string;
+      resumeCode: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      city: string;
+      country: string;
+      affiliations: string[];
+      headshotUrl: string;
+      intendedFunction: string;
+      intendedFunctionOther: string;
+      experienceAreas: string[];
+      workModality: string;
+      infrastructureNarrative: string;
+      expertiseNarrative: string;
+      fullBio: string;
+      prospectSignupId: string | null;
+    }
+  | { success: false; error: string };
+
+/**
+ * Looks up a draft application by its "continue your application" code,
+ * and returns everything needed to repopulate page 1 of the form. Goes
+ * through the get_application_draft_by_resume_code SECURITY DEFINER RPC
+ * (same pattern as lookupProspectPrefill's get_prospect_signup_prefill)
+ * rather than a direct select -- the code is the only thing standing
+ * between a visitor and this draft, so the lookup has to return at most
+ * the one row matching it, never let someone browse drafts generally.
+ *
+ * full_name and city_country are stored as single combined strings (see
+ * the row shape in saveApplicationDraft above) -- split back into the
+ * separate first/last name and city/country fields the form actually
+ * uses. Imperfect for a multi-word first name or a city with a comma in
+ * it, but the applicant lands back on page 1 and can fix either before
+ * continuing again.
+ */
+export async function resumeApplicationDraft(code: string): Promise<ResumeDraftResult> {
+  const trimmed = code.trim().toUpperCase();
+  if (!trimmed) {
+    return { success: false, error: "Enter your continue code." };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("get_application_draft_by_resume_code", {
+    p_code: trimmed,
+  });
+  if (error || !data || data.length === 0) {
+    return { success: false, error: "We couldn't find a saved application with that code." };
+  }
+
+  const row = data[0];
+  const nameParts = ((row.full_name as string) ?? "").trim().split(/\s+/).filter(Boolean);
+  const cityCountryParts = ((row.city_country as string) ?? "").split(",");
+
+  return {
+    success: true,
+    draftId: row.id as string,
+    resumeCode: row.resume_code as string,
+    firstName: nameParts[0] ?? "",
+    lastName: nameParts.slice(1).join(" "),
+    email: (row.email as string) ?? "",
+    city: (cityCountryParts[0] ?? "").trim(),
+    country: cityCountryParts.slice(1).join(",").trim(),
+    affiliations: (row.affiliations as string[]) ?? [],
+    headshotUrl: (row.headshot_url as string) ?? "",
+    intendedFunction: (row.intended_function as string) ?? "",
+    intendedFunctionOther: (row.intended_function_other as string) ?? "",
+    experienceAreas: (row.experience_areas as string[]) ?? [],
+    workModality: (row.work_modality as string) ?? "",
+    infrastructureNarrative: (row.infrastructure_narrative as string) ?? "",
+    expertiseNarrative: (row.expertise_narrative as string) ?? "",
+    fullBio: (row.full_bio as string) ?? "",
+    prospectSignupId: (row.prospect_signup_id as string) ?? null,
+  };
 }
 
 /**

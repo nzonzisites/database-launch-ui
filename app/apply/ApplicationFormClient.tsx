@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import {
   submitApplication,
   saveApplicationDraft,
+  resumeApplicationDraft,
   lookupProspectPrefill,
   type SubmitApplicationInput,
 } from "./actions";
@@ -212,6 +213,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const formRef = useRef<HTMLFormElement>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [resumeCode, setResumeCode] = useState<string | null>(null);
+  const [showResumeForm, setShowResumeForm] = useState(false);
+  const [resumeCodeInput, setResumeCodeInput] = useState("");
+  const [resumingDraft, setResumingDraft] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
@@ -365,9 +371,48 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
         return;
       }
       setDraftId(result.draftId);
+      setResumeCode(result.resumeCode);
       goToPage(2);
     } finally {
       setSavingDraft(false);
+    }
+  }
+
+  // Lets someone who saved a draft earlier (page 1 only, or page 1 then
+  // abandoned) come back without an account -- just the short code shown
+  // once they first hit "continue". Repopulates page 1 and leaves them
+  // there to review/edit before hitting "continue" again themselves,
+  // rather than jumping straight to page 2 unreviewed.
+  async function handleResumeDraft() {
+    if (!resumeCodeInput.trim()) return;
+    setResumeError(null);
+    setResumingDraft(true);
+    try {
+      const result = await resumeApplicationDraft(resumeCodeInput);
+      if (!result.success) {
+        setResumeError(result.error);
+        return;
+      }
+      setFirstName(result.firstName);
+      setLastName(result.lastName);
+      setEmail(result.email);
+      setCity(result.city);
+      setCountry(result.country);
+      setAffiliations(result.affiliations);
+      setHeadshotUrl(result.headshotUrl);
+      setIntendedFunction(result.intendedFunction);
+      setIntendedFunctionOther(result.intendedFunctionOther);
+      setExperienceAreas(result.experienceAreas);
+      setWorkModality(result.workModality);
+      setInfrastructureNarrative(result.infrastructureNarrative);
+      setExpertiseNarrative(result.expertiseNarrative);
+      setFullBio(result.fullBio);
+      setDraftId(result.draftId);
+      setResumeCode(result.resumeCode);
+      setShowResumeForm(false);
+      setResumeCodeInput("");
+    } finally {
+      setResumingDraft(false);
     }
   }
 
@@ -637,11 +682,103 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             anything below.
           </p>
         )}
+
+        {page === 1 && !draftId && !showResumeForm && (
+          <button
+            type="button"
+            onClick={() => setShowResumeForm(true)}
+            style={{
+              background: "transparent",
+              border: 0,
+              padding: 0,
+              marginBottom: 40,
+              fontSize: 13.5,
+              fontWeight: 400,
+              textDecoration: "underline",
+              cursor: "pointer",
+              color: "rgba(240,240,240,0.6)",
+            }}
+          >
+            Started earlier? Continue with your code
+          </button>
+        )}
+        {page === 1 && showResumeForm && (
+          <div style={{ marginBottom: 40 }}>
+            <label style={{ fontSize: 13.5, fontWeight: 400, color: "rgba(240,240,240,0.6)" }}>
+              Enter your continue code
+            </label>
+            <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
+              <input
+                value={resumeCodeInput}
+                onChange={(e) => setResumeCodeInput(e.target.value)}
+                placeholder="e.g. 7K4P9XQ2"
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(240,240,240,0.35)",
+                  borderRadius: 4,
+                  padding: "8px 10px",
+                  fontSize: 14,
+                  color: OFFWHITE,
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleResumeDraft}
+                disabled={resumingDraft}
+                style={{
+                  background: "transparent",
+                  border: 0,
+                  borderBottom: `1px solid ${OFFWHITE}`,
+                  padding: "5px 0",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: resumingDraft ? "default" : "pointer",
+                  color: OFFWHITE,
+                  opacity: resumingDraft ? 0.6 : 1,
+                }}
+              >
+                {resumingDraft ? "looking..." : "continue"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResumeForm(false);
+                  setResumeError(null);
+                }}
+                style={{
+                  background: "transparent",
+                  border: 0,
+                  padding: "5px 0",
+                  fontSize: 14,
+                  fontWeight: 400,
+                  cursor: "pointer",
+                  color: "rgba(240,240,240,0.5)",
+                }}
+              >
+                cancel
+              </button>
+            </div>
+            {resumeError && (
+              <p style={{ fontSize: 13, marginTop: 10, color: "#ffb4a8" }}>{resumeError}</p>
+            )}
+          </div>
+        )}
+
         {page === 2 && (
-          <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 40px", color: "rgba(240,240,240,0.7)" }}>
+          <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 20px", color: "rgba(240,240,240,0.7)" }}>
             Step 2 of 2 -- this part is for internal review only. It helps the Nzonzi team
             assess your experience and platform fit, and won&apos;t appear on your public
             listing.
+          </p>
+        )}
+        {page === 2 && resumeCode && (
+          <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 40px", color: "rgba(240,240,240,0.55)" }}>
+            Your continue code is{" "}
+            <strong style={{ color: OFFWHITE, letterSpacing: "0.05em" }}>{resumeCode}</strong>.
+            Save it somewhere -- if you don&apos;t finish today, it&apos;s how you pick back up
+            without starting over.
           </p>
         )}
 
