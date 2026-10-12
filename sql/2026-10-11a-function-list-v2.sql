@@ -15,13 +15,15 @@
 -- "sales" keeps its value, only its label changes (-> "Sales & Account
 -- Management").
 --
--- Also expands application_experience_area from 2 values to 6, to
+-- Also expands application_experience_area from 2 values to 7, to
 -- recapture "direct service experience" signal for Functions that got
 -- dropped (Consulting/Advisory, Teaching/Training, Design/Engineering,
 -- Operations): project_management, client_relations,
 -- consulting_advising, vendor_supplier_negotiation, workshop_delivery,
--- technical_engineering_delivery. "client_relations" keeps its value,
--- only its label changes (-> "Client relationship management").
+-- manufacturing_operations, product_commercialization.
+-- "client_relations" keeps its value, only its label changes (->
+-- "Client relationship management"). "workshop_delivery" keeps its
+-- value, only its label changes (-> "Workshop facilitation").
 --
 -- Postgres can't add/drop/rename individual enum values in place, so
 -- both types are dropped and recreated. Safe to do outright (no
@@ -68,7 +70,8 @@ create type public.application_experience_area as enum (
   'consulting_advising',
   'vendor_supplier_negotiation',
   'workshop_delivery',
-  'technical_engineering_delivery'
+  'manufacturing_operations',
+  'product_commercialization'
 );
 
 -- 8 of 8

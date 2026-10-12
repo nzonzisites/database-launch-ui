@@ -15,7 +15,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BROWN } from "@/lib/colors";
 import { submitApplication, lookupProspectPrefill, type SubmitApplicationInput } from "./actions";
 import {
   FUNCTION_OPTIONS,
@@ -558,7 +557,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   }
 
   return (
-    <div style={{ background: BROWN, minHeight: "100vh" }}>
+    <div style={{ background: CREAM, minHeight: "100vh" }}>
       <form onSubmit={handleSubmit} style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
         {/* No SessionControls here (unlike the submitted/recap view) --
             most visitors reach this form signed out, and even a signed-in
@@ -572,18 +571,18 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             letterSpacing: "-0.035em",
             lineHeight: 1.12,
             margin: 0,
-            color: OFFWHITE,
+            color: "#1F0E03",
             textTransform: "lowercase",
           }}
         >
           nzonzi listing application
         </h2>
-        <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 12px", color: "rgba(240,240,240,0.7)" }}>
+        <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 12px", color: "rgba(31,14,3,0.7)" }}>
           The Nzonzi team will review your listing application and be in touch if you&apos;re
           selected for the next cohort.
         </p>
         {hasPrefill && (
-          <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 40px", color: "rgba(240,240,240,0.5)" }}>
+          <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 40px", color: "rgba(31,14,3,0.5)" }}>
             We&apos;ve carried over what you told us when you signed up -- feel free to update
             anything below.
           </p>
@@ -680,7 +679,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              Function
+              Industry
               <Required />
             </label>
             <p style={helperTextStyle(false)}>Which best describes what you do day to day?</p>
@@ -691,7 +690,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               required
             >
               <option value="" disabled>
-                Select a function
+                Select an industry
               </option>
               {FUNCTION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
@@ -704,7 +703,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           {intendedFunction === "other" && (
             <div>
               <label style={fieldLabelStyle(false)}>
-                Tell us your function
+                Tell us your industry
                 <Required />
               </label>
               <input
@@ -719,7 +718,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>Experience (optional)</label>
-            <p style={helperTextStyle(false)}>Do you have experience with either of these?</p>
+            <p style={helperTextStyle(false)}>Do you have experience with any of these?</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               {EXPERIENCE_AREA_OPTIONS.map((opt) => {
                 const active = experienceAreas.includes(opt.value);
@@ -855,21 +854,25 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
         </div>
 
+        <div
+          style={{ borderTop: "1px solid rgba(31,14,3,0.15)", margin: "40px 0 10px" }}
+        />
+
         <div style={{ display: "flex", flexDirection: "column", gap: 30, marginTop: 30 }}>
           <div>
             <MultiValueField
               label="Professional identity"
-              onDark
+              onDark={false}
               values={workSamples}
               onChange={setWorkSamples}
               placeholder="https://..."
               helper="Provide links to publications / media coverage / or portfolio or otherwise to help the Nzonzi team learn more about you and your work"
             />
             <div style={{ marginTop: 18 }}>
-              <label style={fieldLabelStyle(true)}>About these samples (optional)</label>
+              <label style={fieldLabelStyle(false)}>About these samples (optional)</label>
               <textarea
                 rows={2}
-                style={{ ...underlineInputStyle(true), lineHeight: 1.5, resize: "vertical" }}
+                style={{ ...underlineInputStyle(false), lineHeight: 1.5, resize: "vertical" }}
                 value={workSamplesExplanation}
                 onChange={(e) => setWorkSamplesExplanation(e.target.value)}
               />
@@ -878,7 +881,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
             <div>
-              <label style={fieldLabelStyle(true)}>
+              <label style={fieldLabelStyle(false)}>
                 Outside of a regular job, have you been paid directly by a company for your
                 expertise — consulting, freelance, or similar?
                 <Required />
@@ -892,13 +895,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                       key={opt.value}
                       onClick={() => setPriorPaidWork(opt.value)}
                       style={{
-                        background: active ? OCHRE : "transparent",
-                        border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                        background: active ? FOREST : "transparent",
+                        border: `1px solid ${active ? FOREST : "rgba(31,14,3,0.35)"}`,
                         borderRadius: 999,
                         padding: "9px 18px",
                         fontSize: 14,
                         fontWeight: 500,
-                        color: active ? OFFWHITE : OFFWHITE,
+                        color: active ? OFFWHITE : "#1F0E03",
                         cursor: "pointer",
                       }}
                     >
@@ -910,7 +913,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </div>
 
             <div>
-              <label style={fieldLabelStyle(true)}>
+              <label style={fieldLabelStyle(false)}>
                 Which industries have you been paid to work in? Select all that apply.
                 <Required />
               </label>
@@ -923,13 +926,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                       key={opt.value}
                       onClick={() => toggleSector(opt.value)}
                       style={{
-                        background: active ? OCHRE : "transparent",
-                        border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                        background: active ? FOREST : "transparent",
+                        border: `1px solid ${active ? FOREST : "rgba(31,14,3,0.35)"}`,
                         borderRadius: 999,
                         padding: "9px 18px",
                         fontSize: 14,
                         fontWeight: 500,
-                        color: OFFWHITE,
+                        color: active ? OFFWHITE : "#1F0E03",
                         cursor: "pointer",
                       }}
                     >
@@ -940,7 +943,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               </div>
               {sector.includes("other") && (
                 <input
-                  style={{ ...underlineInputStyle(true), marginTop: 14 }}
+                  style={{ ...underlineInputStyle(false), marginTop: 14 }}
                   placeholder="Tell us the industry"
                   value={sectorOther}
                   onChange={(e) => setSectorOther(e.target.value)}
@@ -950,25 +953,25 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </div>
 
             <div>
-              <label style={fieldLabelStyle(true)}>
+              <label style={fieldLabelStyle(false)}>
                 What deliverables have you been paid to produce?
                 <Required />
               </label>
               <textarea
                 rows={3}
                 maxLength={300}
-                style={{ ...underlineInputStyle(true), lineHeight: 1.5, resize: "vertical" }}
+                style={{ ...underlineInputStyle(false), lineHeight: 1.5, resize: "vertical" }}
                 value={deliverables}
                 onChange={(e) => setDeliverables(e.target.value)}
               />
-              <div style={{ textAlign: "right", fontSize: 11.5, fontWeight: 300, color: "rgba(240,240,240,0.4)", marginTop: 6 }}>
+              <div style={{ textAlign: "right", fontSize: 11.5, fontWeight: 300, color: "rgba(31,14,3,0.4)", marginTop: 6 }}>
                 {deliverables.length} / 300
               </div>
             </div>
 
             <div>
-              <label style={fieldLabelStyle(true)}>
-                Thinking of your most recent paid engagement in your primary area, roughly what
+              <label style={fieldLabelStyle(false)}>
+                Thinking of your most recent paid engagement in your primary area of expertise, roughly what
                 did it pay?
                 <Required />
               </label>
@@ -981,13 +984,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                       key={opt.value}
                       onClick={() => setRateType(opt.value)}
                       style={{
-                        background: active ? OCHRE : "transparent",
-                        border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                        background: active ? FOREST : "transparent",
+                        border: `1px solid ${active ? FOREST : "rgba(31,14,3,0.35)"}`,
                         borderRadius: 999,
                         padding: "9px 18px",
                         fontSize: 14,
                         fontWeight: 500,
-                        color: OFFWHITE,
+                        color: active ? OFFWHITE : "#1F0E03",
                         cursor: "pointer",
                       }}
                     >
@@ -1001,7 +1004,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                 <div style={{ marginTop: 14 }}>
                   <TwoCol>
                     <div>
-                      <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                      <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
                         Amount
                         <Required />
                       </label>
@@ -1009,7 +1012,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                         type="number"
                         min="0"
                         step="any"
-                        style={underlineInputStyle(true)}
+                        style={underlineInputStyle(false)}
                         placeholder="e.g. 450"
                         value={rateAmount}
                         onChange={(e) => setRateAmount(e.target.value)}
@@ -1017,12 +1020,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                       />
                     </div>
                     <div>
-                      <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                      <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
                         Currency
                         <Required />
                       </label>
                       <select
-                        style={{ ...underlineInputStyle(true), cursor: "pointer" }}
+                        style={{ ...underlineInputStyle(false), cursor: "pointer" }}
                         value={rateCurrency}
                         onChange={(e) => setRateCurrency(e.target.value)}
                         required
@@ -1041,7 +1044,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
                   {rateCurrency === "other" && (
                     <input
-                      style={{ ...underlineInputStyle(true), marginTop: 14 }}
+                      style={{ ...underlineInputStyle(false), marginTop: 14 }}
                       placeholder="Name the currency"
                       value={rateCurrencyOther}
                       onChange={(e) => setRateCurrencyOther(e.target.value)}
@@ -1052,11 +1055,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               )}
 
               <div style={{ marginTop: 14 }}>
-                <label style={fieldLabelStyle(true)}>
+                <label style={fieldLabelStyle(false)}>
                   Briefly, what was your scope of work for this payment? (optional)
                 </label>
                 <input
-                  style={underlineInputStyle(true)}
+                  style={underlineInputStyle(false)}
                   value={rateScope}
                   onChange={(e) => setRateScope(e.target.value)}
                 />
@@ -1064,7 +1067,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
               {rateType === "amount" && (
                 <div style={{ marginTop: 14 }}>
-                  <label style={fieldLabelStyle(true)}>
+                  <label style={fieldLabelStyle(false)}>
                     Relative to typical rates in your market for someone at your level, was that
                     payment:
                     <Required />
@@ -1078,13 +1081,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                           key={opt.value}
                           onClick={() => setRateRelativeToMarket(opt.value)}
                           style={{
-                            background: active ? OCHRE : "transparent",
-                            border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                            background: active ? FOREST : "transparent",
+                            border: `1px solid ${active ? FOREST : "rgba(31,14,3,0.35)"}`,
                             borderRadius: 999,
                             padding: "9px 18px",
                             fontSize: 14,
                             fontWeight: 500,
-                            color: OFFWHITE,
+                            color: active ? OFFWHITE : "#1F0E03",
                             cursor: "pointer",
                           }}
                         >
@@ -1098,7 +1101,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </div>
 
             <div>
-              <label style={fieldLabelStyle(true)}>
+              <label style={fieldLabelStyle(false)}>
                 Roughly how many client engagements could you take on per month alongside your
                 current commitments?
                 <Required />
@@ -1112,13 +1115,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                       key={opt.value}
                       onClick={() => setCapacity(opt.value)}
                       style={{
-                        background: active ? OCHRE : "transparent",
-                        border: `1px solid ${active ? OCHRE : "rgba(240,240,240,0.35)"}`,
+                        background: active ? FOREST : "transparent",
+                        border: `1px solid ${active ? FOREST : "rgba(31,14,3,0.35)"}`,
                         borderRadius: 999,
                         padding: "9px 18px",
                         fontSize: 14,
                         fontWeight: 500,
-                        color: OFFWHITE,
+                        color: active ? OFFWHITE : "#1F0E03",
                         cursor: "pointer",
                       }}
                     >
@@ -1131,31 +1134,31 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(true)}>Reference</label>
-            <p style={helperTextStyle(true)}>
+            <label style={fieldLabelStyle(false)}>Reference</label>
+            <p style={helperTextStyle(false)}>
               One person who has paid for or supervised your work. We only contact them if you&apos;re
               selected, and only with your permission below.
             </p>
             <TwoCol>
               <div>
-                <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
                   Name
                   <Required />
                 </label>
                 <input
-                  style={underlineInputStyle(true)}
+                  style={underlineInputStyle(false)}
                   value={referenceName}
                   onChange={(e) => setReferenceName(e.target.value)}
                   required
                 />
               </div>
               <div>
-                <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+                <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
                   Relationship to you
                   <Required />
                 </label>
                 <input
-                  style={underlineInputStyle(true)}
+                  style={underlineInputStyle(false)}
                   value={referenceRelationship}
                   onChange={(e) => setReferenceRelationship(e.target.value)}
                   required
@@ -1164,12 +1167,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </TwoCol>
 
             <div style={{ marginTop: 18 }}>
-              <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+              <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
                 Contact by
                 <Required />
               </label>
               <select
-                style={{ ...underlineInputStyle(true), cursor: "pointer" }}
+                style={{ ...underlineInputStyle(false), cursor: "pointer" }}
                 value={referenceContactMethod}
                 onChange={(e) => setReferenceContactMethod(e.target.value)}
                 required
@@ -1185,12 +1188,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               </select>
             </div>
             <div style={{ marginTop: 18 }}>
-              <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+              <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
                 {referenceContactMethod === "phone" ? "Number" : "Email"}
                 <Required />
               </label>
               <input
-                style={underlineInputStyle(true)}
+                style={underlineInputStyle(false)}
                 value={referenceContactValue}
                 onChange={(e) => setReferenceContactValue(e.target.value)}
                 required
@@ -1205,7 +1208,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                   checked={referenceWhatsappAvailable}
                   onChange={(e) => setReferenceWhatsappAvailable(e.target.checked)}
                 />
-                <label htmlFor="reference-whatsapp" style={{ fontSize: 13, color: OFFWHITE }}>
+                <label htmlFor="reference-whatsapp" style={{ fontSize: 13, color: "#1F0E03" }}>
                   This number is reachable on WhatsApp
                 </label>
               </div>
@@ -1219,22 +1222,22 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                 onChange={(e) => setReferenceMayContact(e.target.checked)}
                 style={{ marginTop: 3 }}
               />
-              <label htmlFor="reference-may-contact" style={{ fontSize: 13, color: OFFWHITE }}>
+              <label htmlFor="reference-may-contact" style={{ fontSize: 13, color: "#1F0E03" }}>
                 I&apos;ve told this person we may contact them as part of reviewing my application.
               </label>
             </div>
           </div>
 
           <div>
-            <label style={fieldLabelStyle(true)}>What&apos;s your preferred contact method?</label>
-            <p style={helperTextStyle(true)}>Used for admin purposes. We won&apos;t publish it.</p>
+            <label style={fieldLabelStyle(false)}>What&apos;s your preferred contact method?</label>
+            <p style={helperTextStyle(false)}>Used for admin purposes. We won&apos;t publish it.</p>
             <div>
-              <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+              <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
                 Contact by
                 <Required />
               </label>
               <select
-                style={{ ...underlineInputStyle(true), cursor: "pointer" }}
+                style={{ ...underlineInputStyle(false), cursor: "pointer" }}
                 value={contactMethod}
                 onChange={(e) => setContactMethod(e.target.value)}
                 required
@@ -1250,12 +1253,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               </select>
             </div>
             <div style={{ marginTop: 18 }}>
-              <label style={{ ...fieldLabelStyle(true), fontSize: 12.5 }}>
+              <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
                 {contactMethod === "phone" ? "Number" : "Email"}
                 <Required />
               </label>
               <input
-                style={underlineInputStyle(true)}
+                style={underlineInputStyle(false)}
                 value={contactValue}
                 onChange={(e) => setContactValue(e.target.value)}
                 required
@@ -1270,7 +1273,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                   checked={whatsappAvailable}
                   onChange={(e) => setWhatsappAvailable(e.target.checked)}
                 />
-                <label htmlFor="applicant-whatsapp" style={{ fontSize: 13, color: OFFWHITE }}>
+                <label htmlFor="applicant-whatsapp" style={{ fontSize: 13, color: "#1F0E03" }}>
                   This number is reachable on WhatsApp
                 </label>
               </div>
@@ -1278,19 +1281,19 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           </div>
 
           <div>
-            <label style={fieldLabelStyle(true)}>Is there anything else you&apos;d like to share with the application review team? (optional)</label>
+            <label style={fieldLabelStyle(false)}>Is there anything else you&apos;d like to share with the application review team? (optional)</label>
             <textarea
               rows={2}
-              style={{ ...underlineInputStyle(true), lineHeight: 1.5, resize: "vertical" }}
+              style={{ ...underlineInputStyle(false), lineHeight: 1.5, resize: "vertical" }}
               value={additionalNotes}
               onChange={(e) => setAdditionalNotes(e.target.value)}
             />
           </div>
 
           <div>
-            <label style={fieldLabelStyle(true)}>How did you hear about us? (optional)</label>
+            <label style={fieldLabelStyle(false)}>How did you hear about us? (optional)</label>
             <input
-              style={underlineInputStyle(true)}
+              style={underlineInputStyle(false)}
               value={referralSource}
               onChange={(e) => setReferralSource(e.target.value)}
             />
@@ -1319,13 +1322,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           style={{
             background: "transparent",
             border: 0,
-            borderBottom: `1px solid ${OFFWHITE}`,
+            borderBottom: "1px solid #1F0E03",
             padding: "5px 0",
             marginTop: 40,
             fontSize: 16,
             fontWeight: 600,
             cursor: isPending ? "default" : "pointer",
-            color: OFFWHITE,
+            color: "#1F0E03",
             opacity: isPending ? 0.6 : 1,
           }}
         >

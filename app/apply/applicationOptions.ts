@@ -51,13 +51,14 @@ export const EXPERIENCE_AREA_OPTIONS: { value: string; label: string }[] = [
   { value: "client_relations", label: "Client relationship management" },
   { value: "consulting_advising", label: "Consulting and advising" },
   { value: "vendor_supplier_negotiation", label: "Vendor or supplier negotiation" },
-  { value: "workshop_delivery", label: "Workshop delivery" },
-  { value: "technical_engineering_delivery", label: "Technical or engineering delivery" },
+  { value: "workshop_delivery", label: "Workshop facilitation" },
+  { value: "manufacturing_operations", label: "Manufacturing operations" },
+  { value: "product_commercialization", label: "Product commercialization" },
 ];
 
 export const WORK_MODALITY_OPTIONS: { value: string; label: string }[] = [
   { value: "remote_only", label: "Remote" },
-  { value: "travel_flexible", label: "Travel required" },
+  { value: "travel_flexible", label: "Open to travel" },
   { value: "both", label: "Either" },
 ];
 

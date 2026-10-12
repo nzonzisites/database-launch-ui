@@ -219,7 +219,7 @@ export default function ApplicationSummary({
 
         <Section>
           <SectionLabel>Application</SectionLabel>
-          <Row label="Function" value={functionLabel} />
+          <Row label="Industry" value={functionLabel} />
           <Row label="Experience" value={experienceAreasLabel} />
           <Row label="Category" value={categoryLabel} />
           <Row label="Delivery" value={optionLabel(WORK_MODALITY_OPTIONS, data.workModality)} />

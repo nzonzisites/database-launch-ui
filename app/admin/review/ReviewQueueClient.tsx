@@ -167,7 +167,7 @@ export default function ReviewQueueClient({
               }}
             >
               <span>Applicant</span>
-              <span>Function</span>
+              <span>Industry</span>
               <span>Submitted</span>
               <span>Status</span>
               <span style={{ textAlign: "right" }}>Action</span>
@@ -324,7 +324,7 @@ function ApplicationRow({
           />
           <Detail label="Location" value={a.city_country} />
           <Detail label="Affiliations" value={a.affiliations?.join(", ") || "—"} />
-          <Detail label="Function" value={categoryLabel} />
+          <Detail label="Industry" value={categoryLabel} />
           {a.experience_areas && a.experience_areas.length > 0 && (
             <Detail
               label="Experience"
@@ -438,7 +438,7 @@ function ApplicationRow({
               ) : approving ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 480 }}>
                   <p style={{ fontSize: 12.5, opacity: 0.65, margin: 0 }}>
-                    This is shown publicly on their listing in place of the Category/Function they
+                    This is shown publicly on their listing in place of the Category/Industry they
                     answered -- write it the way a buy-side client would expect to see it, and edit
                     it any time from the Listings tab afterward.
                   </p>

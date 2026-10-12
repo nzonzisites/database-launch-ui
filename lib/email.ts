@@ -101,7 +101,7 @@ export async function sendApplicationConfirmationEmail(
     listRow("Affiliations", data.affiliations);
 
   const applicationRows =
-    row("Function", functionLabel) +
+    row("Industry", functionLabel) +
     row("Experience", experienceAreasLabel) +
     row("Delivery", optionLabel(WORK_MODALITY_OPTIONS, data.workModality)) +
     row("What you do", data.expertiseNarrative) +
