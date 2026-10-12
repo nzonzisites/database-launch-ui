@@ -1,0 +1,23 @@
+-- DESTINATION: sql/2026-10-12e-fix-draft-update-platform-agent-grant.sql
+--
+-- Same root cause as 2026-10-12d, one table over: "permission denied for
+-- table platform_agent".
+--
+-- Updating a draft is the first time anon/authenticated roles have ever
+-- issued an UPDATE on application -- previously they only ever inserted.
+-- Postgres evaluates every permissive UPDATE policy on the table, not
+-- just the new draft one, and "review_sellers agents can decide
+-- applications" (2026-09-23b) references platform_agent (joined through
+-- app_user) in its USING clause. Same gotcha as before: the privilege
+-- check for every table a policy touches happens at parse time, before
+-- any exists()/join logic runs, so anon needs SELECT on platform_agent
+-- just to be allowed to attempt the update at all -- even though that
+-- policy will never actually match an ordinary applicant.
+--
+-- Safe for the same reason as the app_user grant: the existing "platform
+-- agents can read their own row" RLS policy (user_id in (select id from
+-- app_user where auth_provider_id = auth.uid())) already limits what
+-- anon can see to zero rows, since auth.uid() is null for anon. This
+-- grant only clears the privilege check, it doesn't expose agent data.
+
+grant select on public.platform_agent to anon;
