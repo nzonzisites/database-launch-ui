@@ -15,7 +15,12 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { submitApplication, lookupProspectPrefill, type SubmitApplicationInput } from "./actions";
+import {
+  submitApplication,
+  saveApplicationDraft,
+  lookupProspectPrefill,
+  type SubmitApplicationInput,
+} from "./actions";
 import { BROWN } from "@/lib/colors";
 import {
   FUNCTION_OPTIONS,
@@ -205,6 +210,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [sendingReviewLink, setSendingReviewLink] = useState(false);
   const [page, setPage] = useState<1 | 2>(1);
   const formRef = useRef<HTMLFormElement>(null);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
@@ -332,8 +339,36 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleContinue() {
-    if (formRef.current?.reportValidity()) goToPage(2);
+  async function handleContinue() {
+    if (!formRef.current?.reportValidity()) return;
+    setError(null);
+    setSavingDraft(true);
+    try {
+      const result = await saveApplicationDraft({
+        draftId,
+        fullName: `${firstName} ${lastName}`.trim(),
+        email,
+        cityCountry: [city, country].filter(Boolean).join(", "),
+        affiliations,
+        headshotUrl,
+        intendedFunction,
+        intendedFunctionOther,
+        experienceAreas,
+        workModality,
+        infrastructureNarrative,
+        expertiseNarrative,
+        fullBio,
+        prospectSignupId: prefill.prospectSignupId,
+      });
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+      setDraftId(result.draftId);
+      goToPage(2);
+    } finally {
+      setSavingDraft(false);
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -432,6 +467,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       rateScope,
       capacity,
       prospectSignupId: prefill.prospectSignupId,
+      draftId,
     };
 
     startTransition(async () => {
@@ -606,6 +642,22 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             Step 2 of 2 -- this part is for internal review only. It helps the Nzonzi team
             assess your experience and platform fit, and won&apos;t appear on your public
             listing.
+          </p>
+        )}
+
+        {error && (
+          <p
+            style={{
+              color: "#ffb4a8",
+              fontSize: 13,
+              marginBottom: 30,
+              border: "1px solid rgba(255,180,168,0.4)",
+              borderRadius: 6,
+              padding: "10px 12px",
+              background: "rgba(255,180,168,0.08)",
+            }}
+          >
+            {error}
           </p>
         )}
 
@@ -878,6 +930,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           <button
             type="button"
             onClick={handleContinue}
+            disabled={savingDraft}
             style={{
               background: "transparent",
               border: 0,
@@ -886,11 +939,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               marginTop: 40,
               fontSize: 16,
               fontWeight: 600,
-              cursor: "pointer",
+              cursor: savingDraft ? "default" : "pointer",
               color: "#1F0E03",
+              opacity: savingDraft ? 0.6 : 1,
             }}
           >
-            continue →
+            {savingDraft ? "saving..." : "continue →"}
           </button>
         </div>
         )}
@@ -1336,22 +1390,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               onChange={(e) => setReferralSource(e.target.value)}
             />
           </div>
-
-          {error && (
-            <p
-              style={{
-                color: "#B3261E",
-                fontSize: 13,
-                marginTop: 30,
-                border: "1px solid rgba(179,38,30,0.35)",
-                borderRadius: 6,
-                padding: "10px 12px",
-                background: "rgba(179,38,30,0.08)",
-              }}
-            >
-              {error}
-            </p>
-          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 40 }}>
             <button

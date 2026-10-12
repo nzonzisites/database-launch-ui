@@ -37,7 +37,7 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 // this change for exactly what to add in Resend and as an env var.
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "Nzonzi <noreply@nzonzi.net>";
 
-export type ApplicationConfirmationData = Omit<SubmitApplicationInput, "prospectSignupId">;
+export type ApplicationConfirmationData = Omit<SubmitApplicationInput, "prospectSignupId" | "draftId">;
 
 function escapeHtml(value: string): string {
   return value

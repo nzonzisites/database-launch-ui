@@ -70,7 +70,9 @@ type ExistingApplicationRow = {
  *    their signed-in account or, for someone who applied anonymously and
  *    is now revisiting after clicking a magic link, by matching the
  *    verified email on their session -- show the full, read-only recap
- *    (ApplicationSummary) instead of the form.
+ *    (ApplicationSummary) instead of the form. A "draft" row (page 1
+ *    saved, page 2 never finished) doesn't count -- they get the real
+ *    form back, same as someone who never started.
  *
  * Requires the matching DB migration (applicant_user_id nullable, plus
  * RLS policies letting an anonymous insert and an authenticated
@@ -133,6 +135,7 @@ export default async function ApplyPage() {
     .from("application")
     .select(APPLICATION_SUMMARY_COLUMNS)
     .eq("applicant_user_id", appUser.id)
+    .neq("status", "draft")
     .maybeSingle();
   existingApplication = byAccount as ExistingApplicationRow | null;
 
@@ -141,6 +144,7 @@ export default async function ApplyPage() {
       .from("application")
       .select(APPLICATION_SUMMARY_COLUMNS)
       .ilike("email", appUser.email)
+      .neq("status", "draft")
       .maybeSingle();
     existingApplication = byEmail as ExistingApplicationRow | null;
   }

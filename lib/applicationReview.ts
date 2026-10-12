@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type ApplicationStatus = "applied" | "under_review" | "approved" | "rejected";
+export type ApplicationStatus = "draft" | "applied" | "under_review" | "approved" | "rejected";
 
 export interface ApplicationForReview {
   id: string;
@@ -79,6 +79,9 @@ export async function fetchApplicationsForReview(
   const { data, error } = await supabase
     .from("application")
     .select(REVIEW_COLUMNS)
+    // Drafts are unfinished page-1-only submissions -- an applicant hasn't
+    // asked for review yet, so they don't belong in this queue.
+    .neq("status", "draft")
     .order("created_at", { ascending: false });
 
   if (error) throw error;

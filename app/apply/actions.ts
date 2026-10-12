@@ -46,6 +46,10 @@ export interface SubmitApplicationInput {
   rateScope: string;
   capacity: string;
   prospectSignupId: string | null;
+  // Set when this submission continues an existing page-1 draft (see
+  // saveApplicationDraft below) -- lets submitApplication update that
+  // same row instead of inserting a second one.
+  draftId: string | null;
 }
 
 export type SubmitApplicationResult =
@@ -61,6 +65,146 @@ export interface ProspectPrefill {
   category: string | null;
   expertiseNarrative: string;
   infrastructureNarrative: string;
+}
+
+export interface SaveDraftInput {
+  // The id returned from a prior saveApplicationDraft call this session,
+  // if any -- lets repeat calls (e.g. going back to page 1, editing, and
+  // hitting "continue" again) update the same row instead of creating a
+  // new draft every time. When null, the lookup below falls back to
+  // matching by account/email, same as submitApplication's duplicate
+  // check.
+  draftId: string | null;
+  fullName: string;
+  email: string;
+  cityCountry: string;
+  affiliations: string[];
+  headshotUrl: string;
+  intendedFunction: string;
+  intendedFunctionOther: string;
+  experienceAreas: string[];
+  workModality: string;
+  infrastructureNarrative: string;
+  expertiseNarrative: string;
+  fullBio: string;
+  prospectSignupId: string | null;
+}
+
+export type SaveDraftResult =
+  | { success: true; draftId: string }
+  | { success: false; error: string };
+
+/**
+ * Saves (inserts or updates) a "draft" application row holding just the
+ * page-1 answers -- fired from the page-1 "continue" button, so an
+ * applicant who fills out page 1 and then abandons before finishing page
+ * 2 still leaves Nzonzi a usable partial record instead of nothing at
+ * all. submitApplication (below) finds and finishes this same row at
+ * final submit, rather than inserting a second one.
+ *
+ * Requires the matching DB migration: a "draft" application_status
+ * value, the page-2 NOT NULL constraints loosened, and an UPDATE policy
+ * letting the applicant (anon or authenticated) update their own draft
+ * row -- see the SQL delivered alongside this change.
+ */
+export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveDraftResult> {
+  const supabase = await getSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let applicantUserId: string | null = null;
+  if (user) {
+    const { data: appUser } = await supabase
+      .from("app_user")
+      .select("id")
+      .eq("auth_provider_id", user.id)
+      .maybeSingle();
+    if (appUser) applicantUserId = appUser.id as string;
+  }
+
+  // Mirrors the page-1 `required` fields -- this only ever fires from the
+  // page-1 "continue" button, once native browser validation on those
+  // same fields has already passed, so these checks are a server-side
+  // backstop rather than the primary gate.
+  const required: [string, string][] = [
+    ["full name", input.fullName],
+    ["email", input.email],
+    ["city and country", input.cityCountry],
+    ["industry", input.intendedFunction],
+    ["delivery", input.workModality],
+    ['"what you do"', input.expertiseNarrative],
+    ['"failed infrastructure" answer', input.infrastructureNarrative],
+    ["bio", input.fullBio],
+  ];
+  for (const [label, value] of required) {
+    if (!value || value.trim().length === 0) {
+      return { success: false, error: `Missing required field: ${label}.` };
+    }
+  }
+  if (input.intendedFunction === "other" && !input.intendedFunctionOther.trim()) {
+    return { success: false, error: 'Describe your industry since you selected "other".' };
+  }
+
+  const row = {
+    applicant_user_id: applicantUserId,
+    prospect_signup_id: input.prospectSignupId,
+    full_name: input.fullName.trim(),
+    email: input.email.trim(),
+    headshot_url: input.headshotUrl.trim() || null,
+    city_country: input.cityCountry.trim(),
+    affiliations: input.affiliations,
+    intended_function: input.intendedFunction,
+    intended_function_other:
+      input.intendedFunction === "other" ? input.intendedFunctionOther.trim() : null,
+    experience_areas: input.experienceAreas.length > 0 ? input.experienceAreas : null,
+    work_modality: input.workModality,
+    infrastructure_narrative: input.infrastructureNarrative.trim(),
+    expertise_narrative: input.expertiseNarrative.trim(),
+    full_bio: input.fullBio.trim(),
+    status: "draft" as const,
+  };
+
+  // Resume an existing draft by id if the client already has one from
+  // earlier this session; otherwise look it up the same way
+  // submitApplication's duplicate check does (by account, or by email for
+  // an anonymous visitor). Never touches a row that isn't still a draft --
+  // an already-submitted application is left alone either way.
+  let existingDraftId = input.draftId;
+  if (!existingDraftId) {
+    const { data: existing } = applicantUserId
+      ? await supabase
+          .from("application")
+          .select("id")
+          .eq("applicant_user_id", applicantUserId)
+          .eq("status", "draft")
+          .maybeSingle()
+      : await supabase
+          .from("application")
+          .select("id")
+          .ilike("email", input.email.trim())
+          .eq("status", "draft")
+          .maybeSingle();
+    if (existing) existingDraftId = existing.id as string;
+  }
+
+  if (existingDraftId) {
+    const { error } = await supabase
+      .from("application")
+      .update(row)
+      .eq("id", existingDraftId)
+      .eq("status", "draft");
+    if (error) return { success: false, error: error.message };
+    return { success: true, draftId: existingDraftId };
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("application")
+    .insert(row)
+    .select("id")
+    .single();
+  if (error) return { success: false, error: error.message };
+  return { success: true, draftId: inserted.id as string };
 }
 
 /**
@@ -150,22 +294,31 @@ export async function submitApplication(
 
   // Duplicate check -- by account when signed in, otherwise by the email
   // just typed into the form (case-insensitive), since that's the only
-  // identity an anonymous submission has.
+  // identity an anonymous submission has. A row still in "draft" isn't a
+  // duplicate -- it's this same application's own page-1 save, and gets
+  // finished below instead of blocking the submission.
   const { data: existing } = applicantUserId
     ? await supabase
         .from("application")
-        .select("id")
+        .select("id, status")
         .eq("applicant_user_id", applicantUserId)
         .maybeSingle()
     : await supabase
         .from("application")
-        .select("id")
+        .select("id, status")
         .ilike("email", input.email.trim())
         .maybeSingle();
 
-  if (existing) {
+  if (existing && existing.status !== "draft") {
     return { success: false, error: "You've already submitted an application." };
   }
+
+  // Prefer the client-supplied draftId (set once saveApplicationDraft
+  // first returns one); fall back to whatever the duplicate check above
+  // just found, in case the client lost track of it (e.g. a page reload
+  // between pages 1 and 2).
+  const draftId =
+    input.draftId ?? (existing && existing.status === "draft" ? (existing.id as string) : null);
 
   // Server-side validation -- the client form has its own required-field
   // checks, but those are trivially bypassable, so re-check here against
@@ -240,7 +393,7 @@ export async function submitApplication(
     }
   }
 
-  const { error: insertError } = await supabase.from("application").insert({
+  const row = {
     applicant_user_id: applicantUserId,
     prospect_signup_id: prospectSignupId,
     full_name: input.fullName.trim(),
@@ -286,10 +439,18 @@ export async function submitApplication(
     rate_relative_to_market: input.rateType === "amount" ? input.rateRelativeToMarket : null,
     rate_scope: input.rateScope.trim() || null,
     capacity: input.capacity,
-  });
+    status: "applied" as const,
+  };
 
-  if (insertError) {
-    return { success: false, error: insertError.message };
+  // Finish an existing page-1 draft in place if there is one, so this
+  // submission updates that same row (keeping its original created_at)
+  // instead of leaving the draft behind and inserting a second row.
+  const { error: writeError } = draftId
+    ? await supabase.from("application").update(row).eq("id", draftId).eq("status", "draft")
+    : await supabase.from("application").insert(row);
+
+  if (writeError) {
+    return { success: false, error: writeError.message };
   }
 
   // Best-effort confirmation email -- gives the applicant a copy of

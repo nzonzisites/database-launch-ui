@@ -37,6 +37,9 @@ const MODALITY_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<ApplicationStatus, { label: string; bg: string; fg: string }> = {
+  // Drafts never reach this screen (fetchApplicationsForReview excludes
+  // them) -- this entry only exists so the Record type is exhaustive.
+  draft: { label: "Draft", bg: "rgba(31,14,3,0.12)", fg: BROWN },
   applied: { label: "Applied", bg: SAND, fg: BROWN },
   under_review: { label: "Under review", bg: MOSS, fg: BROWN },
   approved: { label: "Approved", bg: "#3C6B3F", fg: WHITE },
