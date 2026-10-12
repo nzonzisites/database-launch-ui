@@ -13,7 +13,7 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { submitApplication, lookupProspectPrefill, type SubmitApplicationInput } from "./actions";
 import { BROWN } from "@/lib/colors";
@@ -203,6 +203,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [submitted, setSubmitted] = useState(false);
   const [reviewLinkSent, setReviewLinkSent] = useState(false);
   const [sendingReviewLink, setSendingReviewLink] = useState(false);
+  const [page, setPage] = useState<1 | 2>(1);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
@@ -323,6 +325,15 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       filledSomething = true;
     }
     if (filledSomething) setHasPrefill(true);
+  }
+
+  function goToPage(next: 1 | 2) {
+    setPage(next);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleContinue() {
+    if (formRef.current?.reportValidity()) goToPage(2);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -559,7 +570,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
-      <form onSubmit={handleSubmit} style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
+      <form onSubmit={handleSubmit} ref={formRef} style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
         {/* No SessionControls here (unlike the submitted/recap view) --
             most visitors reach this form signed out, and even a signed-in
             one shouldn't risk losing an in-progress, unsaved application
@@ -578,18 +589,28 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
         >
           nzonzi listing application
         </h2>
-        <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 12px", color: "rgba(240,240,240,0.7)" }}>
-          The Nzonzi team will review your listing application and be in touch if you&apos;re
-          selected for the next cohort.
-        </p>
-        {hasPrefill && (
+        {page === 1 && (
+          <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 12px", color: "rgba(240,240,240,0.7)" }}>
+            Step 1 of 2 -- submit your listing. This information will be reviewed for your
+            public Nzonzi listing page.
+          </p>
+        )}
+        {page === 1 && hasPrefill && (
           <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 40px", color: "rgba(240,240,240,0.5)" }}>
             We&apos;ve carried over what you told us when you signed up -- feel free to update
             anything below.
           </p>
         )}
+        {page === 2 && (
+          <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 40px", color: "rgba(240,240,240,0.7)" }}>
+            Step 2 of 2 -- this part is for internal review only. It helps the Nzonzi team
+            assess your experience and platform fit, and won&apos;t appear on your public
+            listing.
+          </p>
+        )}
 
         {/* Public-facing info -- cream card, matches the mockup's light section */}
+        {page === 1 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 30, background: CREAM, padding: 32 }}>
           <div>
             <label style={fieldLabelStyle(false)}>
@@ -853,6 +874,29 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               onChange={(e) => setHeadshotUrl(e.target.value)}
             />
           </div>
+
+          <button
+            type="button"
+            onClick={handleContinue}
+            style={{
+              background: "transparent",
+              border: 0,
+              borderBottom: "1px solid #1F0E03",
+              padding: "5px 0",
+              marginTop: 40,
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: "pointer",
+              color: "#1F0E03",
+            }}
+          >
+            continue →
+          </button>
+        </div>
+        )}
+
+        {page === 2 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 30, background: CREAM, padding: 32 }}>
           <div>
             <MultiValueField
               label="15. Professional identity"
@@ -1309,25 +1353,42 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isPending}
-            style={{
-              background: "transparent",
-              border: 0,
-              borderBottom: "1px solid #1F0E03",
-              padding: "5px 0",
-              marginTop: 40,
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: isPending ? "default" : "pointer",
-              color: "#1F0E03",
-              opacity: isPending ? 0.6 : 1,
-            }}
-          >
-            {isPending ? "submitting..." : "submit →"}
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 40 }}>
+            <button
+              type="button"
+              onClick={() => goToPage(1)}
+              style={{
+                background: "transparent",
+                border: 0,
+                padding: "5px 0",
+                fontSize: 15,
+                fontWeight: 500,
+                cursor: "pointer",
+                color: "rgba(31,14,3,0.6)",
+              }}
+            >
+              ← back
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              style={{
+                background: "transparent",
+                border: 0,
+                borderBottom: "1px solid #1F0E03",
+                padding: "5px 0",
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: isPending ? "default" : "pointer",
+                color: "#1F0E03",
+                opacity: isPending ? 0.6 : 1,
+              }}
+            >
+              {isPending ? "submitting..." : "submit →"}
+            </button>
+          </div>
         </div>
+        )}
       </form>
     </div>
   );
