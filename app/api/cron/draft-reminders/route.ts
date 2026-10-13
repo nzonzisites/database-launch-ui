@@ -1,19 +1,26 @@
 // DESTINATION: app/api/cron/draft-reminders/route.ts
 //
-// Hit on a schedule (see vercel.json) to email anyone who started an
-// application, went idle for 30+ minutes while still a "draft", and
-// hasn't already been reminded. Each draft only ever gets this once --
-// the row is "claimed" (reminder_sent_at set) right before the send
-// attempt, so a retry or an overlapping run can't double-send, and a
-// failed send just means that one applicant goes unreminded rather than
-// risking a second email later.
+// Hit on a schedule to email anyone who started an application, went
+// idle for 30+ minutes while still a "draft", and hasn't already been
+// reminded. Each draft only ever gets this once -- the row is "claimed"
+// (reminder_sent_at set) right before the send attempt, so a retry or an
+// overlapping run can't double-send, and a failed send just means that
+// one applicant goes unreminded rather than risking a second email later.
+//
+// NOT scheduled via vercel.json -- the Hobby plan only allows cron jobs
+// to run once a day, which is too infrequent for a 30-minute reminder.
+// Instead, an external scheduler (e.g. cron-job.org's free tier) hits
+// this URL every 5-10 minutes with an "Authorization: Bearer <CRON_SECRET>"
+// header. If this project ever moves to Vercel Pro, a vercel.json cron
+// entry pointing here works too, using the same secret.
 //
 // Needs the service-role key (bypasses RLS -- this has to see every
 // applicant's draft, not just one signed-in user's own row, the way the
-// anon/authenticated policies would restrict it) and a CRON_SECRET so
-// only Vercel's own scheduler (or someone who has that secret) can
-// trigger it. See .env.example for both, and the SQL delivered alongside
-// this change for the updated_at/reminder_sent_at columns this depends on.
+// anon/authenticated policies would restrict it) and CRON_SECRET so only
+// whoever configured the scheduler (or anyone else who has that secret)
+// can trigger it. See .env.example for both, and the SQL delivered
+// alongside this change for the updated_at/reminder_sent_at columns this
+// depends on.
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
