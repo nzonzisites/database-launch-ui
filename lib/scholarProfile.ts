@@ -56,6 +56,13 @@ export interface ScholarProfileRow {
   background: string;
   experience_label: string | null;
   vetted_date: string | null;
+  // Industries the applicant is paid to work in -- copied from
+  // application.sector/sector_other at approval time, shown as badges on
+  // the public listing page. Same "other" convention as the source
+  // field: sector_other only means something when sector includes
+  // "other".
+  sector: string[] | null;
+  sector_other: string | null;
   status: ScholarProfileStatus;
   reviewed_by: string | null;
   reviewer_name: string | null;
@@ -69,7 +76,7 @@ export type ScholarProfileWithSeller = ScholarProfileRow;
 
 const COLUMNS =
   "id, application_id, slug, full_name, headshot_url, headshot_focal_y, submitted_headshot_url, intended_category, intended_category_other, city_country, work_modality, " +
-  "tagline, full_bio, background, experience_label, vetted_date, status, reviewed_by, created_at";
+  "tagline, full_bio, background, experience_label, vetted_date, sector, sector_other, status, reviewed_by, created_at";
 
 /** All scholar_profile rows, for the admin Listings tab. Requires review_listings (enforced by RLS). */
 export async function fetchScholarProfilesForReview(

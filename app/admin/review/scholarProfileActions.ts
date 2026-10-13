@@ -41,6 +41,11 @@ export interface ScholarProfileEditableFields {
   background: string;
   experience_label: string;
   vetted_date: string; // "" clears it (stored as null)
+  // Industries shown as badges on the public listing -- same shape and
+  // "other" convention as application.sector/sector_other (see
+  // SECTOR_OPTIONS in app/apply/applicationOptions.ts).
+  sector: string[];
+  sector_other: string;
 }
 
 /**
@@ -69,6 +74,8 @@ export async function updateScholarProfile(
       background: fields.background.trim(),
       experience_label: fields.experience_label.trim() || null,
       vetted_date: fields.vetted_date || null,
+      sector: fields.sector.length > 0 ? fields.sector : null,
+      sector_other: fields.sector.includes("other") ? fields.sector_other.trim() : null,
       reviewed_by: agentId,
     })
     .eq("id", profileId);

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
-import { WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
+import { WORK_MODALITY_OPTIONS, SECTOR_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
 import { publishScholarProfile, unpublishScholarProfile, updateScholarProfile } from "./scholarProfileActions";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
@@ -141,6 +141,12 @@ function ListingRow({
   const [background, setBackground] = useState(p.background);
   const [experienceLabel, setExperienceLabel] = useState(p.experience_label ?? "");
   const [vettedDate, setVettedDate] = useState(p.vetted_date ?? "");
+  const [sector, setSector] = useState<string[]>(p.sector ?? []);
+  const [sectorOther, setSectorOther] = useState(p.sector_other ?? "");
+
+  function toggleSector(value: string) {
+    setSector((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
+  }
 
   const fields = {
     headshot_url: headshotUrl,
@@ -151,6 +157,8 @@ function ListingRow({
     background,
     experience_label: experienceLabel,
     vetted_date: vettedDate,
+    sector,
+    sector_other: sectorOther,
   };
   const readyToPublish = tagline.trim().length > 0 && fullBio.trim().length > 0;
 
@@ -427,6 +435,41 @@ function ListingRow({
               style={fieldStyle}
               placeholder="Separate paragraphs with a blank line"
             />
+          </Field>
+
+          <Field label="Industries (shown as badges on the public listing)">
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {SECTOR_OPTIONS.map((opt) => {
+                const active = sector.includes(opt.value);
+                return (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => toggleSector(opt.value)}
+                    style={{
+                      background: active ? MOSS : "transparent",
+                      border: `1px solid ${active ? MOSS : "rgba(230,222,210,0.35)"}`,
+                      borderRadius: 999,
+                      padding: "7px 14px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: active ? BROWN : SAND,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+            {sector.includes("other") && (
+              <input
+                value={sectorOther}
+                onChange={(e) => setSectorOther(e.target.value)}
+                style={{ ...fieldStyle, marginTop: 10 }}
+                placeholder="Describe the other industry"
+              />
+            )}
           </Field>
 
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>

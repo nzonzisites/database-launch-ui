@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchScholarProfile } from "@/lib/scholarProfile";
-import { CATEGORY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
+import { CATEGORY_OPTIONS, SECTOR_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
 import { BROWN, OCHRE, FOREST, SAND } from "@/lib/colors";
 import ProfilePortrait from "./ProfilePortrait";
 
@@ -24,6 +24,16 @@ function deliveryTags(workModality: string | null): string[] {
   if (workModality === "travel_flexible") return ["Open to Travel"];
   if (workModality === "both") return ["Remote", "Open to Travel"];
   return [];
+}
+
+/** Maps sector values to their display labels, substituting sector_other
+ * for the "other" entry -- same convention the admin review portal and
+ * the application-summary email already use for this field. */
+function industryLabels(sector: string[] | null, sectorOther: string | null): string[] {
+  if (!sector || sector.length === 0) return [];
+  return sector.map((value) =>
+    value === "other" && sectorOther ? sectorOther : optionLabel(SECTOR_OPTIONS, value)
+  );
 }
 
 function vettedLabel(vettedDate: string | null): string | null {
@@ -78,6 +88,7 @@ export default async function ScholarProfilePage({
     vetted ? { k: "Vetted", v: vetted } : null,
   ].filter((f): f is { k: string; v: string } => f !== null);
   const deliveryTagList = deliveryTags(profile.work_modality);
+  const industryTagList = industryLabels(profile.sector, profile.sector_other);
 
   // Neither "message this scholar" nor "report this listing" has a real
   // backend yet -- these are simple mailto: placeholders routed to the
@@ -211,6 +222,41 @@ export default async function ScholarProfilePage({
                     <div style={{ fontSize: 14.5, fontWeight: 400, lineHeight: 1.3 }}>{f.v}</div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {industryTagList.length > 0 && (
+              <div style={{ marginBottom: 34 }}>
+                <h2
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 400,
+                    color: "rgba(31,14,3,0.5)",
+                    marginBottom: 10,
+                    textTransform: "lowercase",
+                  }}
+                >
+                  industries
+                </h2>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {industryTagList.map((label) => (
+                    <span
+                      key={label}
+                      style={{
+                        display: "inline-block",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        padding: "5px 13px",
+                        borderRadius: 999,
+                        background: "rgba(45,77,49,0.12)",
+                        color: FOREST,
+                        letterSpacing: "0.01em",
+                      }}
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 
