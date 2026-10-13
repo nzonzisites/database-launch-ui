@@ -243,7 +243,7 @@ export default function LandingPage() {
                   maxWidth: 620,
                 }}
               >
-                knowledge producers, rigorous practitioners, and community
+                knowledge producers, innovative practitioners, and community
                 leaders who foster positive social impact through
                 organizations, businesses, institutions, and communities
               </p>
