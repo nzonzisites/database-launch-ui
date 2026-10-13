@@ -348,6 +348,9 @@ function ApplicationRow({
           ) : (
             <Detail label="Professional identity" value={a.work_samples_explanation || "—"} />
           )}
+          {Array.isArray(a.external_links) && a.external_links.length > 0 && (
+            <DetailLinks label="Links" urls={a.external_links} />
+          )}
           {(a.prior_paid_work || (a.sector && a.sector.length > 0) || a.deliverables || a.rate_type || a.capacity) && (
             <>
               <Detail
@@ -391,8 +394,8 @@ function ApplicationRow({
           <Detail
             label="Reference"
             value={`${a.reference_name} (${a.reference_relationship}) — ${a.reference_contact_value} via ${a.reference_contact_method}${
-              a.reference_may_contact ? "" : " — NOT cleared to contact yet"
-            }`}
+              a.reference_contact_method === "phone" && a.reference_whatsapp_available ? " (WhatsApp)" : ""
+            }${a.reference_may_contact ? "" : " — NOT cleared to contact yet"}`}
           />
           {a.additional_notes && <Detail label="Additional notes" value={a.additional_notes} />}
           {a.referral_source && <Detail label="Referral source" value={a.referral_source} />}
