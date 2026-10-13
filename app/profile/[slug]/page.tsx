@@ -96,7 +96,7 @@ export default async function ScholarProfilePage({
           <Link href="/" style={{ color: "inherit" }}>
             home
           </Link>{" "}
-          <span style={{ opacity: 0.5 }}>/</span> {category || "scholar"}{" "}
+          <span style={{ opacity: 0.5 }}>/</span> {(category || "scholar").toLowerCase()}{" "}
           <span style={{ opacity: 0.5 }}>/</span> {profile.full_name.toLowerCase()}
         </div>
 

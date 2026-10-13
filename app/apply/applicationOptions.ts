@@ -17,7 +17,7 @@ export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: "materials_science", label: "Materials science" },
   { value: "mechanical_manufacturing_engineering", label: "Mechanical / manufacturing engineering" },
   { value: "industrial_design", label: "Industrial design" },
-  { value: "applied_quant_qual_research", label: "Applied quant / qual research" },
+  { value: "applied_quant_qual_research", label: "Applied quant & qual research" },
   { value: "arts_cultural_research", label: "Arts & cultural research" },
   { value: "other", label: "Other" },
 ];
