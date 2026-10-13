@@ -748,6 +748,15 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             public Nzonzi listing page.
           </p>
         )}
+        {page === 1 && (
+          <p style={{ fontSize: 13, fontWeight: 300, lineHeight: 1.5, margin: "0 0 28px", color: "rgba(240,240,240,0.55)" }}>
+            We care about your data rights. For more information, see our{" "}
+            <Link href="/privacy" style={{ fontWeight: 500, color: "inherit", borderBottom: "1px solid currentColor" }}>
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        )}
         {page === 1 && hasPrefill && (
           <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 40px", color: "rgba(240,240,240,0.5)" }}>
             We&apos;ve carried over what you told us when you signed up -- feel free to update
@@ -1633,24 +1642,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               {isPending ? "submitting..." : "submit →"}
             </button>
           </div>
-
-          <p
-            style={{
-              margin: "18px 0 0",
-              maxWidth: 560,
-              fontSize: 12.5,
-              fontWeight: 300,
-              lineHeight: 1.55,
-              color: "rgba(31,14,3,0.65)",
-            }}
-          >
-            By submitting, you agree to our collecting and processing this
-            information to review your application. See our{" "}
-            <Link href="/privacy" style={{ fontWeight: 500, borderBottom: "1px solid currentColor" }}>
-              Privacy Notice
-            </Link>
-            .
-          </p>
         </div>
         )}
       </form>
