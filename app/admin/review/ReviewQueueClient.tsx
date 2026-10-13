@@ -42,7 +42,12 @@ const STATUS_STYLE: Record<ApplicationStatus, { label: string; bg: string; fg: s
   // Drafts DO reach this screen -- fetchApplicationsForReview includes
   // them so an admin can see an incomplete/abandoned application, just
   // without the approve/reject controls (canDecide below excludes draft).
-  draft: { label: "Draft", bg: "rgba(31,14,3,0.12)", fg: BROWN },
+  // bg/fg must read against this page's dark BROWN background -- the
+  // original rgba(31,14,3,...)/BROWN pairing here was copied from a
+  // light-background pattern and rendered as BROWN text on a
+  // near-BROWN pill, invisible against the admin page's own BROWN
+  // background.
+  draft: { label: "Draft", bg: "rgba(230,222,210,0.16)", fg: SAND },
   applied: { label: "Applied", bg: SAND, fg: BROWN },
   under_review: { label: "Under review", bg: MOSS, fg: BROWN },
   approved: { label: "Approved", bg: "#3C6B3F", fg: WHITE },
