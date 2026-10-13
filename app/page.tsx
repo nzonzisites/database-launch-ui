@@ -110,6 +110,22 @@ export default function LandingPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: SAND, color: BROWN }}>
+      <div
+        style={{
+          padding: "20px clamp(20px, 6vw, 48px) 0",
+          fontSize: 13,
+          fontWeight: 500,
+          color: "rgba(31,14,3,0.6)",
+        }}
+      >
+        <Link href="/" style={{ color: "inherit" }}>
+          home
+        </Link>{" "}
+        <span style={{ opacity: 0.5 }}>/</span>{" "}
+        <Link href="/apply" style={{ color: "inherit" }}>
+          apply
+        </Link>
+      </div>
       <Link
         href="/admin/review"
         onMouseEnter={() => setAdminLinkHover(true)}

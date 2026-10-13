@@ -15,6 +15,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   submitApplication,
   saveApplicationDraft,
@@ -1632,6 +1633,24 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               {isPending ? "submitting..." : "submit →"}
             </button>
           </div>
+
+          <p
+            style={{
+              margin: "18px 0 0",
+              maxWidth: 560,
+              fontSize: 12.5,
+              fontWeight: 300,
+              lineHeight: 1.55,
+              color: "rgba(31,14,3,0.65)",
+            }}
+          >
+            By submitting, you agree to our collecting and processing this
+            information to review your application. See our{" "}
+            <Link href="/privacy" style={{ fontWeight: 500, borderBottom: "1px solid currentColor" }}>
+              Privacy Notice
+            </Link>
+            .
+          </p>
         </div>
         )}
       </form>
