@@ -1,26 +1,27 @@
 // DESTINATION: app/api/cron/draft-reminders/route.ts
 //
-// Hit on a schedule to email anyone who started an application, went
-// idle for 30+ minutes while still a "draft", and hasn't already been
-// reminded. Each draft only ever gets this once -- the row is "claimed"
-// (reminder_sent_at set) right before the send attempt, so a retry or an
-// overlapping run can't double-send, and a failed send just means that
-// one applicant goes unreminded rather than risking a second email later.
+// Hit once a day (see vercel.json -- 13:00 UTC / 9am ET) to email anyone
+// who started an application, is still a "draft", and hasn't already
+// been reminded. Each draft only ever gets this once -- the row is
+// "claimed" (reminder_sent_at set) right before the send attempt, so a
+// retry or an overlapping run can't double-send, and a failed send just
+// means that one applicant goes unreminded rather than risking a second
+// email later.
 //
-// NOT scheduled via vercel.json -- the Hobby plan only allows cron jobs
-// to run once a day, which is too infrequent for a 30-minute reminder.
-// Instead, an external scheduler (e.g. cron-job.org's free tier) hits
-// this URL every 5-10 minutes with an "Authorization: Bearer <CRON_SECRET>"
-// header. If this project ever moves to Vercel Pro, a vercel.json cron
-// entry pointing here works too, using the same secret.
+// STALE_AFTER_MINUTES is still checked (not just reminder_sent_at IS
+// NULL) so a draft someone is actively filling out right at the moment
+// the daily cron fires doesn't get swept up mid-edit -- in practice,
+// with only one run a day, almost everything that qualifies is already
+// hours or a day stale by the time this runs.
 //
-// Needs the service-role key (bypasses RLS -- this has to see every
-// applicant's draft, not just one signed-in user's own row, the way the
-// anon/authenticated policies would restrict it) and CRON_SECRET so only
-// whoever configured the scheduler (or anyone else who has that secret)
-// can trigger it. See .env.example for both, and the SQL delivered
-// alongside this change for the updated_at/reminder_sent_at columns this
-// depends on.
+// Vercel Cron on the Hobby plan is capped at once/day (Pro allows
+// per-minute); that's the whole reason this runs daily rather than
+// every few minutes. Vercel sends CRON_SECRET automatically as
+// "Authorization: Bearer <value>" on every scheduled hit, which is how
+// the route tells a real cron run apart from a random request to the
+// same URL. See .env.example for both required env vars, and the SQL
+// delivered alongside this change for the updated_at/reminder_sent_at
+// columns this depends on.
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
