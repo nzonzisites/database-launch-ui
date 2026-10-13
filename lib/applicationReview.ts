@@ -1,17 +1,28 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveReviewerNames } from "./reviewerNames";
 
 export type ApplicationStatus = "draft" | "applied" | "under_review" | "approved" | "rejected";
 
+// Most of these became nullable at the DB level alongside the autosave
+// feature (sql/2026-10-12c-application-autosave.sql dropped NOT NULL on
+// full_name, city_country, intended_function, work_modality,
+// expertise_narrative, infrastructure_narrative, full_bio -- and every
+// other content column already tolerated null via saveApplicationDraft's
+// row builder) so a "draft" row can be genuinely half-filled-in. Now that
+// this queue shows drafts too (see fetchApplicationsForReview), the type
+// has to admit that -- only id/email/status/created_at/reference_may_contact
+// are guaranteed non-null (reference_may_contact's client default is
+// always a real boolean, never actually unset).
 export interface ApplicationForReview {
   id: string;
-  full_name: string;
+  full_name: string | null;
   email: string;
-  contact_method: "email" | "phone";
-  contact_value: string;
+  contact_method: "email" | "phone" | null;
+  contact_value: string | null;
   whatsapp_available: boolean | null;
-  city_country: string;
-  affiliations: string[];
-  external_links: string[];
+  city_country: string | null;
+  affiliations: string[] | null;
+  external_links: string[] | null;
   headshot_url: string | null;
   // Category -- legacy: null on every application from 2026-09-30
   // onward, replaced by Function as the intake question.
@@ -20,16 +31,16 @@ export interface ApplicationForReview {
   intended_function: string | null;
   intended_function_other: string | null;
   experience_areas: string[] | null;
-  work_modality: "remote_only" | "travel_flexible" | "both";
-  infrastructure_narrative: string;
-  expertise_narrative: string;
+  work_modality: "remote_only" | "travel_flexible" | "both" | null;
+  infrastructure_narrative: string | null;
+  expertise_narrative: string | null;
   full_bio: string | null;
   work_samples: string[];
   work_samples_explanation: string | null;
-  reference_name: string;
-  reference_relationship: string;
-  reference_contact_method: "email" | "phone";
-  reference_contact_value: string;
+  reference_name: string | null;
+  reference_relationship: string | null;
+  reference_contact_method: "email" | "phone" | null;
+  reference_contact_value: string | null;
   reference_whatsapp_available: boolean | null;
   reference_may_contact: boolean;
   additional_notes: string | null;
@@ -46,6 +57,7 @@ export interface ApplicationForReview {
   capacity: string | null;
   status: ApplicationStatus;
   reviewed_by: string | null;
+  reviewer_name: string | null;
   decision_reason: string | null;
   created_at: string;
 }
@@ -76,20 +88,29 @@ const REVIEW_COLUMNS =
 export async function fetchApplicationsForReview(
   supabase: SupabaseClient
 ): Promise<ApplicationForReview[]> {
+  // Drafts ARE included (no status filter) -- an admin should be able to
+  // see an incomplete/abandoned application, just without the ability to
+  // decide on it (canDecide, in ReviewQueueClient, is still limited to
+  // applied/under_review).
   const { data, error } = await supabase
     .from("application")
     .select(REVIEW_COLUMNS)
-    // Drafts are unfinished page-1-only submissions -- an applicant hasn't
-    // asked for review yet, so they don't belong in this queue.
-    .neq("status", "draft")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
 
-  return ((data ?? []) as unknown as RawApplicationForReview[]).map((row) => {
-    const { work_samples, ...rest } = row;
+  const rows = (data ?? []) as unknown as RawApplicationForReview[];
+  const reviewerNames = await resolveReviewerNames(
+    supabase,
+    rows.map((row) => row.reviewed_by)
+  );
+
+  return rows.map((row) => {
+    const { work_samples, reviewed_by, ...rest } = row;
     return {
       ...rest,
+      reviewed_by,
+      reviewer_name: reviewed_by ? reviewerNames.get(reviewed_by) ?? null : null,
       work_samples: (work_samples ?? []).map((sample) => sample?.url ?? "").filter(Boolean),
     };
   });

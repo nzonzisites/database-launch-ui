@@ -37,8 +37,9 @@ const MODALITY_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLE: Record<ApplicationStatus, { label: string; bg: string; fg: string }> = {
-  // Drafts never reach this screen (fetchApplicationsForReview excludes
-  // them) -- this entry only exists so the Record type is exhaustive.
+  // Drafts DO reach this screen -- fetchApplicationsForReview includes
+  // them so an admin can see an incomplete/abandoned application, just
+  // without the approve/reject controls (canDecide below excludes draft).
   draft: { label: "Draft", bg: "rgba(31,14,3,0.12)", fg: BROWN },
   applied: { label: "Applied", bg: SAND, fg: BROWN },
   under_review: { label: "Under review", bg: MOSS, fg: BROWN },
@@ -88,6 +89,7 @@ export default function ReviewQueueClient({
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
+    const draft = applications.filter((a) => a.status === "draft").length;
     const applied = applications.filter((a) => a.status === "applied").length;
     const underReview = applications.filter((a) => a.status === "under_review").length;
     const decided = applications.filter(
@@ -98,6 +100,7 @@ export default function ReviewQueueClient({
       { k: "Applied", v: applied },
       { k: "Under review", v: underReview },
       { k: "Decided", v: decided },
+      { k: "Draft (incomplete)", v: draft },
     ];
   }, [applications]);
 
@@ -209,7 +212,6 @@ function ApplicationRow({
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [approving, setApproving] = useState(false);
-  const [listingDescriptor, setListingDescriptor] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const statusStyle = STATUS_STYLE[a.status];
   const canDecide = a.status === "applied" || a.status === "under_review";
@@ -221,15 +223,14 @@ function ApplicationRow({
       ? a.intended_category === "other"
         ? a.intended_category_other || "Other"
         : CATEGORY_LABELS[a.intended_category] || a.intended_category
-      : "—";
+      : "No response";
 
   function handleApprove() {
     setActionError(null);
     startTransition(async () => {
       try {
-        await approveApplication(a.id, listingDescriptor);
+        await approveApplication(a.id);
         setApproving(false);
-        setListingDescriptor("");
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Couldn't approve this application.");
       }
@@ -278,7 +279,7 @@ function ApplicationRow({
             instead, once there's something legitimate to show. */}
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 14.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {a.full_name}
+            {a.full_name || "No name yet"}
           </div>
           <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{a.email}</div>
         </div>
@@ -319,86 +320,87 @@ function ApplicationRow({
 
       {expanded && (
         <div style={{ padding: "0 14px 26px", display: "flex", flexDirection: "column", gap: 18 }}>
+          {/* Every question the application form can ask is rendered
+              unconditionally below, "No response" and all -- this queue
+              now includes drafts (see fetchApplicationsForReview), which
+              can be genuinely half-filled-in, and a reviewer should see
+              at a glance exactly what was and wasn't answered rather
+              than have unanswered questions quietly disappear. */}
           <Detail
             label="Contact"
-            value={`${a.contact_value} via ${a.contact_method}${
-              a.contact_method === "phone" && a.whatsapp_available ? " (WhatsApp)" : ""
-            }`}
+            value={
+              a.contact_value
+                ? `${a.contact_value}${a.contact_method ? ` via ${a.contact_method}` : ""}${
+                    a.contact_method === "phone" && a.whatsapp_available ? " (WhatsApp)" : ""
+                  }`
+                : null
+            }
           />
           <Detail label="Location" value={a.city_country} />
-          <Detail label="Affiliations" value={a.affiliations?.join(", ") || "—"} />
-          <Detail label="Industry" value={categoryLabel} />
-          {a.experience_areas && a.experience_areas.length > 0 && (
-            <Detail
-              label="Experience"
-              value={a.experience_areas.map((v) => optionLabel(EXPERIENCE_AREA_OPTIONS, v)).join(", ")}
-            />
-          )}
-          <Detail label="Delivery" value={MODALITY_LABELS[a.work_modality] || a.work_modality} />
+          <Detail label="Affiliations" value={a.affiliations?.join(", ")} />
+          <Detail label="Industry" value={a.intended_function || a.intended_category ? categoryLabel : null} />
+          <Detail
+            label="Experience"
+            value={a.experience_areas?.map((v) => optionLabel(EXPERIENCE_AREA_OPTIONS, v)).join(", ")}
+          />
+          <Detail label="Delivery" value={a.work_modality ? MODALITY_LABELS[a.work_modality] || a.work_modality : null} />
           <Detail label="What they do" value={a.expertise_narrative} />
           <Detail label="Failed infrastructure → innovation" value={a.infrastructure_narrative} />
-          <Detail label="Bio (submitted)" value={a.full_bio || "—"} />
-          {a.headshot_url ? (
-            <DetailLinks label="Headshot" urls={[a.headshot_url]} />
-          ) : (
-            <Detail label="Headshot" value="—" />
-          )}
+          <Detail label="Bio (submitted)" value={a.full_bio} />
+          <DetailLinks label="Headshot" urls={a.headshot_url ? [a.headshot_url] : []} />
           {Array.isArray(a.work_samples) && a.work_samples.length > 0 ? (
             <DetailLinks label="Professional identity" urls={a.work_samples} />
           ) : (
-            <Detail label="Professional identity" value={a.work_samples_explanation || "—"} />
+            <Detail label="Professional identity" value={a.work_samples_explanation} />
           )}
-          {Array.isArray(a.external_links) && a.external_links.length > 0 && (
-            <DetailLinks label="Links" urls={a.external_links} />
-          )}
-          {(a.prior_paid_work || (a.sector && a.sector.length > 0) || a.deliverables || a.rate_type || a.capacity) && (
-            <>
-              <Detail
-                label="Been paid directly by a company before"
-                value={a.prior_paid_work ? optionLabel(PRIOR_PAID_WORK_OPTIONS, a.prior_paid_work) : "—"}
-              />
-              <Detail
-                label="Industries paid to work in"
-                value={
-                  a.sector && a.sector.length > 0
-                    ? a.sector
-                        .map((v) => (v === "other" && a.sector_other ? a.sector_other : optionLabel(SECTOR_OPTIONS, v)))
-                        .join(", ")
-                    : "—"
-                }
-              />
-              <Detail label="Deliverables produced" value={a.deliverables || "—"} />
-              <Detail
-                label="Most recent paid engagement"
-                value={
-                  a.rate_type === "amount"
-                    ? `${a.rate_amount ?? ""} ${a.rate_currency ?? ""}`.trim()
-                    : a.rate_type
-                      ? optionLabel(RATE_TYPE_OPTIONS, a.rate_type)
-                      : "—"
-                }
-              />
-              {a.rate_scope && <Detail label="Scope of that payment" value={a.rate_scope} />}
-              {a.rate_type === "amount" && a.rate_relative_to_market && (
-                <Detail
-                  label="Relative to typical for their market"
-                  value={optionLabel(RATE_RELATIVE_OPTIONS, a.rate_relative_to_market)}
-                />
-              )}
-              <Detail
-                label="Capacity per month"
-                value={a.capacity ? optionLabel(CAPACITY_OPTIONS, a.capacity) : "—"}
-              />
-            </>
-          )}
+          <DetailLinks label="Links" urls={a.external_links ?? []} />
           <Detail
-            label="Reference"
-            value={`${a.reference_name} (${a.reference_relationship}) — ${a.reference_contact_value} via ${a.reference_contact_method}${
-              a.reference_contact_method === "phone" && a.reference_whatsapp_available ? " (WhatsApp)" : ""
-            }${a.reference_may_contact ? "" : " — NOT cleared to contact yet"}`}
+            label="Been paid directly by a company before"
+            value={a.prior_paid_work ? optionLabel(PRIOR_PAID_WORK_OPTIONS, a.prior_paid_work) : null}
           />
-          {a.additional_notes && <Detail label="Additional notes" value={a.additional_notes} />}
-          {a.referral_source && <Detail label="Referral source" value={a.referral_source} />}
+          <Detail
+            label="Industries paid to work in"
+            value={
+              a.sector && a.sector.length > 0
+                ? a.sector
+                    .map((v) => (v === "other" && a.sector_other ? a.sector_other : optionLabel(SECTOR_OPTIONS, v)))
+                    .join(", ")
+                : null
+            }
+          />
+          <Detail label="Deliverables produced" value={a.deliverables} />
+          <Detail
+            label="Most recent paid engagement"
+            value={
+              a.rate_type === "amount"
+                ? `${a.rate_amount ?? ""} ${a.rate_currency ?? ""}`.trim() || null
+                : a.rate_type
+                  ? optionLabel(RATE_TYPE_OPTIONS, a.rate_type)
+                  : null
+            }
+          />
+          <Detail label="Scope of that payment" value={a.rate_scope} />
+          <Detail
+            label="Relative to typical for their market"
+            value={a.rate_relative_to_market ? optionLabel(RATE_RELATIVE_OPTIONS, a.rate_relative_to_market) : null}
+          />
+          <Detail label="Capacity per month" value={a.capacity ? optionLabel(CAPACITY_OPTIONS, a.capacity) : null} />
+          <Detail label="Reference name" value={a.reference_name} />
+          <Detail label="Reference relationship" value={a.reference_relationship} />
+          <Detail
+            label="Reference contact"
+            value={
+              a.reference_contact_value
+                ? `${a.reference_contact_value}${a.reference_contact_method ? ` via ${a.reference_contact_method}` : ""}${
+                    a.reference_contact_method === "phone" && a.reference_whatsapp_available ? " (WhatsApp)" : ""
+                  }`
+                : null
+            }
+          />
+          <Detail label="Reference cleared to contact" value={a.reference_may_contact ? "Yes" : "No"} />
+          <Detail label="Additional notes" value={a.additional_notes} />
+          <Detail label="Referral source" value={a.referral_source} />
+          {a.reviewed_by && <Detail label="Reviewed by" value={a.reviewer_name || "Unknown reviewer"} />}
           {a.decision_reason && <Detail label="Decision reason" value={a.decision_reason} />}
 
           {canDecide && (
@@ -444,29 +446,13 @@ function ApplicationRow({
               ) : approving ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 480 }}>
                   <p style={{ fontSize: 12.5, opacity: 0.65, margin: 0 }}>
-                    This is shown publicly on their listing in place of the Category/Industry they
-                    answered -- write it the way a buy-side client would expect to see it, and edit
-                    it any time from the Listings tab afterward.
+                    Once approved, set the public listing descriptor (and anything else buyer-facing)
+                    from the Listings tab.
                   </p>
-                  <textarea
-                    placeholder="Public listing descriptor (e.g. Cosmetic chemist & formulation scientist)"
-                    value={listingDescriptor}
-                    onChange={(e) => setListingDescriptor(e.target.value)}
-                    rows={3}
-                    style={{
-                      width: "100%",
-                      border: "1px solid rgba(230,222,210,0.35)",
-                      background: "transparent",
-                      color: SAND,
-                      padding: 10,
-                      fontSize: 14,
-                      fontFamily: "inherit",
-                    }}
-                  />
                   <div style={{ display: "flex", gap: 10 }}>
                     <button
                       onClick={handleApprove}
-                      disabled={isPending || !listingDescriptor.trim()}
+                      disabled={isPending}
                       style={{
                         background: "#3C6B3F",
                         color: WHITE,
@@ -474,17 +460,14 @@ function ApplicationRow({
                         padding: "9px 16px",
                         fontSize: 13,
                         fontWeight: 600,
-                        cursor: isPending || !listingDescriptor.trim() ? "default" : "pointer",
-                        opacity: isPending || !listingDescriptor.trim() ? 0.6 : 1,
+                        cursor: isPending ? "default" : "pointer",
+                        opacity: isPending ? 0.6 : 1,
                       }}
                     >
                       Confirm approve
                     </button>
                     <button
-                      onClick={() => {
-                        setApproving(false);
-                        setListingDescriptor("");
-                      }}
+                      onClick={() => setApproving(false)}
                       disabled={isPending}
                       style={{
                         background: "transparent",
@@ -588,16 +571,19 @@ function ApplicationRow({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
       <div style={{ ...monoLabel, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 300, lineHeight: 1.5, color: SAND }}>{value}</div>
+      <div style={{ fontSize: 14, fontWeight: 300, lineHeight: 1.5, color: SAND }}>
+        {value || "No response"}
+      </div>
     </div>
   );
 }
 
 function DetailLinks({ label, urls }: { label: string; urls: string[] }) {
+  if (!urls || urls.length === 0) return <Detail label={label} value={null} />;
   return (
     <div>
       <div style={{ ...monoLabel, marginBottom: 4 }}>{label}</div>

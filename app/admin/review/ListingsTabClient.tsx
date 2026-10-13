@@ -311,6 +311,9 @@ function ListingRow({
             {p.work_modality && (
               <span style={monoLabel}>Delivery (from application): {optionLabel(WORK_MODALITY_OPTIONS, p.work_modality)}</span>
             )}
+            {p.reviewed_by && (
+              <span style={monoLabel}>Reviewed by: {p.reviewer_name || "Unknown reviewer"}</span>
+            )}
           </div>
 
           <Field label="Headshot">

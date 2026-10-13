@@ -27,6 +27,7 @@
 // published by an admin on the review page's Listings tab.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveReviewerNames } from "./reviewerNames";
 
 export type ScholarProfileStatus = "draft" | "published";
 
@@ -57,6 +58,7 @@ export interface ScholarProfileRow {
   vetted_date: string | null;
   status: ScholarProfileStatus;
   reviewed_by: string | null;
+  reviewer_name: string | null;
   created_at: string;
 }
 
@@ -79,7 +81,17 @@ export async function fetchScholarProfilesForReview(
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []) as unknown as ScholarProfileRow[];
+
+  const rows = (data ?? []) as unknown as Omit<ScholarProfileRow, "reviewer_name">[];
+  const reviewerNames = await resolveReviewerNames(
+    supabase,
+    rows.map((row) => row.reviewed_by)
+  );
+
+  return rows.map((row) => ({
+    ...row,
+    reviewer_name: row.reviewed_by ? reviewerNames.get(row.reviewed_by) ?? null : null,
+  }));
 }
 
 /**

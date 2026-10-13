@@ -26,25 +26,19 @@ async function requireReviewSellersPermission() {
 }
 
 /**
- * Approving requires a public listing descriptor -- added 2026-09-30
- * alongside replacing the application's Category question with Function.
- * Function is a segmenting/profiling axis, not buyer-facing copy, so it's
- * no longer what shows on the public listing; instead the admin types
- * the descriptor that should show there, same spirit as Reject already
- * requiring a reason (just public-facing instead of internal-only).
- *
- * The status update below fires create_scholar_profile_on_approval,
- * which inserts (or no-ops onto an existing) scholar_profile row seeded
- * from application.intended_category -- always null for a Function-era
- * application. The follow-up update overwrites that field with the
- * descriptor just typed, so the listing never shows a blank category or
- * a raw, non-buyer-facing intake answer.
+ * Approving used to require typing a public listing descriptor inline
+ * here (added 2026-09-30 alongside replacing the application's Category
+ * question with Function), immediately overwriting the scholar_profile
+ * row create_scholar_profile_on_approval seeds. That duplicated the
+ * Listings tab, which already has its own editable "Listing descriptor"
+ * field for the same scholar_profile.intended_category column -- so this
+ * no longer asks for it at approval time; the fresh scholar_profile row
+ * (seeded with intended_category null, since Function-era applications
+ * never populate the legacy category field) just sits with no descriptor
+ * until an admin sets one on the Listings tab, same as editing it later
+ * always worked.
  */
-export async function approveApplication(applicationId: string, listingDescriptor: string) {
-  if (!listingDescriptor.trim()) {
-    throw new Error("A public listing descriptor is required to approve an application.");
-  }
-
+export async function approveApplication(applicationId: string) {
   const { supabase, agentId } = await requireReviewSellersPermission();
 
   const { error } = await supabase
@@ -57,13 +51,6 @@ export async function approveApplication(applicationId: string, listingDescripto
     .eq("id", applicationId);
 
   if (error) throw error;
-
-  const { error: profileError } = await supabase
-    .from("scholar_profile")
-    .update({ intended_category: listingDescriptor.trim(), intended_category_other: null })
-    .eq("application_id", applicationId);
-
-  if (profileError) throw profileError;
 
   revalidatePath("/admin/review");
 }
