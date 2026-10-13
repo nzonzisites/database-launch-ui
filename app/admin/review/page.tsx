@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getPlatformAgentRow } from "@/lib/platformAgent";
 import { fetchApplicationsForReview } from "@/lib/applicationReview";
 import { fetchScholarProfilesForReview } from "@/lib/scholarProfile";
+import { fetchProspectSignupsForReview } from "@/lib/prospectSignupReview";
 import { BROWN, WHITE } from "@/lib/colors";
 import ReviewQueueClient from "./ReviewQueueClient";
 import SessionControls from "@/app/components/SessionControls";
@@ -79,8 +80,18 @@ export default async function ReviewQueuePage() {
   const scholarProfiles = agent.permissions.includes("review_listings")
     ? await fetchScholarProfilesForReview(supabase)
     : [];
+  // Reuses review_sellers rather than a dedicated permission -- see
+  // lib/prospectSignupReview.ts for why.
+  const prospects = agent.permissions.includes("review_sellers")
+    ? await fetchProspectSignupsForReview(supabase)
+    : [];
 
   return (
-    <ReviewQueueClient agent={agent} applications={applications} scholarProfiles={scholarProfiles} />
+    <ReviewQueueClient
+      agent={agent}
+      applications={applications}
+      scholarProfiles={scholarProfiles}
+      prospects={prospects}
+    />
   );
 }

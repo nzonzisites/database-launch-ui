@@ -5,8 +5,10 @@ import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { PlatformAgentRow } from "@/lib/platformAgent";
 import type { ApplicationForReview, ApplicationStatus } from "@/lib/applicationReview";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
+import type { ProspectSignupForReview } from "@/lib/prospectSignupReview";
 import { approveApplication, rejectApplication, revokeDecision } from "./actions";
 import ListingsTabClient from "./ListingsTabClient";
+import ProspectsTabClient from "./ProspectsTabClient";
 import SessionControls from "@/app/components/SessionControls";
 import {
   FUNCTION_OPTIONS,
@@ -47,12 +49,13 @@ const STATUS_STYLE: Record<ApplicationStatus, { label: string; bg: string; fg: s
   rejected: { label: "Rejected", bg: OCHRE, fg: WHITE },
 };
 
-const TABS = ["all", "applications", "listings", "reports"] as const;
+const TABS = ["all", "applications", "prospects", "listings", "reports"] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_LABEL: Record<Tab, string> = {
   all: "All",
   applications: "Applications",
+  prospects: "Prospects",
   listings: "Listings",
   reports: "Reports",
 };
@@ -73,13 +76,18 @@ export default function ReviewQueueClient({
   agent,
   applications,
   scholarProfiles,
+  prospects,
 }: {
   agent: PlatformAgentRow;
   applications: ApplicationForReview[];
   scholarProfiles: ScholarProfileWithSeller[];
+  prospects: ProspectSignupForReview[];
 }) {
   const availableTabs = TABS.filter((t) => {
     if (t === "all" || t === "applications") return agent.permissions.includes("review_sellers");
+    // Reuses review_sellers rather than a dedicated permission -- see
+    // lib/prospectSignupReview.ts for why.
+    if (t === "prospects") return agent.permissions.includes("review_sellers");
     if (t === "listings") return agent.permissions.includes("review_listings");
     if (t === "reports") return agent.permissions.includes("review_reports");
     return false;
@@ -157,6 +165,8 @@ export default function ReviewQueueClient({
         )}
 
         {tab === "listings" && <ListingsTabClient profiles={scholarProfiles} />}
+
+        {tab === "prospects" && <ProspectsTabClient prospects={prospects} />}
 
         {showApplications && (
           <>
