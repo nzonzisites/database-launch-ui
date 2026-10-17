@@ -86,8 +86,13 @@ export default async function FoundersPage() {
                   style={{ display: "flex", flexWrap: "wrap", gap: 28, alignItems: "flex-start" }}
                 >
                   <div style={{ width: "clamp(220px, min(36vh, 32vw), 440px)", flexShrink: 0 }}>
+                    {/* fullBio deliberately left blank -- ProfilePortrait only
+                        renders the click-for-bio label/overlay when it's
+                        truthy, and that interaction is staying off this page
+                        (per Modupe: incomplete here) without touching the
+                        shared component /profile/[slug] still uses it on. */}
                     <ProfilePortrait
-                      fullBio={profile.full_bio}
+                      fullBio=""
                       headshotUrl={profile.headshot_url}
                       headshotFocalY={profile.headshot_focal_y}
                     />
