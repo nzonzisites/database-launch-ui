@@ -104,24 +104,26 @@ export default function AboutPage() {
           ))}
         </div>
 
-        <div style={{ marginTop: 72 }}>
-          <Link
-            href={FOUNDERS_HREF}
-            style={{
-              display: "inline-block",
-              fontSize: 15,
-              fontWeight: 500,
-              color: OCHRE,
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-            }}
-          >
-            Meet the Nzonzi founders →
-          </Link>
-          <div style={{ fontSize: 15, fontWeight: 500, color: BROWN, marginTop: 4 }}>
-            (TLDR: we're not nepo-babies)
-          </div>
-        </div>
+        {/* Bordered-box button style, carried over from the (now removed)
+            LEARN MORE button on /database -- same shape, OCHRE instead of
+            WHITE since this sits on SAND rather than BROWN. */}
+        <Link
+          href={FOUNDERS_HREF}
+          style={{
+            marginTop: 72,
+            display: "inline-block",
+            background: "transparent",
+            border: `1px solid ${OCHRE}`,
+            color: OCHRE,
+            fontSize: 12.5,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            padding: "14px 26px",
+          }}
+        >
+          Meet the Nzonzi founders
+        </Link>
       </div>
     </div>
   );

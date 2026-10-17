@@ -1,16 +1,19 @@
 // DESTINATION: app/database/page.tsx
 //
 // "Introducing the database" page, inspired by the Studio Museum in
-// Harlem's "Introducing the 2026 Cohort" announcement layout (headline +
-// intro + a "LEARN MORE" button up top, three photo/name/title cards
-// below) -- rebuilt in the Nzonzi brand palette: BROWN stands in for
-// the reference's black background, WHITE for its white text.
+// Harlem's "Introducing the 2026 Cohort" announcement layout -- rebuilt
+// in the Nzonzi brand palette (BROWN for the reference's black
+// background, WHITE for its white text), as a one-screen sample/teaser:
+// headline, a "coming soon" subtext, three placeholder photo/name/title
+// cards. Sized to fit without scrolling rather than the earlier
+// scroll-length version -- no LEARN MORE button any more (removed per
+// Modupe; its bordered-box style moved to the "meet the founders" link
+// on /about instead).
 //
 // Everything here is a PLACEHOLDER (per Modupe: "use placeholder text
-// and images") -- the three "scholars" aren't real people, the photo
-// boxes are the same diagonal-stripe pattern ProfilePortrait already
-// uses for a missing headshot (just inverted for a dark background),
-// and LEARN MORE isn't wired to anything yet. DATABASE_PREVIEW is the
+// and images") -- the three "scholars" aren't real people, and the
+// photo boxes reuse ProfilePortrait's diagonal-stripe missing-headshot
+// pattern (inverted for the dark background). DATABASE_PREVIEW is the
 // one thing to touch once there's real content to show here.
 
 import Link from "next/link";
@@ -34,7 +37,9 @@ export default function DatabasePage() {
         background: BROWN,
         color: WHITE,
         minHeight: "100vh",
-        padding: "clamp(28px, 6vw, 56px) clamp(20px, 6vw, 64px) clamp(56px, 10vw, 96px)",
+        padding: "28px clamp(20px, 6vw, 56px) 36px",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       <Link
@@ -43,78 +48,46 @@ export default function DatabasePage() {
           fontSize: 13,
           fontWeight: 500,
           color: "rgba(240,240,240,0.6)",
-          marginBottom: 44,
+          marginBottom: 28,
           display: "inline-block",
         }}
       >
         ← back
       </Link>
 
-      <div
+      <h1
         style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 24,
-          marginBottom: 28,
+          fontSize: "clamp(26px, 4.4vw, 46px)",
+          fontWeight: 600,
+          letterSpacing: "-0.01em",
+          lineHeight: 1.06,
+          margin: "0 0 10px",
+          textTransform: "uppercase",
+          maxWidth: 900,
         }}
       >
-        <h1
-          style={{
-            fontSize: "clamp(32px, 6.4vw, 68px)",
-            fontWeight: 600,
-            letterSpacing: "-0.01em",
-            lineHeight: 1.04,
-            margin: 0,
-            textTransform: "uppercase",
-            maxWidth: 900,
-          }}
-        >
-          Introducing the Nzonzi Database
-        </h1>
-
-        {/* Placeholder only -- not wired to a destination yet. */}
-        <button
-          type="button"
-          style={{
-            flexShrink: 0,
-            background: "transparent",
-            border: "1px solid rgba(240,240,240,0.7)",
-            color: WHITE,
-            fontSize: 12.5,
-            fontWeight: 600,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            padding: "14px 26px",
-            cursor: "default",
-          }}
-        >
-          Learn more
-        </button>
-      </div>
+        Introducing the Nzonzi Database
+      </h1>
 
       <p
         style={{
-          fontSize: "clamp(17px, 2.2vw, 20px)",
-          fontWeight: 300,
-          lineHeight: 1.6,
-          maxWidth: 680,
-          margin: "0 0 64px",
-          color: "rgba(240,240,240,0.9)",
+          fontSize: 16,
+          fontWeight: 500,
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+          color: OCHRE,
+          margin: "0 0 32px",
         }}
       >
-        We're thrilled to welcome {DATABASE_PREVIEW[0].name},{" "}
-        {DATABASE_PREVIEW[1].name}, and {DATABASE_PREVIEW[2].name} to the
-        Nzonzi database -- a growing roster of vetted scholar-practitioners
-        ready to work with the organizations that need their expertise.
+        Coming soon
       </p>
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: 32,
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 24,
+          maxWidth: 880,
         }}
       >
         {DATABASE_PREVIEW.map((scholar) => (
@@ -122,6 +95,7 @@ export default function DatabasePage() {
             <div
               style={{
                 aspectRatio: "4 / 5",
+                maxHeight: "38vh",
                 backgroundImage:
                   "repeating-linear-gradient(135deg, rgba(240,240,240,0.12) 0 7px, transparent 7px 14px)",
                 display: "flex",
@@ -130,14 +104,14 @@ export default function DatabasePage() {
             >
               <span
                 style={{
-                  fontSize: 10.5,
+                  fontSize: 10,
                   fontWeight: 600,
-                  letterSpacing: "0.12em",
+                  letterSpacing: "0.1em",
                   textTransform: "uppercase",
                   color: "rgba(240,240,240,0.55)",
                   background: BROWN,
-                  padding: "4px 8px",
-                  margin: 12,
+                  padding: "3px 7px",
+                  margin: 10,
                 }}
               >
                 photo placeholder
@@ -145,20 +119,20 @@ export default function DatabasePage() {
             </div>
             <div
               style={{
-                fontSize: 19,
+                fontSize: 16,
                 fontWeight: 600,
                 letterSpacing: "-0.01em",
-                marginTop: 16,
+                marginTop: 12,
               }}
             >
               {scholar.name}
             </div>
             <div
               style={{
-                fontSize: 13.5,
+                fontSize: 12.5,
                 fontWeight: 500,
                 color: OCHRE,
-                marginTop: 4,
+                marginTop: 3,
               }}
             >
               {scholar.title}
