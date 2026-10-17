@@ -104,22 +104,24 @@ export default function AboutPage() {
           ))}
         </div>
 
-        <Link
-          href={FOUNDERS_HREF}
-          style={{
-            marginTop: 72,
-            display: "inline-block",
-            fontSize: 15,
-            fontWeight: 500,
-            color: OCHRE,
-            textDecoration: "underline",
-            textUnderlineOffset: 3,
-          }}
-        >
-          About the Nzonzi founders
-          <br />
-          (TLDR: we're not nepo-babies) →
-        </Link>
+        <div style={{ marginTop: 72 }}>
+          <Link
+            href={FOUNDERS_HREF}
+            style={{
+              display: "inline-block",
+              fontSize: 15,
+              fontWeight: 500,
+              color: OCHRE,
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+            }}
+          >
+            Meet the Nzonzi founders →
+          </Link>
+          <div style={{ fontSize: 15, fontWeight: 500, color: BROWN, marginTop: 4 }}>
+            (TLDR: we're not nepo-babies)
+          </div>
+        </div>
       </div>
     </div>
   );
