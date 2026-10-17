@@ -79,9 +79,10 @@ export default async function FoundersPage() {
             color: "rgba(31,14,3,0.8)",
           }}
         >
-          TLDR: we're not nepo-babies. Uche and Ireti are both vetted,
-          published scholars on Nzonzi in their own right -- here are our
-          own listings.
+          TLDR: we're not nepo-babies.
+          <br />
+          Uche and Ireti are both vetted, published scholars on Nzonzi in
+          their own right -- here are our own listings.
         </p>
 
         {profiles.length === 0 ? (

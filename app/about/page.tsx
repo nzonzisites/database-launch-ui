@@ -85,8 +85,12 @@ export default function AboutPage() {
                 margin: 0,
               }}
             >
-              {p.lead ? <em style={{ fontStyle: "italic" }}>{p.lead}</em> : null}
-              {p.lead ? " " : null}
+              {p.lead ? (
+                <>
+                  <em style={{ fontStyle: "italic" }}>{p.lead}</em>
+                  <br />
+                </>
+              ) : null}
               {p.text}
             </p>
           ))}
