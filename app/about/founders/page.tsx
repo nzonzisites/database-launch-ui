@@ -62,28 +62,13 @@ export default async function FoundersPage() {
             fontWeight: 300,
             letterSpacing: "-0.03em",
             lineHeight: 1.1,
-            margin: "0 0 14px",
+            margin: "0 0 52px",
             color: FOREST,
             textTransform: "lowercase",
           }}
         >
-          the nzonzi founders
+          meet the founders
         </h1>
-        <p
-          style={{
-            fontSize: 17,
-            fontWeight: 300,
-            lineHeight: 1.6,
-            margin: "0 0 52px",
-            maxWidth: 620,
-            color: "rgba(31,14,3,0.8)",
-          }}
-        >
-          TLDR: we're not nepo-babies.
-          <br />
-          Uche and Ireti are both vetted, published scholars on Nzonzi in
-          their own right -- here are our own listings.
-        </p>
 
         {profiles.length === 0 ? (
           <p style={{ fontSize: 15, color: "rgba(31,14,3,0.6)" }}>
