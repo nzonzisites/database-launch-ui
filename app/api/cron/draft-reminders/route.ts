@@ -1,7 +1,7 @@
 // DESTINATION: app/api/cron/draft-reminders/route.ts
 //
-// Hit every 10 minutes (see vercel.json) to email anyone who started an
-// application, is still a "draft", and has been idle for
+// Hit once a day (13:00 UTC / 9am ET, see vercel.json) to email anyone
+// who started an application, is still a "draft", and has been idle for
 // STALE_AFTER_MINUTES or more. Each draft only ever gets this once --
 // the row is "claimed" (reminder_sent_at set) right before the send
 // attempt, so an overlapping run can't double-send, and a failed send
@@ -9,11 +9,15 @@
 // than risking a second email on the next one.
 //
 // Vercel Cron requires a Pro plan for anything more frequent than
-// once/day -- this ran on a daily schedule (13:00 UTC / 9am ET) until
-// the account upgraded, relying on reminder_sent_at IS NULL rather than
-// a tight window since a once-a-day check can't hit a precise 30-minute
-// mark anyway. Now that it runs every 10 minutes, STALE_AFTER_MINUTES
-// actually means something close to what it says.
+// once/day -- a tighter schedule (every 10 minutes) was tried on
+// 2026-10-15 but reverted on 2026-10-17 since the account stayed on
+// Hobby, and a vercel.json cron faster than once/day on Hobby makes
+// Vercel reject every deploy outright (no build, no deployment record
+// at all -- this is what silently broke auto-deploy for several days).
+// STALE_AFTER_MINUTES is kept at 30 for when reminder_sent_at IS NULL
+// is checked once a day -- it can't hit a precise 30-minute mark on
+// this cadence, but it's still the right threshold for "how long before
+// a draft counts as abandoned."
 //
 // Vercel sends CRON_SECRET automatically as "Authorization: Bearer
 // <value>" on every scheduled hit, which is how the route tells a real
