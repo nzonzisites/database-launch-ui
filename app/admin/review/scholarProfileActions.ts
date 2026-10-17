@@ -36,6 +36,23 @@ export interface ScholarProfileEditableFields {
   // so it can keep being refined to match buyer-side language over
   // time, without needing to revoke and re-approve the application.
   intended_category: string;
+  // Added 2026-10-17 alongside the fields below -- the Function-era
+  // replacement for intended_category above. Kept separate rather than
+  // merged, since intended_category stays in use as the free-text
+  // "Listing descriptor" buyers actually see.
+  intended_function: string;
+  intended_function_other: string;
+  // Set automatically at approval (create_scholar_profile_on_approval)
+  // but had no admin-edit path until now -- an admin correcting a typo
+  // or adding a location the applicant left off had no way to do so.
+  city_country: string;
+  residences: { city: string; country: string; is_primary: boolean }[];
+  country_of_origin: string;
+  affiliations: string[];
+  // Same gap as city_country above -- set at approval, previously
+  // read-only on the Listings tab.
+  work_modality: string[];
+  experience_areas: string[];
   tagline: string;
   full_bio: string;
   background: string;
@@ -69,6 +86,22 @@ export async function updateScholarProfile(
       headshot_url: fields.headshot_url.trim() || null,
       headshot_focal_y: Math.round(Math.min(100, Math.max(0, fields.headshot_focal_y))),
       intended_category: fields.intended_category.trim(),
+      intended_function: fields.intended_function || null,
+      intended_function_other:
+        fields.intended_function === "other" ? fields.intended_function_other.trim() : null,
+      city_country: fields.city_country.trim() || null,
+      residences:
+        fields.residences.length > 0
+          ? fields.residences.map((r) => ({
+              city: r.city.trim(),
+              country: r.country.trim(),
+              is_primary: r.is_primary,
+            }))
+          : null,
+      country_of_origin: fields.country_of_origin.trim() || null,
+      affiliations: fields.affiliations.length > 0 ? fields.affiliations : null,
+      work_modality: fields.work_modality.length > 0 ? fields.work_modality : null,
+      experience_areas: fields.experience_areas.length > 0 ? fields.experience_areas : null,
       tagline: fields.tagline.trim(),
       full_bio: fields.full_bio.trim(),
       background: fields.background.trim(),

@@ -34,6 +34,19 @@ function industryLabels(sector: string[] | null, sectorOther: string | null): st
   );
 }
 
+/** The first non-primary residence, formatted as "City, Country" -- shown
+ * as a second location fact alongside city_country (the primary one)
+ * when the applicant listed more than one place they split time between. */
+function secondaryResidenceLabel(
+  residences: { city: string; country: string; is_primary: boolean }[] | null
+): string | null {
+  if (!residences || residences.length === 0) return null;
+  const secondary = residences.find((r) => !r.is_primary) ?? null;
+  if (!secondary) return null;
+  const label = [secondary.city, secondary.country].filter(Boolean).join(", ");
+  return label || null;
+}
+
 function vettedLabel(vettedDate: string | null): string | null {
   if (!vettedDate) return null;
   const d = new Date(vettedDate + "T00:00:00Z");
@@ -80,8 +93,12 @@ export default async function ScholarProfilePage({
   const category = categoryLabel(profile.intended_category, profile.intended_category_other);
   const vetted = vettedLabel(profile.vetted_date);
 
+  const alsoBasedIn = secondaryResidenceLabel(profile.residences);
+
   const facts = [
     profile.city_country ? { k: "Location", v: profile.city_country } : null,
+    alsoBasedIn ? { k: "Also based in", v: alsoBasedIn } : null,
+    profile.country_of_origin ? { k: "Country of origin", v: profile.country_of_origin } : null,
     profile.experience_label ? { k: "Experience", v: profile.experience_label } : null,
     vetted ? { k: "Vetted", v: vetted } : null,
   ].filter((f): f is { k: string; v: string } => f !== null);
@@ -238,6 +255,41 @@ export default async function ScholarProfilePage({
                 </h2>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {industryTagList.map((label) => (
+                    <span
+                      key={label}
+                      style={{
+                        display: "inline-block",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        padding: "5px 13px",
+                        borderRadius: 999,
+                        background: "rgba(45,77,49,0.12)",
+                        color: FOREST,
+                        letterSpacing: "0.01em",
+                      }}
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {profile.affiliations && profile.affiliations.length > 0 && (
+              <div style={{ marginBottom: 34 }}>
+                <h2
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 400,
+                    color: "rgba(31,14,3,0.5)",
+                    marginBottom: 10,
+                    textTransform: "lowercase",
+                  }}
+                >
+                  affiliations
+                </h2>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {profile.affiliations.map((label) => (
                     <span
                       key={label}
                       style={{

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
-import { WORK_MODALITY_OPTIONS, SECTOR_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
+import { FUNCTION_OPTIONS, EXPERIENCE_AREA_OPTIONS, WORK_MODALITY_OPTIONS, SECTOR_OPTIONS } from "@/app/apply/applicationOptions";
 import { publishScholarProfile, unpublishScholarProfile, updateScholarProfile } from "./scholarProfileActions";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
@@ -136,6 +136,17 @@ function ListingRow({
   const [headshotUrl, setHeadshotUrl] = useState(p.headshot_url ?? "");
   const [headshotFocalY, setHeadshotFocalY] = useState(p.headshot_focal_y ?? 50);
   const [listingDescriptor, setListingDescriptor] = useState(p.intended_category ?? "");
+  const [intendedFunction, setIntendedFunction] = useState(p.intended_function ?? "");
+  const [intendedFunctionOther, setIntendedFunctionOther] = useState(p.intended_function_other ?? "");
+  const [cityCountry, setCityCountry] = useState(p.city_country ?? "");
+  const [residences, setResidences] = useState<{ city: string; country: string; is_primary: boolean }[]>(
+    p.residences ?? []
+  );
+  const [countryOfOrigin, setCountryOfOrigin] = useState(p.country_of_origin ?? "");
+  const [affiliations, setAffiliations] = useState<string[]>(p.affiliations ?? []);
+  const [affiliationDraft, setAffiliationDraft] = useState("");
+  const [workModality, setWorkModality] = useState<string[]>(p.work_modality ?? []);
+  const [experienceAreas, setExperienceAreas] = useState<string[]>(p.experience_areas ?? []);
   const [tagline, setTagline] = useState(p.tagline);
   const [fullBio, setFullBio] = useState(p.full_bio);
   const [background, setBackground] = useState(p.background);
@@ -148,10 +159,57 @@ function ListingRow({
     setSector((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
   }
 
+  function toggleWorkModality(value: string) {
+    setWorkModality((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
+  }
+
+  function toggleExperienceArea(value: string) {
+    setExperienceAreas((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
+  }
+
+  function addResidence() {
+    setResidences((prev) => [...prev, { city: "", country: "", is_primary: prev.length === 0 }]);
+  }
+
+  function updateResidence(index: number, key: "city" | "country", value: string) {
+    setResidences((prev) => prev.map((r, i) => (i === index ? { ...r, [key]: value } : r)));
+  }
+
+  function setPrimaryResidence(index: number) {
+    setResidences((prev) => prev.map((r, i) => ({ ...r, is_primary: i === index })));
+  }
+
+  function removeResidence(index: number) {
+    setResidences((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length > 0 && !next.some((r) => r.is_primary)) next[0].is_primary = true;
+      return next;
+    });
+  }
+
+  function addAffiliation() {
+    const trimmed = affiliationDraft.trim();
+    if (!trimmed) return;
+    setAffiliations((prev) => [...prev, trimmed]);
+    setAffiliationDraft("");
+  }
+
+  function removeAffiliation(index: number) {
+    setAffiliations((prev) => prev.filter((_, i) => i !== index));
+  }
+
   const fields = {
     headshot_url: headshotUrl,
     headshot_focal_y: headshotFocalY,
     intended_category: listingDescriptor,
+    intended_function: intendedFunction,
+    intended_function_other: intendedFunctionOther,
+    city_country: cityCountry,
+    residences,
+    country_of_origin: countryOfOrigin,
+    affiliations,
+    work_modality: workModality,
+    experience_areas: experienceAreas,
     tagline,
     full_bio: fullBio,
     background,
@@ -316,9 +374,6 @@ function ListingRow({
             >
               Preview public page →
             </a>
-            {p.work_modality && p.work_modality.length > 0 && (
-              <span style={monoLabel}>Delivery (from application): {p.work_modality.map((v) => optionLabel(WORK_MODALITY_OPTIONS, v)).join(", ")}</span>
-            )}
             {p.reviewed_by && (
               <span style={monoLabel}>Reviewed by: {p.reviewer_name || "Unknown reviewer"}</span>
             )}
@@ -414,6 +469,118 @@ function ListingRow({
             />
           </Field>
 
+          <Field label="Function (from application)">
+            <select
+              value={intendedFunction}
+              onChange={(e) => setIntendedFunction(e.target.value)}
+              style={{ ...fieldStyle, cursor: "pointer" }}
+            >
+              <option value="">— not set —</option>
+              {FUNCTION_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            {intendedFunction === "other" && (
+              <input
+                value={intendedFunctionOther}
+                onChange={(e) => setIntendedFunctionOther(e.target.value)}
+                style={{ ...fieldStyle, marginTop: 10 }}
+                placeholder="Describe the other function"
+              />
+            )}
+          </Field>
+
+          <Field label="Location">
+            <input
+              value={cityCountry}
+              onChange={(e) => setCityCountry(e.target.value)}
+              style={fieldStyle}
+              placeholder="e.g. Ibadan, Nigeria"
+            />
+            <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+              {residences.map((r, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <input
+                    value={r.city}
+                    onChange={(e) => updateResidence(i, "city", e.target.value)}
+                    style={{ ...fieldStyle, width: 160 }}
+                    placeholder="City"
+                  />
+                  <input
+                    value={r.country}
+                    onChange={(e) => updateResidence(i, "country", e.target.value)}
+                    style={{ ...fieldStyle, width: 160 }}
+                    placeholder="Country"
+                  />
+                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: SAND, cursor: "pointer" }}>
+                    <input type="radio" name={`residence-primary-${p.id}`} checked={r.is_primary} onChange={() => setPrimaryResidence(i)} />
+                    Primary
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => removeResidence(i)}
+                    style={{ background: "transparent", border: 0, padding: 0, fontSize: 12.5, color: OCHRE, cursor: "pointer" }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addResidence}
+                style={{ background: "transparent", border: 0, padding: 0, fontSize: 12.5, fontWeight: 600, textDecoration: "underline", color: SAND, cursor: "pointer", alignSelf: "flex-start" }}
+              >
+                + Add another location
+              </button>
+            </div>
+          </Field>
+
+          <Field label="Country of origin">
+            <input
+              value={countryOfOrigin}
+              onChange={(e) => setCountryOfOrigin(e.target.value)}
+              style={fieldStyle}
+              placeholder="e.g. Nigeria"
+            />
+          </Field>
+
+          <Field label="Affiliations">
+            <input
+              value={affiliationDraft}
+              onChange={(e) => setAffiliationDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addAffiliation();
+                }
+              }}
+              onBlur={addAffiliation}
+              style={fieldStyle}
+              placeholder="e.g. University of Ibadan — press Enter to add"
+            />
+            {affiliations.length > 0 && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                {affiliations.map((a, i) => (
+                  <span
+                    key={`${a}-${i}`}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12.5, padding: "6px 10px", border: "1px solid rgba(230,222,210,0.3)" }}
+                  >
+                    {a}
+                    <button
+                      type="button"
+                      onClick={() => removeAffiliation(i)}
+                      style={{ background: "transparent", border: 0, padding: 0, color: OCHRE, cursor: "pointer", fontSize: 13 }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </Field>
+
           <Field label="Tagline">
             <input
               value={tagline}
@@ -470,6 +637,60 @@ function ListingRow({
                 placeholder="Describe the other industry"
               />
             )}
+          </Field>
+
+          <Field label="Delivery (what type of work they're open to)">
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {WORK_MODALITY_OPTIONS.map((opt) => {
+                const active = workModality.includes(opt.value);
+                return (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => toggleWorkModality(opt.value)}
+                    style={{
+                      background: active ? MOSS : "transparent",
+                      border: `1px solid ${active ? MOSS : "rgba(230,222,210,0.35)"}`,
+                      borderRadius: 999,
+                      padding: "7px 14px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: active ? BROWN : SAND,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          <Field label="Experience areas (from application)">
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {EXPERIENCE_AREA_OPTIONS.map((opt) => {
+                const active = experienceAreas.includes(opt.value);
+                return (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => toggleExperienceArea(opt.value)}
+                    style={{
+                      background: active ? MOSS : "transparent",
+                      border: `1px solid ${active ? MOSS : "rgba(230,222,210,0.35)"}`,
+                      borderRadius: 999,
+                      padding: "7px 14px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: active ? BROWN : SAND,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
           </Field>
 
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>

@@ -50,9 +50,33 @@ export interface ScholarProfileRow {
   intended_category: string | null;
   intended_category_other: string | null;
   city_country: string | null;
+  // Structured primary/secondary residence list, same shape as
+  // application.residences ({ city, country, is_primary }[]) -- added
+  // 2026-10-17 alongside country_of_origin/affiliations/experience_areas
+  // /intended_function below, to close the gap where these page-1
+  // application fields were being collected but never copied onto the
+  // public listing. city_country (above) is kept as the simple
+  // single-string display value already used across the profile/admin
+  // pages; residences is the fuller structured version for anywhere that
+  // wants to show more than one location.
+  residences: { city: string; country: string; is_primary: boolean }[] | null;
+  country_of_origin: string | null;
+  affiliations: string[] | null;
+  // Function-era replacement for intended_category (see
+  // sql/2026-09-30b-application-function.sql) -- kept alongside
+  // intended_category rather than replacing it, so nothing already
+  // written there is lost. Plain text, not the application-side enum,
+  // same decoupling-from-the-enum choice already made for work_modality
+  // and sector on this table.
+  intended_function: string | null;
+  intended_function_other: string | null;
   // Rebuilt 2026-10-17 as a genuine multi-select (virtual/local/travel) --
   // see WORK_MODALITY_OPTIONS in app/apply/applicationOptions.ts.
   work_modality: string[] | null;
+  // The "Experience (optional)" page-1 multi-select (see
+  // EXPERIENCE_AREA_OPTIONS) -- distinct from experience_label below,
+  // which is a free-text admin-written summary ("14 years").
+  experience_areas: string[] | null;
   tagline: string;
   full_bio: string;
   background: string;
@@ -77,7 +101,8 @@ export interface ScholarProfileRow {
 export type ScholarProfileWithSeller = ScholarProfileRow;
 
 const COLUMNS =
-  "id, application_id, slug, full_name, headshot_url, headshot_focal_y, submitted_headshot_url, intended_category, intended_category_other, city_country, work_modality, " +
+  "id, application_id, slug, full_name, headshot_url, headshot_focal_y, submitted_headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, " +
+  "city_country, residences, country_of_origin, affiliations, work_modality, experience_areas, " +
   "tagline, full_bio, background, experience_label, vetted_date, sector, sector_other, status, reviewed_by, created_at";
 
 /** All scholar_profile rows, for the admin Listings tab. Requires review_listings (enforced by RLS). */
