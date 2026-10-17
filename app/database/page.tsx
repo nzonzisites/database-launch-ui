@@ -112,7 +112,7 @@ export default function DatabasePage() {
               <div
                 style={{
                   aspectRatio: "4 / 5",
-                  maxHeight: "62vh",
+                  maxHeight: "44vh",
                   backgroundImage:
                     "repeating-linear-gradient(135deg, rgba(240,240,240,0.12) 0 7px, transparent 7px 14px)",
                   display: "flex",
