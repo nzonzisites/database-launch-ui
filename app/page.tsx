@@ -122,12 +122,12 @@ export default function LandingPage() {
           home
         </Link>{" "}
         <span style={{ opacity: 0.5 }}>/</span>{" "}
-        <Link href="/apply" style={{ color: "inherit" }}>
-          apply
-        </Link>{" "}
-        <span style={{ opacity: 0.5 }}>/</span>{" "}
         <Link href="/about" style={{ color: "inherit" }}>
           about
+        </Link>{" "}
+        <span style={{ opacity: 0.5 }}>/</span>{" "}
+        <Link href="/apply" style={{ color: "inherit" }}>
+          apply
         </Link>
       </div>
       <Link
