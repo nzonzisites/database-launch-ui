@@ -1,16 +1,27 @@
 // DESTINATION: app/about/page.tsx
-// (new folder -- create app/about/ and save this as page.tsx inside it)
 //
-// About page -- deliberately minimal for now (Modupe: "just add this for
-// now and I'll add more later as it develops"). One paragraph in an
-// ABOUT_PARAGRAPHS array so adding more later is just adding more
-// strings to that array, not restructuring the page.
+// About page -- styled as a single large "wall text" statement (per
+// Modupe's reference: a museum-plaque style block of big type, italic
+// opening clause, generous whitespace) in the Nzonzi brand palette.
+//
+// ABOUT_PARAGRAPHS stays an array so adding more later (per Modupe:
+// "I'll add more later as it develops") is just appending another
+// { lead?, text } entry -- `lead` is the optional italicized opening
+// clause, `text` is the regular-weight continuation in the same <p>.
 
 import Link from "next/link";
-import { BROWN, FOREST, SAND } from "@/lib/colors";
+import { BROWN, SAND } from "@/lib/colors";
 
-const ABOUT_PARAGRAPHS: string[] = [
-  "We are internationally oriented children, grandchildren, and great-grandchildren of the African continent. In homage to all that our ancestors have instilled within us, Nzonzis pursue the reclamation of our ancestral inheritance through research, experimentation, collaboration, and practical expertise.",
+type AboutParagraph = {
+  lead?: string;
+  text: string;
+};
+
+const ABOUT_PARAGRAPHS: AboutParagraph[] = [
+  {
+    lead: "We are internationally oriented children, grandchildren, and great-grandchildren of the African continent.",
+    text: "In homage to all that our ancestors have instilled within us, Nzonzis pursue the reclamation of our ancestral inheritance through research, experimentation, collaboration, and practical expertise.",
+  },
 ];
 
 export default function AboutPage() {
@@ -20,10 +31,10 @@ export default function AboutPage() {
         background: SAND,
         color: BROWN,
         minHeight: "100vh",
-        padding: "56px 48px 90px",
+        padding: "72px 48px 120px",
       }}
     >
-      <div style={{ maxWidth: 680, margin: "0 auto" }}>
+      <div style={{ maxWidth: 820, margin: "0 auto" }}>
         <Link
           href="/"
           style={{
@@ -33,30 +44,28 @@ export default function AboutPage() {
             fontSize: 13,
             fontWeight: 500,
             color: "rgba(31,14,3,0.6)",
-            marginBottom: 34,
+            marginBottom: 64,
             display: "inline-block",
           }}
         >
           ← back
         </Link>
-        <h1
-          style={{
-            fontSize: 44,
-            fontWeight: 300,
-            letterSpacing: "-0.04em",
-            lineHeight: 1.05,
-            margin: 0,
-            color: FOREST,
-            textTransform: "lowercase",
-          }}
-        >
-          about nzonzi
-        </h1>
 
-        <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 24 }}>
-          {ABOUT_PARAGRAPHS.map((text, i) => (
-            <p key={i} style={{ fontSize: 17, fontWeight: 300, lineHeight: 1.62, margin: 0 }}>
-              {text}
+        <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
+          {ABOUT_PARAGRAPHS.map((p, i) => (
+            <p
+              key={i}
+              style={{
+                fontSize: "clamp(28px, 4.4vw, 46px)",
+                fontWeight: 300,
+                lineHeight: 1.2,
+                letterSpacing: "-0.015em",
+                margin: 0,
+              }}
+            >
+              {p.lead ? <em style={{ fontStyle: "italic" }}>{p.lead}</em> : null}
+              {p.lead ? " " : null}
+              {p.text}
             </p>
           ))}
         </div>
