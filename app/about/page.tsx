@@ -32,6 +32,7 @@ const ABOUT_PARAGRAPHS: AboutParagraph[] = [
 ];
 
 const FOUNDERS_HREF = "/about/founders";
+const DATABASE_HREF = "/database";
 
 export default function AboutPage() {
   return (
@@ -107,23 +108,40 @@ export default function AboutPage() {
         {/* Bordered-box button style, carried over from the (now removed)
             LEARN MORE button on /database -- same shape, OCHRE instead of
             WHITE since this sits on SAND rather than BROWN. */}
-        <Link
-          href={FOUNDERS_HREF}
-          style={{
-            marginTop: 72,
-            display: "inline-block",
-            background: "transparent",
-            border: `1px solid ${OCHRE}`,
-            color: OCHRE,
-            fontSize: 12.5,
-            fontWeight: 600,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            padding: "14px 26px",
-          }}
-        >
-          Meet the Nzonzi founders
-        </Link>
+        <div style={{ marginTop: 72, display: "flex", flexWrap: "wrap", gap: 16 }}>
+          <Link
+            href={FOUNDERS_HREF}
+            style={{
+              display: "inline-block",
+              background: "transparent",
+              border: `1px solid ${OCHRE}`,
+              color: OCHRE,
+              fontSize: 12.5,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              padding: "14px 26px",
+            }}
+          >
+            Meet the Nzonzi founders
+          </Link>
+          <Link
+            href={DATABASE_HREF}
+            style={{
+              display: "inline-block",
+              background: "transparent",
+              border: `1px solid ${OCHRE}`,
+              color: OCHRE,
+              fontSize: 12.5,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              padding: "14px 26px",
+            }}
+          >
+            Preview the directory
+          </Link>
+        </div>
       </div>
     </div>
   );
