@@ -4,9 +4,10 @@
 // The point (per Modupe: "TLDR: we're not nepo-babies") is to let a
 // visitor land straight on the founders' own vetted listings rather
 // than take that on faith -- so this pulls Uche's and Ireti's live
-// scholar_profile rows and renders the same portrait/tagline/category
-// treatment as /profile/[slug], just two-up, each linking out to their
-// full listing.
+// scholar_profile rows and renders each one as a compact row (portrait
+// left, name/category/tagline/link to the right), stacked so both fit
+// on one screen without scrolling, each linking out to their full
+// listing.
 //
 // FOUNDER_SLUGS is the only thing to touch if a slug ever changes (an
 // admin renaming a listing, a profile being re-approved under a new
@@ -42,14 +43,14 @@ export default async function FoundersPage() {
 
   return (
     <div style={{ background: SAND, color: BROWN, minHeight: "100vh" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "56px 48px 96px" }}>
+      <div style={{ maxWidth: 820, margin: "0 auto", padding: "32px 48px 48px" }}>
         <Link
           href="/about"
           style={{
             fontSize: 13,
             fontWeight: 500,
             color: "rgba(31,14,3,0.6)",
-            marginBottom: 40,
+            marginBottom: 24,
             display: "inline-block",
           }}
         >
@@ -58,11 +59,11 @@ export default async function FoundersPage() {
 
         <h1
           style={{
-            fontSize: "clamp(30px, 4.6vw, 44px)",
+            fontSize: "clamp(26px, 4vw, 36px)",
             fontWeight: 300,
             letterSpacing: "-0.03em",
             lineHeight: 1.1,
-            margin: "0 0 52px",
+            margin: "0 0 32px",
             color: FOREST,
             textTransform: "lowercase",
           }}
@@ -76,18 +77,15 @@ export default async function FoundersPage() {
             meantime, you can browse the full roster from the home page.
           </p>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: 48,
-            }}
-          >
+          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
             {profiles.map((profile) => {
               const category = categoryLabel(profile.intended_category, profile.intended_category_other);
               return (
-                <div key={profile.id}>
-                  <div style={{ maxWidth: 320 }}>
+                <div
+                  key={profile.id}
+                  style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "flex-start" }}
+                >
+                  <div style={{ width: 150, flexShrink: 0 }}>
                     <ProfilePortrait
                       fullBio={profile.full_bio}
                       headshotUrl={profile.headshot_url}
@@ -95,57 +93,58 @@ export default async function FoundersPage() {
                     />
                   </div>
 
-                  {category && (
-                    <div
+                  <div style={{ flex: "1 1 320px", minWidth: 240 }}>
+                    {category && (
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 500,
+                          letterSpacing: "0.02em",
+                          color: OCHRE,
+                          textTransform: "lowercase",
+                        }}
+                      >
+                        {category}
+                      </div>
+                    )}
+                    <h2
                       style={{
-                        fontSize: 13,
-                        fontWeight: 500,
-                        letterSpacing: "0.02em",
-                        color: OCHRE,
-                        textTransform: "lowercase",
-                        marginTop: 18,
-                      }}
-                    >
-                      {category}
-                    </div>
-                  )}
-                  <h2
-                    style={{
-                      fontSize: 26,
-                      fontWeight: 300,
-                      letterSpacing: "-0.02em",
-                      lineHeight: 1.1,
-                      margin: "8px 0 10px",
-                      textTransform: "lowercase",
-                    }}
-                  >
-                    {profile.full_name}
-                  </h2>
-                  {profile.tagline && (
-                    <p
-                      style={{
-                        fontSize: 15,
+                        fontSize: 22,
                         fontWeight: 300,
-                        lineHeight: 1.5,
-                        margin: "0 0 16px",
-                        color: "rgba(31,14,3,0.8)",
+                        letterSpacing: "-0.02em",
+                        lineHeight: 1.1,
+                        margin: "6px 0 8px",
+                        textTransform: "lowercase",
                       }}
                     >
-                      {profile.tagline}
-                    </p>
-                  )}
-                  <Link
-                    href={`/profile/${profile.slug}`}
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: FOREST,
-                      textDecoration: "underline",
-                      textUnderlineOffset: 3,
-                    }}
-                  >
-                    See the full listing →
-                  </Link>
+                      {profile.full_name}
+                    </h2>
+                    {profile.tagline && (
+                      <p
+                        style={{
+                          fontSize: 14.5,
+                          fontWeight: 300,
+                          lineHeight: 1.45,
+                          margin: "0 0 12px",
+                          color: "rgba(31,14,3,0.8)",
+                        }}
+                      >
+                        {profile.tagline}
+                      </p>
+                    )}
+                    <Link
+                      href={`/profile/${profile.slug}`}
+                      style={{
+                        fontSize: 13.5,
+                        fontWeight: 500,
+                        color: FOREST,
+                        textDecoration: "underline",
+                        textUnderlineOffset: 3,
+                      }}
+                    >
+                      See the full listing →
+                    </Link>
+                  </div>
                 </div>
               );
             })}
