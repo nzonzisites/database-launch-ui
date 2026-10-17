@@ -370,13 +370,20 @@ export default function LandingPage() {
                           type="button"
                           onClick={() => setRole(r.key)}
                           style={{
-                            background: on ? BROWN : "transparent",
-                            border: `1px solid ${on ? BROWN : "rgba(31,14,3,0.25)"}`,
-                            borderRadius: 999,
-                            padding: "14px 24px",
-                            fontSize: 15.5,
-                            fontWeight: 500,
-                            color: on ? SAND : "rgba(31,14,3,0.8)",
+                            // Bordered-box style, matching "Meet the Nzonzi
+                            // founders" / "Preview the directory" on /about --
+                            // transparent + OCHRE border/text when unselected,
+                            // filled OCHRE when selected (that page's style has
+                            // no selected state of its own, so this is the
+                            // adaptation for it).
+                            background: on ? OCHRE : "transparent",
+                            border: `1px solid ${OCHRE}`,
+                            padding: "14px 26px",
+                            fontSize: 12.5,
+                            fontWeight: 600,
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            color: on ? BROWN : OCHRE,
                             cursor: "pointer",
                             animation: `riseIn 1.6s ${5.0 + r.i * 0.6}s cubic-bezier(0.33, 0, 0.2, 1) both`,
                           }}
