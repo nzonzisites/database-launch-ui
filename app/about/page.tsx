@@ -75,24 +75,32 @@ export default function AboutPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
           {ABOUT_PARAGRAPHS.map((p, i) => (
-            <p
-              key={i}
-              style={{
-                fontSize: "clamp(26px, 4vw, 42px)",
-                fontWeight: 300,
-                lineHeight: 1.2,
-                letterSpacing: "-0.015em",
-                margin: 0,
-              }}
-            >
-              {p.lead ? (
-                <>
+            <div key={i}>
+              {p.lead && (
+                <p
+                  style={{
+                    fontSize: "clamp(26px, 4vw, 42px)",
+                    fontWeight: 300,
+                    lineHeight: 1.2,
+                    letterSpacing: "-0.015em",
+                    margin: "0 0 22px",
+                  }}
+                >
                   <em style={{ fontStyle: "italic" }}>{p.lead}</em>
-                  <br />
-                </>
-              ) : null}
-              {p.text}
-            </p>
+                </p>
+              )}
+              <p
+                style={{
+                  fontSize: "clamp(26px, 4vw, 42px)",
+                  fontWeight: 300,
+                  lineHeight: 1.2,
+                  letterSpacing: "-0.015em",
+                  margin: 0,
+                }}
+              >
+                {p.text}
+              </p>
+            </div>
           ))}
         </div>
 
@@ -108,7 +116,9 @@ export default function AboutPage() {
             textUnderlineOffset: 3,
           }}
         >
-          About the Nzonzi founders (TLDR: we're not nepo-babies) →
+          About the Nzonzi founders
+          <br />
+          (TLDR: we're not nepo-babies) →
         </Link>
       </div>
     </div>
