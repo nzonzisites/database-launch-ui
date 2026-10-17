@@ -841,16 +841,16 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             textTransform: "lowercase",
           }}
         >
-          nzonzi listing application
+          {page === 1 ? "submit your nzonzi listing" : "background check and references"}
         </h2>
         {page === 1 && (
           <p style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4, margin: "14px 0 6px", color: OFFWHITE }}>
-            Step 1: Nzonzi Listing Page
+            Step 1 of 2
           </p>
         )}
         {page === 1 && (
           <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 14px", color: "rgba(240,240,240,0.7)" }}>
-            This information will be reviewed for your public Nzonzi listing page.
+            This information will be included on your public Nzonzi listing page.
           </p>
         )}
         {/* Privacy notice and the "continue with your code" prompt kept
@@ -957,7 +957,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
         {page === 2 && (
           <p style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4, margin: "14px 0 6px", color: OFFWHITE }}>
-            Nzonzi Application Part 2: Background Check and References
+            Step 2 of 2
           </p>
         )}
         {page === 2 && (
