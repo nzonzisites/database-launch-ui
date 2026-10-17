@@ -240,11 +240,15 @@ export default function LandingPage() {
             >
               <p
                 style={{
-                  fontSize: "clamp(17px, 4.2vw, 22px)",
+                  // Verified live on nzonzi.net (1440px viewport) that
+                  // 24px/690px is the largest size that still wraps to 3
+                  // lines -- 25px breaks to 4. Scaled the whole clamp up
+                  // proportionally rather than just raising the cap.
+                  fontSize: "clamp(18px, 4.6vw, 24px)",
                   fontWeight: 300,
                   lineHeight: 1.55,
                   margin: 0,
-                  maxWidth: 620,
+                  maxWidth: 690,
                 }}
               >
                 knowledge producers, innovative practitioners, and community
