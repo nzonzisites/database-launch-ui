@@ -43,14 +43,14 @@ export default async function FoundersPage() {
 
   return (
     <div style={{ background: SAND, color: BROWN, minHeight: "100vh" }}>
-      <div style={{ maxWidth: 820, margin: "0 auto", padding: "32px 48px 48px" }}>
+      <div style={{ maxWidth: 980, margin: "0 auto", padding: "28px 48px 40px" }}>
         <Link
           href="/about"
           style={{
             fontSize: 13,
             fontWeight: 500,
             color: "rgba(31,14,3,0.6)",
-            marginBottom: 24,
+            marginBottom: 20,
             display: "inline-block",
           }}
         >
@@ -59,11 +59,11 @@ export default async function FoundersPage() {
 
         <h1
           style={{
-            fontSize: "clamp(26px, 4vw, 36px)",
+            fontSize: "clamp(24px, 3.4vw, 32px)",
             fontWeight: 300,
             letterSpacing: "-0.03em",
             lineHeight: 1.1,
-            margin: "0 0 32px",
+            margin: "0 0 24px",
             color: FOREST,
             textTransform: "lowercase",
           }}
@@ -77,15 +77,15 @@ export default async function FoundersPage() {
             meantime, you can browse the full roster from the home page.
           </p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
             {profiles.map((profile) => {
               const category = categoryLabel(profile.intended_category, profile.intended_category_other);
               return (
                 <div
                   key={profile.id}
-                  style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "flex-start" }}
+                  style={{ display: "flex", flexWrap: "wrap", gap: 28, alignItems: "flex-start" }}
                 >
-                  <div style={{ width: 150, flexShrink: 0 }}>
+                  <div style={{ width: "clamp(220px, min(36vh, 32vw), 440px)", flexShrink: 0 }}>
                     <ProfilePortrait
                       fullBio={profile.full_bio}
                       headshotUrl={profile.headshot_url}
@@ -93,7 +93,7 @@ export default async function FoundersPage() {
                     />
                   </div>
 
-                  <div style={{ flex: "1 1 320px", minWidth: 240 }}>
+                  <div style={{ flex: "1 1 380px", minWidth: 240 }}>
                     {category && (
                       <div
                         style={{
