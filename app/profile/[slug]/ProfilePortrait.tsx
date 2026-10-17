@@ -91,32 +91,51 @@ export default function ProfilePortrait({
         </span>
       )}
       {fullBio && (
+        // The scroll container and the vertical-centering flex box can't
+        // be the same element: align-items: center on an overflow:auto
+        // container clips the top of any content taller than the box
+        // (a long bio's opening lines became unreachable, even scrolling
+        // all the way up) -- this is why a bio could come in "cut off"
+        // instead of just needing a scroll. Splitting them into an
+        // outer plain-block scroll container and an inner flex box
+        // (min-height: 100% so it still centers a short bio, but grows
+        // past 100% and drags the scrollable area with it for a long
+        // one) fixes that: the full bio is always reachable by
+        // scrolling from the very top, with its 26px padding intact on
+        // every side regardless of scroll position.
         <div
           style={{
             position: "absolute",
             inset: 0,
             background: "rgba(31,14,3,0.88)",
-            padding: 26,
-            display: "flex",
-            alignItems: "center",
             opacity: hovered ? 1 : 0,
             transition: "opacity 0.25s ease",
             overflowY: "auto",
             pointerEvents: hovered ? "auto" : "none",
           }}
         >
-          <p
+          <div
             style={{
-              margin: 0,
-              fontSize: 13.5,
-              fontWeight: 300,
-              lineHeight: 1.55,
-              color: WHITE,
-              whiteSpace: "pre-wrap",
+              minHeight: "100%",
+              boxSizing: "border-box",
+              padding: 26,
+              display: "flex",
+              alignItems: "center",
             }}
           >
-            {fullBio}
-          </p>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 13.5,
+                fontWeight: 300,
+                lineHeight: 1.55,
+                color: WHITE,
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {fullBio}
+            </p>
+          </div>
         </div>
       )}
     </div>
