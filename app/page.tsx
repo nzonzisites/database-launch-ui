@@ -170,7 +170,7 @@ export default function LandingPage() {
             flex: 1,
             minWidth: 0,
             display: "grid",
-            placeItems: "center",
+            placeItems: "center start",
             padding: "24px 0 56px",
           }}
         >
@@ -525,7 +525,7 @@ export default function LandingPage() {
               style={{
                 minHeight: "calc(100vh - 46px)",
                 display: "grid",
-                placeItems: "center",
+                placeItems: "center start",
                 padding: "clamp(40px, 10vw, 64px) clamp(20px, 6vw, 48px)",
               }}
             >
@@ -634,7 +634,7 @@ function ClientApplicationSection({
     <div
       style={{
         maxWidth: 720,
-        margin: "0 auto",
+        margin: "0",
         padding: "clamp(48px, 10vw, 72px) clamp(20px, 6vw, 48px) clamp(56px, 10vw, 80px)",
       }}
     >
@@ -852,7 +852,7 @@ function ScholarApplicationSection({
     <div
       style={{
         maxWidth: 720,
-        margin: "0 auto",
+        margin: "0",
         padding: "clamp(48px, 10vw, 72px) clamp(20px, 6vw, 48px) clamp(56px, 10vw, 80px)",
       }}
     >
