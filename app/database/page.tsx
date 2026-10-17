@@ -75,10 +75,27 @@ export default function DatabasePage() {
           letterSpacing: "0.04em",
           textTransform: "uppercase",
           color: OCHRE,
-          margin: "0 0 36px",
+          margin: "0 0 14px",
         }}
       >
         Coming soon
+      </p>
+
+      {/* Curation criteria, per Modupe's exact wording. */}
+      <p
+        style={{
+          fontSize: "clamp(14px, 1.6vw, 17px)",
+          fontWeight: 300,
+          lineHeight: 1.5,
+          maxWidth: 680,
+          color: "rgba(240,240,240,0.85)",
+          margin: "0 0 32px",
+        }}
+      >
+        Every profile listed on Nzonzi directory is a trusted contact with
+        proven expertise in their field and has demonstrated their
+        commitment to engaging with African and Caribbean knowledge
+        systems.
       </p>
 
       <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
