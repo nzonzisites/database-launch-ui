@@ -56,10 +56,18 @@ export const EXPERIENCE_AREA_OPTIONS: { value: string; label: string }[] = [
   { value: "product_commercialization", label: "Product commercialization" },
 ];
 
+// Rebuilt 2026-10-17 as a genuine multi-select (any combination of
+// Virtual / Local / Willing to Travel) rather than three mutually
+// exclusive options where "both" stood in for "both of the other two" --
+// work_modality is now text[] on application/scholar_profile instead of
+// a single value. remote_only/travel_flexible/both are gone as values;
+// existing rows were translated (remote_only -> {virtual},
+// travel_flexible -> {travel}, both -> {virtual,travel}) by the SQL
+// migration that changed the column type.
 export const WORK_MODALITY_OPTIONS: { value: string; label: string }[] = [
-  { value: "remote_only", label: "Remote" },
-  { value: "travel_flexible", label: "Open to travel" },
-  { value: "both", label: "Either" },
+  { value: "virtual", label: "Virtual" },
+  { value: "local", label: "Local" },
+  { value: "travel", label: "Willing to Travel" },
 ];
 
 // Note: the mockup's reference contact-method dropdown shows "Phone

@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchScholarProfile } from "@/lib/scholarProfile";
-import { CATEGORY_OPTIONS, SECTOR_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
+import { CATEGORY_OPTIONS, SECTOR_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
 import { BROWN, OCHRE, FOREST, SAND } from "@/lib/colors";
 import ProfilePortrait from "./ProfilePortrait";
 
@@ -14,16 +14,14 @@ function categoryLabel(category: string | null, other: string | null): string {
 }
 
 /**
- * Turns work_modality into one or two small tags rather than a single
- * line of text -- "both" genuinely means both are on the table, so it
- * gets both tags rather than a combined "Remote or Open to Travel"
- * string.
+ * Turns work_modality into one small tag per selection -- it's a genuine
+ * multi-select (Virtual / Local / Willing to Travel) since 2026-10-17,
+ * so this is now just a label lookup rather than remote_only/
+ * travel_flexible/both branching logic.
  */
-function deliveryTags(workModality: string | null): string[] {
-  if (workModality === "remote_only") return ["Remote"];
-  if (workModality === "travel_flexible") return ["Open to Travel"];
-  if (workModality === "both") return ["Remote", "Open to Travel"];
-  return [];
+function deliveryTags(workModality: string[] | null): string[] {
+  if (!workModality || workModality.length === 0) return [];
+  return workModality.map((value) => optionLabel(WORK_MODALITY_OPTIONS, value));
 }
 
 /** Maps sector values to their display labels, substituting sector_other

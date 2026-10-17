@@ -6,19 +6,35 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { sendApplicationConfirmationEmail } from "@/lib/email";
 
+// A place someone lives -- see ResidenceEntry in ApplicationFormClient.tsx.
+export interface ResidenceInput {
+  city: string;
+  country: string;
+  isPrimary: boolean;
+}
+
 export interface SubmitApplicationInput {
   fullName: string;
   email: string;
   contactMethod: string;
   contactValue: string;
   whatsappAvailable: boolean;
+  // Derived (client-side) from whichever entry in `residences` is
+  // primary -- kept as its own column because everything downstream of
+  // submission (public listing, admin review table, confirmation email)
+  // only ever wants one place, not the full list.
   cityCountry: string;
+  residences: ResidenceInput[];
+  countryOfOrigin: string;
   affiliations: string[];
   headshotUrl: string;
   intendedFunction: string;
   intendedFunctionOther: string;
   experienceAreas: string[];
-  workModality: string;
+  // What type of work they're open to (Virtual / Local / Willing to
+  // Travel) -- genuinely multi-select since 2026-10-17, so this is an
+  // array even though it's still asked as a single "Delivery" question.
+  workModality: string[];
   infrastructureNarrative: string;
   expertiseNarrative: string;
   fullBio: string;
@@ -150,6 +166,12 @@ export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveD
     contact_value: input.contactValue.trim() || null,
     whatsapp_available: input.contactMethod === "phone" ? input.whatsappAvailable : null,
     city_country: input.cityCountry.trim() || null,
+    residences: input.residences.length > 0 ? input.residences.map((r) => ({
+      city: r.city.trim(),
+      country: r.country.trim(),
+      is_primary: r.isPrimary,
+    })) : null,
+    country_of_origin: input.countryOfOrigin.trim() || null,
     affiliations: input.affiliations,
     external_links: input.externalLinks,
     // intended_function is a strict enum column -- an empty string isn't
@@ -159,7 +181,7 @@ export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveD
     intended_function_other:
       input.intendedFunction === "other" ? input.intendedFunctionOther.trim() : null,
     experience_areas: input.experienceAreas.length > 0 ? input.experienceAreas : null,
-    work_modality: input.workModality || null,
+    work_modality: input.workModality.length > 0 ? input.workModality : null,
     infrastructure_narrative: input.infrastructureNarrative.trim() || null,
     expertise_narrative: input.expertiseNarrative.trim() || null,
     full_bio: input.fullBio.trim() || null,
@@ -265,14 +287,20 @@ export type ResumeDraftResult =
       firstName: string;
       lastName: string;
       email: string;
+      // city/country: a same-shaped fallback for a draft saved before
+      // the `residences` column existed (split from the legacy
+      // city_country string, same as before) -- residences is empty in
+      // that case and the client falls back to these two instead.
       city: string;
       country: string;
+      residences: ResidenceInput[];
+      countryOfOrigin: string;
       affiliations: string[];
       headshotUrl: string;
       intendedFunction: string;
       intendedFunctionOther: string;
       experienceAreas: string[];
-      workModality: string;
+      workModality: string[];
       infrastructureNarrative: string;
       expertiseNarrative: string;
       fullBio: string;
@@ -313,6 +341,8 @@ export async function resumeApplicationDraft(code: string): Promise<ResumeDraftR
   const row = data[0];
   const nameParts = ((row.full_name as string) ?? "").trim().split(/\s+/).filter(Boolean);
   const cityCountryParts = ((row.city_country as string) ?? "").split(",");
+  const rawResidences =
+    (row.residences as { city?: string; country?: string; is_primary?: boolean }[] | null) ?? [];
 
   return {
     success: true,
@@ -323,12 +353,18 @@ export async function resumeApplicationDraft(code: string): Promise<ResumeDraftR
     email: (row.email as string) ?? "",
     city: (cityCountryParts[0] ?? "").trim(),
     country: cityCountryParts.slice(1).join(",").trim(),
+    residences: rawResidences.map((r) => ({
+      city: r.city ?? "",
+      country: r.country ?? "",
+      isPrimary: Boolean(r.is_primary),
+    })),
+    countryOfOrigin: (row.country_of_origin as string) ?? "",
     affiliations: (row.affiliations as string[]) ?? [],
     headshotUrl: (row.headshot_url as string) ?? "",
     intendedFunction: (row.intended_function as string) ?? "",
     intendedFunctionOther: (row.intended_function_other as string) ?? "",
     experienceAreas: (row.experience_areas as string[]) ?? [],
-    workModality: (row.work_modality as string) ?? "",
+    workModality: (row.work_modality as string[]) ?? [],
     infrastructureNarrative: (row.infrastructure_narrative as string) ?? "",
     expertiseNarrative: (row.expertise_narrative as string) ?? "",
     fullBio: (row.full_bio as string) ?? "",
@@ -459,7 +495,6 @@ export async function submitApplication(
     ["contact info", input.contactValue],
     ["city and country", input.cityCountry],
     ["function", input.intendedFunction],
-    ["work modality", input.workModality],
     ['"what you do"', input.expertiseNarrative],
     ['"failed infrastructure" answer', input.infrastructureNarrative],
     ["bio", input.fullBio],
@@ -469,13 +504,15 @@ export async function submitApplication(
     ["reference contact value", input.referenceContactValue],
     ["deliverables", input.deliverables],
     ["rate", input.rateType],
-    ["capacity", input.capacity],
     ["prior paid work", input.priorPaidWork],
   ];
   for (const [label, value] of required) {
     if (!value || value.trim().length === 0) {
       return { success: false, error: `Missing required field: ${label}.` };
     }
+  }
+  if (input.workModality.length === 0) {
+    return { success: false, error: "Missing required field: delivery." };
   }
   // Affiliations is optional (2026-09-30 -- previously required); no
   // length check here on purpose.
@@ -532,6 +569,12 @@ export async function submitApplication(
     contact_value: input.contactValue.trim(),
     whatsapp_available: input.contactMethod === "phone" ? input.whatsappAvailable : null,
     city_country: input.cityCountry.trim(),
+    residences: input.residences.length > 0 ? input.residences.map((r) => ({
+      city: r.city.trim(),
+      country: r.country.trim(),
+      is_primary: r.isPrimary,
+    })) : null,
+    country_of_origin: input.countryOfOrigin.trim() || null,
     affiliations: input.affiliations,
     external_links: input.externalLinks,
     intended_function: input.intendedFunction,
@@ -567,7 +610,7 @@ export async function submitApplication(
         : null,
     rate_relative_to_market: input.rateType === "amount" ? input.rateRelativeToMarket : null,
     rate_scope: input.rateScope.trim() || null,
-    capacity: input.capacity,
+    capacity: input.capacity || null,
     status: "applied" as const,
   };
 
@@ -594,6 +637,12 @@ export async function submitApplication(
       contactValue: input.contactValue.trim(),
       whatsappAvailable: input.contactMethod === "phone" ? input.whatsappAvailable : false,
       cityCountry: input.cityCountry.trim(),
+      residences: input.residences.map((r) => ({
+        city: r.city.trim(),
+        country: r.country.trim(),
+        isPrimary: r.isPrimary,
+      })),
+      countryOfOrigin: input.countryOfOrigin.trim(),
       affiliations: input.affiliations,
       headshotUrl: input.headshotUrl.trim(),
       intendedFunction: input.intendedFunction,

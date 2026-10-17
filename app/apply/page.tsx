@@ -10,7 +10,7 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, experience_areas, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity";
+  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, residences, country_of_origin, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, experience_areas, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity";
 
 type ExistingApplicationRow = {
   status: string;
@@ -20,6 +20,8 @@ type ExistingApplicationRow = {
   contact_value: string | null;
   whatsapp_available: boolean | null;
   city_country: string | null;
+  residences: { city?: string; country?: string; is_primary?: boolean }[] | null;
+  country_of_origin: string | null;
   affiliations: string[] | null;
   external_links: string[] | null;
   headshot_url: string | null;
@@ -31,7 +33,7 @@ type ExistingApplicationRow = {
   intended_function: string | null;
   intended_function_other: string | null;
   experience_areas: string[] | null;
-  work_modality: string | null;
+  work_modality: string[] | null;
   infrastructure_narrative: string | null;
   expertise_narrative: string | null;
   full_bio: string | null;
@@ -158,6 +160,12 @@ export default async function ApplyPage() {
       contactValue: existingApplication.contact_value ?? "",
       whatsappAvailable: Boolean(existingApplication.whatsapp_available),
       cityCountry: existingApplication.city_country ?? "",
+      residences: (existingApplication.residences ?? []).map((r) => ({
+        city: r.city ?? "",
+        country: r.country ?? "",
+        isPrimary: Boolean(r.is_primary),
+      })),
+      countryOfOrigin: existingApplication.country_of_origin ?? "",
       affiliations: existingApplication.affiliations ?? [],
       headshotUrl: existingApplication.headshot_url ?? appUser.headshot_url ?? "",
       intendedCategory: existingApplication.intended_category ?? "",
@@ -165,7 +173,7 @@ export default async function ApplyPage() {
       intendedFunction: existingApplication.intended_function ?? "",
       intendedFunctionOther: existingApplication.intended_function_other ?? "",
       experienceAreas: existingApplication.experience_areas ?? [],
-      workModality: existingApplication.work_modality ?? "",
+      workModality: existingApplication.work_modality ?? [],
       expertiseNarrative: existingApplication.expertise_narrative ?? "",
       infrastructureNarrative: existingApplication.infrastructure_narrative ?? "",
       fullBio: existingApplication.full_bio ?? "",

@@ -18,6 +18,7 @@ import {
   RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
+  WORK_MODALITY_OPTIONS,
   optionLabel,
 } from "@/app/apply/applicationOptions";
 
@@ -30,12 +31,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   applied_quant_qual_research: "Quant & Qual Research",
   arts_cultural_research: "Arts & Cultural Research",
   other: "Other",
-};
-
-const MODALITY_LABELS: Record<string, string> = {
-  remote_only: "Remote only",
-  travel_flexible: "Travel-flexible",
-  both: "Remote or travel",
 };
 
 const STATUS_STYLE: Record<ApplicationStatus, { label: string; bg: string; fg: string }> = {
@@ -75,6 +70,22 @@ const monoLabel: React.CSSProperties = {
 
 function formatDate(iso: string) {
   return iso.slice(0, 10);
+}
+
+// Renders every city/country pair on its own line, flagging whichever
+// one is primary -- there can be more than one once B) added support
+// for multiple residences. Returns null (so the caller can fall back to
+// the legacy single city_country string) when there's nothing here,
+// which covers rows from before this column existed.
+function formatResidences(residences: { city?: string; country?: string; is_primary?: boolean }[] | null): string | null {
+  if (!residences || residences.length === 0) return null;
+  const lines = residences
+    .filter((r) => r.city || r.country)
+    .map((r) => {
+      const place = [r.city, r.country].filter(Boolean).join(", ");
+      return residences.length > 1 && r.is_primary ? `${place} (primary)` : place;
+    });
+  return lines.length > 0 ? lines.join("\n") : null;
 }
 
 export default function ReviewQueueClient({
@@ -188,7 +199,7 @@ export default function ReviewQueueClient({
               }}
             >
               <span>Applicant</span>
-              <span>Industry</span>
+              <span>Sector</span>
               <span>Submitted</span>
               <span>Status</span>
               <span style={{ textAlign: "right" }}>Action</span>
@@ -351,14 +362,18 @@ function ApplicationRow({
                 : null
             }
           />
-          <Detail label="Location" value={a.city_country} />
+          <Detail label="Location" value={formatResidences(a.residences) ?? a.city_country} />
+          <Detail label="Country of origin" value={a.country_of_origin} />
           <Detail label="Affiliations" value={a.affiliations?.join(", ")} />
-          <Detail label="Industry" value={a.intended_function || a.intended_category ? categoryLabel : null} />
+          <Detail label="Sector" value={a.intended_function || a.intended_category ? categoryLabel : null} />
           <Detail
             label="Experience"
             value={a.experience_areas?.map((v) => optionLabel(EXPERIENCE_AREA_OPTIONS, v)).join(", ")}
           />
-          <Detail label="Delivery" value={a.work_modality ? MODALITY_LABELS[a.work_modality] || a.work_modality : null} />
+          <Detail
+            label="Delivery"
+            value={a.work_modality && a.work_modality.length > 0 ? a.work_modality.map((v) => optionLabel(WORK_MODALITY_OPTIONS, v)).join(", ") : null}
+          />
           <Detail label="What they do" value={a.expertise_narrative} />
           <Detail label="Failed infrastructure → innovation" value={a.infrastructure_narrative} />
           <Detail label="Bio (submitted)" value={a.full_bio} />
@@ -590,7 +605,7 @@ function Detail({ label, value }: { label: string; value: string | null | undefi
   return (
     <div>
       <div style={{ ...monoLabel, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 300, lineHeight: 1.5, color: SAND }}>
+      <div style={{ fontSize: 14, fontWeight: 300, lineHeight: 1.5, color: SAND, whiteSpace: "pre-line" }}>
         {value || "No response"}
       </div>
     </div>

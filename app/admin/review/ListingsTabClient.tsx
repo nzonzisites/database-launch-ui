@@ -316,8 +316,8 @@ function ListingRow({
             >
               Preview public page →
             </a>
-            {p.work_modality && (
-              <span style={monoLabel}>Delivery (from application): {optionLabel(WORK_MODALITY_OPTIONS, p.work_modality)}</span>
+            {p.work_modality && p.work_modality.length > 0 && (
+              <span style={monoLabel}>Delivery (from application): {p.work_modality.map((v) => optionLabel(WORK_MODALITY_OPTIONS, v)).join(", ")}</span>
             )}
             {p.reviewed_by && (
               <span style={monoLabel}>Reviewed by: {p.reviewer_name || "Unknown reviewer"}</span>

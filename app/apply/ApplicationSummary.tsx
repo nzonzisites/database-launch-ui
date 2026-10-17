@@ -40,6 +40,12 @@ export interface ApplicationSummaryData {
   contactValue: string;
   whatsappAvailable: boolean;
   cityCountry: string;
+  // Can be more than one once B) added support for multiple locations --
+  // cityCountry above stays the derived "primary" string for anywhere
+  // that only shows one line (admin table, confirmation email subject
+  // line, etc.); this is the full list, for display here.
+  residences: { city: string; country: string; isPrimary: boolean }[];
+  countryOfOrigin: string;
   affiliations: string[];
   headshotUrl: string;
   // Category -- legacy: only ever set on applications submitted before
@@ -52,7 +58,7 @@ export interface ApplicationSummaryData {
   intendedFunction: string;
   intendedFunctionOther: string;
   experienceAreas: string[];
-  workModality: string;
+  workModality: string[];
   expertiseNarrative: string;
   infrastructureNarrative: string;
   fullBio: string;
@@ -175,6 +181,15 @@ export default function ApplicationSummary({
     value === "other" && data.sectorOther ? data.sectorOther : optionLabel(SECTOR_OPTIONS, value)
   );
 
+  const workModalityLabel = data.workModality.map((value) => optionLabel(WORK_MODALITY_OPTIONS, value)).join(", ");
+
+  const residenceLines = data.residences
+    .filter((r) => r.city || r.country)
+    .map((r) => {
+      const place = [r.city, r.country].filter(Boolean).join(", ");
+      return data.residences.length > 1 && r.isPrimary ? `${place} (primary)` : place;
+    });
+
   return (
     <div style={{ background: BROWN, minHeight: "100vh" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "72px 48px 80px" }}>
@@ -213,16 +228,17 @@ export default function ApplicationSummary({
           {data.contactMethod === "phone" && (
             <Row label="Reachable on WhatsApp" value={data.whatsappAvailable ? "Yes" : "No"} />
           )}
-          <Row label="Location" value={data.cityCountry} />
+          <ListRow label="Location" values={residenceLines} />
+          <Row label="Country of origin" value={data.countryOfOrigin} />
           <ListRow label="Affiliations" values={data.affiliations} />
         </Section>
 
         <Section>
           <SectionLabel>Application</SectionLabel>
-          <Row label="Industry" value={functionLabel} />
+          <Row label="Sector" value={functionLabel} />
           <Row label="Experience" value={experienceAreasLabel} />
           <Row label="Category" value={categoryLabel} />
-          <Row label="Delivery" value={optionLabel(WORK_MODALITY_OPTIONS, data.workModality)} />
+          <Row label="Delivery" value={workModalityLabel} />
           <Row label="What you do" value={data.expertiseNarrative} />
           <Row label="How failed or missing infrastructure guided you" value={data.infrastructureNarrative} />
           <Row label="Bio" value={data.fullBio} />

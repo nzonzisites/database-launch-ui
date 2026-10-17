@@ -62,6 +62,20 @@ function listRow(label: string, values: string[]): string {
   return row(label, values.join("\n"));
 }
 
+// Renders each city/country pair on its own line, flagging whichever one
+// is the applicant's primary residence -- there can be more than one once
+// B) added support for multiple locations.
+function residencesRow(label: string, residences: { city: string; country: string; isPrimary: boolean }[]): string {
+  if (!residences || residences.length === 0) return "";
+  const lines = residences
+    .filter((r) => r.city || r.country)
+    .map((r) => {
+      const place = [r.city, r.country].filter(Boolean).join(", ");
+      return residences.length > 1 && r.isPrimary ? `${place} (primary)` : place;
+    });
+  return row(label, lines.join("\n"));
+}
+
 function section(title: string, rowsHtml: string): string {
   if (!rowsHtml.trim()) return "";
   return `
@@ -97,13 +111,16 @@ export async function sendApplicationConfirmationEmail(
     (data.contactMethod === "phone"
       ? row("Reachable on WhatsApp", data.whatsappAvailable ? "Yes" : "No")
       : "") +
-    row("Location", data.cityCountry) +
+    residencesRow("Location", data.residences) +
+    row("Country of origin", data.countryOfOrigin) +
     listRow("Affiliations", data.affiliations);
 
+  const workModalityLabel = data.workModality.map((value) => optionLabel(WORK_MODALITY_OPTIONS, value)).join(", ");
+
   const applicationRows =
-    row("Industry", functionLabel) +
+    row("Sector", functionLabel) +
     row("Experience", experienceAreasLabel) +
-    row("Delivery", optionLabel(WORK_MODALITY_OPTIONS, data.workModality)) +
+    row("Delivery", workModalityLabel) +
     row("What you do", data.expertiseNarrative) +
     row("How failed or missing infrastructure guided you", data.infrastructureNarrative) +
     row("Bio", data.fullBio) +

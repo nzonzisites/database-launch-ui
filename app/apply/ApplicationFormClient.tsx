@@ -34,7 +34,6 @@ import {
   RATE_TYPE_OPTIONS,
   CURRENCY_OPTIONS,
   RATE_RELATIVE_OPTIONS,
-  CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
 } from "./applicationOptions";
 import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
@@ -59,6 +58,74 @@ interface Prefill {
   prospectSignupId: string | null;
   expertiseNarrative: string;
   infrastructureNarrative: string;
+}
+
+// A place someone lives -- the form supports more than one (someone who
+// splits time between two cities), with exactly one marked as their
+// primary country of residence. city_country (the single combined-string
+// column everything else downstream reads -- the public listing, the
+// admin review table, the confirmation email) is always derived from
+// whichever entry is primary at submit time.
+interface ResidenceEntry {
+  city: string;
+  country: string;
+  isPrimary: boolean;
+}
+
+// A small "?" button that reveals a short explanation on click -- used
+// for Country of origin, where the question itself doesn't say why it's
+// being asked. Click rather than hover-only so it works the same on a
+// phone as a desktop.
+function InfoHint({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span style={{ position: "relative", display: "inline-block", marginLeft: 8 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="More information"
+        aria-expanded={open}
+        style={{
+          width: 17,
+          height: 17,
+          borderRadius: "50%",
+          border: "1px solid rgba(31,14,3,0.4)",
+          background: "transparent",
+          color: "rgba(31,14,3,0.6)",
+          fontSize: 10.5,
+          fontWeight: 600,
+          lineHeight: "15px",
+          padding: 0,
+          cursor: "pointer",
+          verticalAlign: "middle",
+        }}
+      >
+        ?
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            left: 0,
+            zIndex: 10,
+            width: 240,
+            background: "#1F0E03",
+            color: "#F0F0F0",
+            fontSize: 12.5,
+            fontWeight: 400,
+            lineHeight: 1.5,
+            padding: "10px 12px",
+            borderRadius: 6,
+            boxShadow: "0 6px 18px rgba(0,0,0,0.3)",
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  );
 }
 
 function Required() {
@@ -224,8 +291,10 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
   const [email, setEmail] = useState(prefill.email);
-  const [city, setCity] = useState(prefill.city);
-  const [country, setCountry] = useState(prefill.country);
+  const [residences, setResidences] = useState<ResidenceEntry[]>([
+    { city: prefill.city, country: prefill.country, isPrimary: true },
+  ]);
+  const [countryOfOrigin, setCountryOfOrigin] = useState("");
   const [affiliations, setAffiliations] = useState<string[]>(prefill.affiliations);
   const [headshotUrl, setHeadshotUrl] = useState(prefill.headshotUrl);
 
@@ -234,6 +303,32 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       prefill.affiliations.length > 0 ||
       Boolean(prefill.expertiseNarrative || prefill.infrastructureNarrative)
   );
+  // Residence helpers -- isPrimary lives on each entry rather than a
+  // separate index, so removing or reordering rows never needs to
+  // re-point a stored index at a different entry.
+  function updateResidence(index: number, field: "city" | "country", value: string) {
+    setResidences((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+  }
+  function addResidence() {
+    setResidences((prev) => [...prev, { city: "", country: "", isPrimary: false }]);
+  }
+  function removeResidence(index: number) {
+    setResidences((prev) => {
+      const removingPrimary = prev[index]?.isPrimary;
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 0) return [{ city: "", country: "", isPrimary: true }];
+      if (removingPrimary && !next.some((r) => r.isPrimary)) next[0] = { ...next[0], isPrimary: true };
+      return next;
+    });
+  }
+  function setPrimaryResidence(index: number) {
+    setResidences((prev) => prev.map((r, i) => ({ ...r, isPrimary: i === index })));
+  }
+  function toggleWorkModality(value: string) {
+    setWorkModality((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  }
   // Only relevant for a signed-out visitor (prefill.email is blank in
   // that case -- page.tsx already did this lookup server-side for a
   // signed-in one). Tracks whether the email-blur lookup below has
@@ -244,7 +339,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [intendedFunction, setIntendedFunction] = useState("");
   const [intendedFunctionOther, setIntendedFunctionOther] = useState("");
   const [experienceAreas, setExperienceAreas] = useState<string[]>([]);
-  const [workModality, setWorkModality] = useState("");
+  const [workModality, setWorkModality] = useState<string[]>([]);
   const [expertiseNarrative, setExpertiseNarrative] = useState(prefill.expertiseNarrative);
   const [infrastructureNarrative, setInfrastructureNarrative] = useState(
     prefill.infrastructureNarrative
@@ -260,7 +355,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [referenceContactMethod, setReferenceContactMethod] = useState("");
   const [referenceContactValue, setReferenceContactValue] = useState("");
   const [referenceWhatsappAvailable, setReferenceWhatsappAvailable] = useState(false);
-  const [referenceMayContact, setReferenceMayContact] = useState(false);
+  // No consent checkbox any more (removed 2026-10-17, per Modupe) --
+  // reference_may_contact stays a required boolean column, so this just
+  // always sends true rather than asking the applicant to separately
+  // confirm something implied by listing someone as a reference at all.
+  const referenceMayContact = true;
 
   const [contactMethod, setContactMethod] = useState("");
   const [contactValue, setContactValue] = useState("");
@@ -319,12 +418,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       setLastName(match.lastName);
       filledSomething = true;
     }
-    if (!city && match.city) {
-      setCity(match.city);
-      filledSomething = true;
-    }
-    if (!country && match.country) {
-      setCountry(match.country);
+    if (!residences[0]?.city && !residences[0]?.country && (match.city || match.country)) {
+      setResidences((prev) => [
+        { ...prev[0], city: match.city, country: match.country },
+        ...prev.slice(1),
+      ]);
       filledSomething = true;
     }
     if (affiliations.length === 0 && match.affiliation) {
@@ -352,6 +450,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   // timer below, and final submit, so there's exactly one place that
   // knows how form state maps to that shape.
   function buildDraftInput(): SaveDraftInput {
+    const primaryResidence = residences.find((r) => r.isPrimary) ?? residences[0];
     return {
       draftId,
       fullName: `${firstName} ${lastName}`.trim(),
@@ -359,7 +458,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       contactMethod,
       contactValue,
       whatsappAvailable,
-      cityCountry: [city, country].filter(Boolean).join(", "),
+      cityCountry: [primaryResidence?.city, primaryResidence?.country].filter(Boolean).join(", "),
+      residences: residences
+        .filter((r) => r.city.trim() || r.country.trim())
+        .map((r) => ({ city: r.city.trim(), country: r.country.trim(), isPrimary: r.isPrimary })),
+      countryOfOrigin,
       affiliations,
       headshotUrl,
       intendedFunction,
@@ -453,8 +556,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     contactMethod,
     contactValue,
     whatsappAvailable,
-    city,
-    country,
+    residences,
+    countryOfOrigin,
     affiliations,
     headshotUrl,
     intendedFunction,
@@ -506,8 +609,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       setFirstName(result.firstName);
       setLastName(result.lastName);
       setEmail(result.email);
-      setCity(result.city);
-      setCountry(result.country);
+      setResidences(
+        result.residences.length > 0
+          ? result.residences
+          : [{ city: result.city, country: result.country, isPrimary: true }]
+      );
+      setCountryOfOrigin(result.countryOfOrigin);
       setAffiliations(result.affiliations);
       setHeadshotUrl(result.headshotUrl);
       setIntendedFunction(result.intendedFunction);
@@ -529,11 +636,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-
-    // reference_may_contact is a required boolean column, not a
-    // required-true consent checkbox -- false is a valid, honest answer,
-    // so there's no client-side block on it beyond letting them submit
-    // whichever value they chose.
 
     // The "paid work" questions below aren't native form controls (pill
     // toggles, a checkbox group), so they don't get free browser-native
@@ -573,10 +675,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
         setError("Select whether that payment was typical for your market.");
         return;
       }
-    }
-    if (!capacity) {
-      setError("Select your current capacity.");
-      return;
     }
     if (!priorPaidWork) {
       setError("Answer whether you've been paid directly by a company before.");
@@ -633,13 +731,16 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   }
 
   if (submitted) {
+    const primaryResidence = residences.find((r) => r.isPrimary) ?? residences[0];
     const summaryData: ApplicationSummaryData = {
       fullName: `${firstName} ${lastName}`.trim(),
       email,
       contactMethod,
       contactValue,
       whatsappAvailable,
-      cityCountry: [city, country].filter(Boolean).join(", "),
+      cityCountry: [primaryResidence?.city, primaryResidence?.country].filter(Boolean).join(", "),
+      residences: residences.filter((r) => r.city.trim() || r.country.trim()),
+      countryOfOrigin,
       affiliations,
       headshotUrl,
       intendedFunction,
@@ -743,13 +844,21 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
           nzonzi listing application
         </h2>
         {page === 1 && (
-          <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 12px", color: "rgba(240,240,240,0.7)" }}>
-            Step 1 of 2 -- submit your listing. This information will be reviewed for your
-            public Nzonzi listing page.
+          <p style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4, margin: "14px 0 6px", color: OFFWHITE }}>
+            Step 1: Nzonzi Listing Page
           </p>
         )}
         {page === 1 && (
-          <p style={{ fontSize: 13, fontWeight: 300, lineHeight: 1.5, margin: "0 0 28px", color: "rgba(240,240,240,0.55)" }}>
+          <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 14px", color: "rgba(240,240,240,0.7)" }}>
+            This information will be reviewed for your public Nzonzi listing page.
+          </p>
+        )}
+        {/* Privacy notice and the "continue with your code" prompt kept
+            right next to each other, in the same small/muted format --
+            both are meta-notices about the form itself rather than part
+            of it, so they read as one block instead of scattered notes. */}
+        {page === 1 && (
+          <p style={{ fontSize: 13, fontWeight: 300, lineHeight: 1.5, margin: "0 0 10px", color: "rgba(240,240,240,0.55)" }}>
             We care about your data rights. For more information, see our{" "}
             <Link href="/privacy" style={{ fontWeight: 500, color: "inherit", borderBottom: "1px solid currentColor" }}>
               Privacy Policy
@@ -757,13 +866,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             .
           </p>
         )}
-        {page === 1 && hasPrefill && (
-          <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 40px", color: "rgba(240,240,240,0.5)" }}>
-            We&apos;ve carried over what you told us when you signed up -- feel free to update
-            anything below.
-          </p>
-        )}
-
         {page === 1 && !draftId && !showResumeForm && (
           <button
             type="button"
@@ -772,19 +874,19 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               background: "transparent",
               border: 0,
               padding: 0,
-              marginBottom: 40,
-              fontSize: 13.5,
-              fontWeight: 400,
+              marginBottom: 28,
+              fontSize: 13,
+              fontWeight: 300,
               textDecoration: "underline",
               cursor: "pointer",
-              color: "rgba(240,240,240,0.6)",
+              color: "rgba(240,240,240,0.55)",
             }}
           >
             Started earlier? Continue with your code
           </button>
         )}
         {page === 1 && showResumeForm && (
-          <div style={{ marginBottom: 40 }}>
+          <div style={{ marginBottom: 28 }}>
             <label style={{ fontSize: 13.5, fontWeight: 400, color: "rgba(240,240,240,0.6)" }}>
               Enter your continue code
             </label>
@@ -846,12 +948,22 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             )}
           </div>
         )}
+        {page === 1 && hasPrefill && (
+          <p style={{ fontSize: 13.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 40px", color: "rgba(240,240,240,0.5)" }}>
+            We&apos;ve carried over what you told us when you signed up -- feel free to update
+            anything below.
+          </p>
+        )}
 
         {page === 2 && (
-          <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "14px 0 20px", color: "rgba(240,240,240,0.7)" }}>
-            Step 2 of 2 -- this part is for internal review only. It helps the Nzonzi team
-            assess your experience and platform fit, and won&apos;t appear on your public
-            listing.
+          <p style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.4, margin: "14px 0 6px", color: OFFWHITE }}>
+            Nzonzi Application Part 2: Background Check and References
+          </p>
+        )}
+        {page === 2 && (
+          <p style={{ fontSize: 15.5, fontWeight: 300, lineHeight: 1.5, margin: "0 0 20px", color: "rgba(240,240,240,0.7)" }}>
+            This part of the application helps the Nzonzi team assess your experience and
+            platform fit. This will not appear on your public listing.
           </p>
         )}
         {page === 2 && resumeCode && (
@@ -932,34 +1044,99 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             </div>
           </TwoCol>
 
-          <TwoCol>
-            <div>
-              <label style={fieldLabelStyle(false)}>
-                4. City
-                <Required />
-              </label>
-              <input
-                style={underlineInputStyle(false)}
-                placeholder="Ibadan"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label style={fieldLabelStyle(false)}>
-                5. Country
-                <Required />
-              </label>
-              <input
-                style={underlineInputStyle(false)}
-                placeholder="Nigeria"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                required
-              />
-            </div>
-          </TwoCol>
+          <div>
+            <label style={fieldLabelStyle(false)}>
+              4. Where do you currently live?
+              <Required />
+            </label>
+            <p style={helperTextStyle(false)}>
+              Add another if you split time between places, and mark your primary country of
+              residence.
+            </p>
+            {residences.map((r, i) => (
+              <div key={i} style={{ marginBottom: 18 }}>
+                <TwoCol>
+                  <div>
+                    <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
+                      City
+                      {i === 0 && <Required />}
+                    </label>
+                    <input
+                      style={underlineInputStyle(false)}
+                      placeholder="Ibadan"
+                      value={r.city}
+                      onChange={(e) => updateResidence(i, "city", e.target.value)}
+                      required={i === 0}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...fieldLabelStyle(false), fontSize: 12.5 }}>
+                      Country
+                      {i === 0 && <Required />}
+                    </label>
+                    <input
+                      style={underlineInputStyle(false)}
+                      placeholder="Nigeria"
+                      value={r.country}
+                      onChange={(e) => updateResidence(i, "country", e.target.value)}
+                      required={i === 0}
+                    />
+                  </div>
+                </TwoCol>
+                <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: 10, flexWrap: "wrap" }}>
+                  <label
+                    style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#1F0E03", cursor: "pointer" }}
+                  >
+                    <input
+                      type="radio"
+                      name="primary-residence"
+                      checked={r.isPrimary}
+                      onChange={() => setPrimaryResidence(i)}
+                    />
+                    Primary country of residence
+                  </label>
+                  {residences.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeResidence(i)}
+                      style={{ background: "transparent", border: 0, padding: 0, fontSize: 13, color: "rgba(31,14,3,0.6)", cursor: "pointer" }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addResidence}
+              style={{
+                background: "transparent",
+                border: 0,
+                padding: 0,
+                fontSize: 13.5,
+                fontWeight: 500,
+                textDecoration: "underline",
+                cursor: "pointer",
+                color: "rgba(31,14,3,0.7)",
+              }}
+            >
+              + Add another location
+            </button>
+          </div>
+
+          <div>
+            <label style={fieldLabelStyle(false)}>
+              5. Country of origin
+              <InfoHint text="If you're an immigrant or a descendant of immigrants, please list the country you or your family emigrated from." />
+            </label>
+            <input
+              style={underlineInputStyle(false)}
+              placeholder="e.g. Nigeria"
+              value={countryOfOrigin}
+              onChange={(e) => setCountryOfOrigin(e.target.value)}
+            />
+          </div>
 
           <MultiValueField
             label="6. Affiliations, if any"
@@ -971,10 +1148,9 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              7. Industry
+              7. Sector
               <Required />
             </label>
-            <p style={helperTextStyle(false)}>Which best describes what you do day to day?</p>
             <select
               style={{ ...underlineInputStyle(false), cursor: "pointer" }}
               value={intendedFunction}
@@ -982,7 +1158,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               required
             >
               <option value="" disabled>
-                Select an industry
+                Select a sector
               </option>
               {FUNCTION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value} style={{ color: "#1F0E03" }}>
@@ -1042,15 +1218,15 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               10. Delivery
               <Required />
             </label>
-            <p style={helperTextStyle(false)}>Which of these are you open to?</p>
+            <p style={helperTextStyle(false)}>What type of work are you open to? Select all that apply.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
               {WORK_MODALITY_OPTIONS.map((opt) => {
-                const active = workModality === opt.value;
+                const active = workModality.includes(opt.value);
                 return (
                   <button
                     type="button"
                     key={opt.value}
-                    onClick={() => setWorkModality(opt.value)}
+                    onClick={() => toggleWorkModality(opt.value)}
                     style={{
                       background: active ? FOREST : "transparent",
                       border: `1px solid ${active ? FOREST : "rgba(31,14,3,0.35)"}`,
@@ -1090,7 +1266,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
 
           <div>
             <label style={fieldLabelStyle(false)}>
-              12. How has failed or missing infrastructure guided you towards innovation?
+              12. How do you engage with failed or missing infrastructure?
               <Required />
             </label>
             <textarea
@@ -1266,6 +1442,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                 19. What deliverables have you been paid to produce?
                 <Required />
               </label>
+              <p style={helperTextStyle(false)}>
+                Example deliverables include reports, academic journal articles, workshops,
+                sculptures, building plans, brand kits, physical products, infrastructure
+                projects, etc.
+              </p>
               <textarea
                 rows={3}
                 maxLength={300}
@@ -1409,44 +1590,13 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               )}
             </div>
 
-            <div>
-              <label style={fieldLabelStyle(false)}>
-                21. Roughly how many client engagements could you take on per month alongside your
-                current commitments?
-                <Required />
-              </label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 8 }}>
-                {CAPACITY_OPTIONS.map((opt) => {
-                  const active = capacity === opt.value;
-                  return (
-                    <button
-                      type="button"
-                      key={opt.value}
-                      onClick={() => setCapacity(opt.value)}
-                      style={{
-                        background: active ? FOREST : "transparent",
-                        border: `1px solid ${active ? FOREST : "rgba(31,14,3,0.35)"}`,
-                        borderRadius: 999,
-                        padding: "9px 18px",
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color: active ? OFFWHITE : "#1F0E03",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           <div>
             <label style={fieldLabelStyle(false)}>22. Reference</label>
             <p style={helperTextStyle(false)}>
-              One person who has paid for or supervised your work. We only contact them if you&apos;re
-              selected, and only with your permission below.
+              One person who was paid or supervised relevant work. We only contact them if
+              you&apos;re selected.
             </p>
             <TwoCol>
               <div>
@@ -1523,18 +1673,6 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               </div>
             )}
 
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 18 }}>
-              <input
-                type="checkbox"
-                id="reference-may-contact"
-                checked={referenceMayContact}
-                onChange={(e) => setReferenceMayContact(e.target.checked)}
-                style={{ marginTop: 3 }}
-              />
-              <label htmlFor="reference-may-contact" style={{ fontSize: 13, color: "#1F0E03" }}>
-                I&apos;ve told this person we may contact them as part of reviewing my application.
-              </label>
-            </div>
           </div>
 
           <div>

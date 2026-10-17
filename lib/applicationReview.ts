@@ -21,6 +21,8 @@ export interface ApplicationForReview {
   contact_value: string | null;
   whatsapp_available: boolean | null;
   city_country: string | null;
+  residences: { city?: string; country?: string; is_primary?: boolean }[] | null;
+  country_of_origin: string | null;
   affiliations: string[] | null;
   external_links: string[] | null;
   headshot_url: string | null;
@@ -31,7 +33,9 @@ export interface ApplicationForReview {
   intended_function: string | null;
   intended_function_other: string | null;
   experience_areas: string[] | null;
-  work_modality: "remote_only" | "travel_flexible" | "both" | null;
+  // Rebuilt 2026-10-17 as a genuine multi-select (any combination of
+  // virtual/local/travel) -- see WORK_MODALITY_OPTIONS in applicationOptions.ts.
+  work_modality: string[] | null;
   infrastructure_narrative: string | null;
   expertise_narrative: string | null;
   full_bio: string | null;
@@ -69,7 +73,7 @@ interface RawApplicationForReview extends Omit<ApplicationForReview, "work_sampl
 }
 
 const REVIEW_COLUMNS =
-  "id, full_name, email, contact_method, contact_value, whatsapp_available, city_country, affiliations, external_links, " +
+  "id, full_name, email, contact_method, contact_value, whatsapp_available, city_country, residences, country_of_origin, affiliations, external_links, " +
   "headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, experience_areas, work_modality, infrastructure_narrative, " +
   "expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, " +
   "reference_relationship, reference_contact_method, reference_contact_value, " +

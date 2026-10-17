@@ -50,7 +50,9 @@ export interface ScholarProfileRow {
   intended_category: string | null;
   intended_category_other: string | null;
   city_country: string | null;
-  work_modality: string | null;
+  // Rebuilt 2026-10-17 as a genuine multi-select (virtual/local/travel) --
+  // see WORK_MODALITY_OPTIONS in app/apply/applicationOptions.ts.
+  work_modality: string[] | null;
   tagline: string;
   full_bio: string;
   background: string;
