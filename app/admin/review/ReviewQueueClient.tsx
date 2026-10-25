@@ -13,13 +13,13 @@ import SessionControls from "@/app/components/SessionControls";
 import {
   FUNCTION_OPTIONS,
   EXPERIENCE_AREA_OPTIONS,
-  SECTOR_OPTIONS,
   RATE_TYPE_OPTIONS,
   RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
   WORK_MODALITY_OPTIONS,
   optionLabel,
+  sectorLabels,
 } from "@/app/apply/applicationOptions";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -391,11 +391,7 @@ function ApplicationRow({
           <Detail
             label="Industries paid to work in"
             value={
-              a.sector && a.sector.length > 0
-                ? a.sector
-                    .map((v) => (v === "other" && a.sector_other ? a.sector_other : optionLabel(SECTOR_OPTIONS, v)))
-                    .join(", ")
-                : null
+              a.sector && a.sector.length > 0 ? sectorLabels(a.sector, a.sector_other).join(", ") : null
             }
           />
           <Detail label="Deliverables produced" value={a.deliverables} />

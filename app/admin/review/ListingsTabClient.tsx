@@ -7,6 +7,7 @@ import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import { FUNCTION_OPTIONS, EXPERIENCE_AREA_OPTIONS, WORK_MODALITY_OPTIONS, SECTOR_OPTIONS } from "@/app/apply/applicationOptions";
 import { publishScholarProfile, unpublishScholarProfile, updateScholarProfile } from "./scholarProfileActions";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import SectorOtherInputs from "@/app/apply/SectorOtherInputs";
 
 const HEADSHOT_BUCKET = "scholar-headshots";
 
@@ -685,10 +686,11 @@ function ListingRow({
               })}
             </div>
             {sector.includes("other") && (
-              <input
+              <SectorOtherInputs
                 value={sectorOther}
-                onChange={(e) => setSectorOther(e.target.value)}
-                style={{ ...fieldStyle, marginTop: 10 }}
+                onChange={setSectorOther}
+                inputStyle={fieldStyle}
+                linkColor={SAND}
                 placeholder="Describe the other industry"
               />
             )}

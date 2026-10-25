@@ -5,6 +5,7 @@
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { sendApplicationConfirmationEmail } from "@/lib/email";
+import { normalizeSectorOther } from "./applicationOptions";
 
 // A place someone lives -- see ResidenceEntry in ApplicationFormClient.tsx.
 export interface ResidenceInput {
@@ -198,7 +199,7 @@ export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveD
     referral_source: input.referralSource.trim() || null,
     prior_paid_work: input.priorPaidWork || null,
     sector: input.sector.length > 0 ? input.sector : null,
-    sector_other: input.sector.includes("other") ? input.sectorOther.trim() : null,
+    sector_other: input.sector.includes("other") ? normalizeSectorOther(input.sectorOther) : null,
     deliverables: input.deliverables.trim() || null,
     rate_type: input.rateType || null,
     // rate_amount is numeric -- Number("") is 0, not "not answered yet",
@@ -522,7 +523,7 @@ export async function submitApplication(
   if (input.sector.length === 0) {
     return { success: false, error: "Select at least one industry." };
   }
-  if (input.sector.includes("other") && !input.sectorOther.trim()) {
+  if (input.sector.includes("other") && !normalizeSectorOther(input.sectorOther)) {
     return { success: false, error: 'Describe the industry since you selected "other".' };
   }
   if (input.rateType === "amount") {
@@ -598,7 +599,7 @@ export async function submitApplication(
     referral_source: input.referralSource.trim() || null,
     prior_paid_work: input.priorPaidWork,
     sector: input.sector,
-    sector_other: input.sector.includes("other") ? input.sectorOther.trim() : null,
+    sector_other: input.sector.includes("other") ? normalizeSectorOther(input.sectorOther) : null,
     deliverables: input.deliverables.trim(),
     rate_type: input.rateType,
     rate_amount: input.rateType === "amount" ? Number(input.rateAmount) : null,
@@ -667,7 +668,7 @@ export async function submitApplication(
       referralSource: input.referralSource.trim(),
       priorPaidWork: input.priorPaidWork,
       sector: input.sector,
-      sectorOther: input.sector.includes("other") ? input.sectorOther.trim() : "",
+      sectorOther: input.sector.includes("other") ? normalizeSectorOther(input.sectorOther) : "",
       deliverables: input.deliverables.trim(),
       rateType: input.rateType,
       rateAmount: input.rateAmount.trim(),

@@ -21,7 +21,7 @@ import {
   EXPERIENCE_AREA_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
-  SECTOR_OPTIONS,
+  sectorLabels,
   RATE_TYPE_OPTIONS,
   RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
@@ -177,9 +177,7 @@ export default function ApplicationSummary({
     .map((value) => optionLabel(EXPERIENCE_AREA_OPTIONS, value))
     .join(", ");
 
-  const sectorLabels = data.sector.map((value) =>
-    value === "other" && data.sectorOther ? data.sectorOther : optionLabel(SECTOR_OPTIONS, value)
-  );
+  const sectorLabelList = sectorLabels(data.sector, data.sectorOther);
 
   const workModalityLabel = data.workModality.map((value) => optionLabel(WORK_MODALITY_OPTIONS, value)).join(", ");
 
@@ -254,11 +252,11 @@ export default function ApplicationSummary({
           </Section>
         )}
 
-        {(sectorLabels.length > 0 || data.deliverables || data.rateType || data.capacity || data.priorPaidWork) && (
+        {(sectorLabelList.length > 0 || data.deliverables || data.rateType || data.capacity || data.priorPaidWork) && (
           <Section>
             <SectionLabel>Paid work</SectionLabel>
             <Row label="Been paid directly by a company before" value={optionLabel(PRIOR_PAID_WORK_OPTIONS, data.priorPaidWork)} />
-            <ListRow label="Industries paid to work in" values={sectorLabels} />
+            <ListRow label="Industries paid to work in" values={sectorLabelList} />
             <Row label="Deliverables produced" value={data.deliverables} />
             <Row
               label="Most recent paid engagement"
