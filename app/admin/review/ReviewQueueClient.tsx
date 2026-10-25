@@ -308,6 +308,11 @@ function ApplicationRow({
             {a.full_name || "No name yet"}
           </div>
           <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{a.email}</div>
+          {a.status === "draft" && a.resume_code && (
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, opacity: 0.75, marginTop: 3 }}>
+              Code {a.resume_code}
+            </div>
+          )}
         </div>
         <span style={{ fontSize: 13, opacity: 0.85 }}>{categoryLabel}</span>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, opacity: 0.65 }}>
@@ -352,6 +357,7 @@ function ApplicationRow({
               can be genuinely half-filled-in, and a reviewer should see
               at a glance exactly what was and wasn't answered rather
               than have unanswered questions quietly disappear. */}
+          {a.status === "draft" && <ResumeCode code={a.resume_code} />}
           <Detail
             label="Contact"
             value={
@@ -593,6 +599,43 @@ function ApplicationRow({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** A draft's "continue your application" code, with a copy button, so an
+ * admin can send it to an applicant who's lost the email. */
+function ResumeCode({ code }: { code: string | null }) {
+  const [copied, setCopied] = useState(false);
+  if (!code) return <Detail label="Continuation code" value={null} />;
+  return (
+    <div>
+      <div style={{ ...monoLabel, marginBottom: 4 }}>Continuation code</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 600, letterSpacing: "0.1em", color: SAND }}>
+          {code}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard.writeText(code).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            });
+          }}
+          style={{
+            background: "transparent",
+            border: "1px solid rgba(230,222,210,0.35)",
+            color: SAND,
+            padding: "5px 11px",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
     </div>
   );
 }
