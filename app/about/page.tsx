@@ -26,7 +26,7 @@ type AboutParagraph = {
 
 const ABOUT_PARAGRAPHS: AboutParagraph[] = [
   {
-    lead: "We are internationally oriented children, grandchildren, and great-grandchildren of Africa and the Caribbean.",
+    lead: "We are internationally oriented children, grandchildren, and great-grandchildren of Africa, the Caribbean, and Afro-Latin America.",
     text: "In homage to all that our ancestors have instilled within us, Nzonzis pursue the reclamation of our cultural inheritance through research, experimentation, collaboration, and practical expertise.",
   },
 ];
