@@ -111,6 +111,22 @@ export default function AboutPage() {
             WHITE since this sits on SAND rather than BROWN. */}
         <div style={{ marginTop: 72, display: "flex", flexWrap: "wrap", gap: 16 }}>
           <Link
+            href={IMPACT_AREAS_HREF}
+            style={{
+              display: "inline-block",
+              background: "transparent",
+              border: `1px solid ${OCHRE}`,
+              color: OCHRE,
+              fontSize: 12.5,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              padding: "14px 26px",
+            }}
+          >
+            Core Impact Areas
+          </Link>
+          <Link
             href={FOUNDERS_HREF}
             style={{
               display: "inline-block",
@@ -141,22 +157,6 @@ export default function AboutPage() {
             }}
           >
             Preview the directory
-          </Link>
-          <Link
-            href={IMPACT_AREAS_HREF}
-            style={{
-              display: "inline-block",
-              background: "transparent",
-              border: `1px solid ${OCHRE}`,
-              color: OCHRE,
-              fontSize: 12.5,
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              padding: "14px 26px",
-            }}
-          >
-            Core Impact Areas
           </Link>
         </div>
       </div>

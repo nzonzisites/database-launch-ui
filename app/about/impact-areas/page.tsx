@@ -8,14 +8,22 @@
 // through a circle for Health Care and Public Health. The marks are
 // inline SVG so they stay crisp at any size and need no image files.
 //
-// IMPACT_AREAS is the one list to touch when the copy changes.
+// Sized to fit one screen on desktop (the tiles stretch to fill whatever
+// height is left under the intro line); on phones the tiles stack and
+// the page scrolls. Hovering (or focusing/tapping) a tile reveals its
+// description -- see ImpactTile.
+//
+// IMPACT_AREAS is the one list to touch when the copy changes: fill in
+// each `description` and its tile's hover panel turns on.
 
 import Link from "next/link";
 import { BROWN, FOREST, MOSS, OCHRE, SAND, WHITE } from "@/lib/colors";
+import ImpactTile from "./ImpactTile";
 
 type ImpactArea = {
   name: string;
   color: string;
+  description?: string;
   Mark: () => JSX.Element;
 };
 
@@ -95,24 +103,40 @@ const IMPACT_AREAS: ImpactArea[] = [
   { name: "Health Care and Public Health", color: MOSS, Mark: PulseMark },
 ];
 
+// Phone-width fallback: inline styles can't hold a media query, so the
+// stack-and-scroll overrides live here (hence !important).
+const MOBILE_CSS = `
+@media (max-width: 700px) {
+  .impact-page { height: auto !important; min-height: 100dvh; overflow: visible !important; }
+  .impact-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .impact-tile-art { flex: none !important; height: 240px; }
+}
+`;
+
 export default function ImpactAreasPage() {
   return (
     <div
+      className="impact-page"
       style={{
         background: SAND,
         color: BROWN,
-        minHeight: "100vh",
-        padding: "72px clamp(20px, 5vw, 56px) 120px",
+        height: "100dvh",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        padding: "clamp(24px, 6vh, 72px) clamp(20px, 5vw, 56px) clamp(24px, 5vh, 56px)",
       }}
     >
+      <style>{MOBILE_CSS}</style>
+
       <Link
         href="/about"
         style={{
           fontSize: 13,
           fontWeight: 500,
           color: "rgba(31,14,3,0.6)",
-          marginBottom: 40,
-          display: "inline-block",
+          marginBottom: "clamp(16px, 4vh, 40px)",
+          alignSelf: "flex-start",
         }}
       >
         ← back
@@ -125,7 +149,7 @@ export default function ImpactAreasPage() {
           letterSpacing: "0.14em",
           textTransform: "uppercase",
           color: FOREST,
-          marginBottom: 28,
+          marginBottom: "clamp(12px, 3vh, 28px)",
         }}
       >
         Core Impact Areas
@@ -133,11 +157,11 @@ export default function ImpactAreasPage() {
 
       <p
         style={{
-          fontSize: "clamp(22px, 3vw, 34px)",
+          fontSize: "clamp(20px, 2.6vw, 34px)",
           fontWeight: 300,
           lineHeight: 1.25,
           letterSpacing: "-0.015em",
-          margin: "0 0 56px",
+          margin: "0 0 clamp(24px, 5vh, 56px)",
           maxWidth: 900,
         }}
       >
@@ -146,46 +170,24 @@ export default function ImpactAreasPage() {
       </p>
 
       <div
+        className="impact-grid"
         style={{
+          flex: 1,
+          minHeight: 0,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
           gap: 24,
         }}
       >
-        {IMPACT_AREAS.map(({ name, color, Mark }, i) => (
-          <div key={name}>
-            <div
-              style={{
-                background: color,
-                aspectRatio: "1 / 1",
-                padding: "18%",
-              }}
-            >
-              <Mark />
-            </div>
-            <div
-              style={{
-                fontFamily: '"JetBrains Mono", monospace',
-                fontSize: 13,
-                fontWeight: 500,
-                color: FOREST,
-                margin: "18px 0 6px",
-              }}
-            >
-              {String(i + 1).padStart(2, "0")}
-            </div>
-            <h2
-              style={{
-                fontSize: "clamp(22px, 2.4vw, 30px)",
-                fontWeight: 600,
-                lineHeight: 1.1,
-                letterSpacing: "-0.01em",
-                margin: 0,
-              }}
-            >
-              {name}
-            </h2>
-          </div>
+        {IMPACT_AREAS.map(({ name, color, description, Mark }, i) => (
+          <ImpactTile
+            key={name}
+            number={i + 1}
+            name={name}
+            color={color}
+            description={description}
+            mark={<Mark />}
+          />
         ))}
       </div>
     </div>
