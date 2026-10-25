@@ -45,6 +45,13 @@ function vettedLabel(vettedDate: string | null): string | null {
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 }
 
+// Per-listing heading for the background section, keyed by slug since
+// it's a one-off wording choice, not a field on the scholar_profile row.
+// Listings not named here get the default "background".
+const BACKGROUND_HEADINGS: Record<string, string> = {
+  "chinasa-t-okolo": "innovation background",
+};
+
 /** Splits on blank lines so admin-entered background text renders as
  * separate <p> paragraphs, matching the mockup's two-paragraph layout
  * without requiring a rich-text editor for a single free-text field. */
@@ -322,7 +329,7 @@ export default async function ScholarProfilePage({
                         color: "rgba(31,14,3,0.55)",
                       }}
                     >
-                      background
+                      {BACKGROUND_HEADINGS[profile.slug] ?? "background"}
                     </h2>
                     {paragraphs(profile.background).map((para, i) => (
                       <p
