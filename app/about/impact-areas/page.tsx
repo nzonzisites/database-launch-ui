@@ -165,8 +165,8 @@ export default function ImpactAreasPage() {
           maxWidth: 900,
         }}
       >
-        Social, environmental, and economic sustainability and resilience
-        are the core of what we do, across the following impact areas:
+        Social, environmental, and economic sustainability are core to what
+        we do, across the following impact areas:
       </p>
 
       <div
