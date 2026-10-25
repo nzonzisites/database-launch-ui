@@ -166,7 +166,7 @@ export default function ImpactAreasPage() {
         }}
       >
         Social, environmental, and economic sustainability are core to what
-        we do, across the following impact areas:
+        we do across the following impact areas:
       </p>
 
       <div
