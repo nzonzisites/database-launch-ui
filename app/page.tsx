@@ -116,10 +116,11 @@ export default function LandingPage() {
     <main style={{ minHeight: "100vh", background: SAND, color: BROWN }}>
       <div
         style={{
-          padding: "20px clamp(20px, 6vw, 48px) 0",
+          padding: "20px clamp(20px, 6vw, 48px)",
           fontSize: 15,
           fontWeight: 500,
-          color: "rgba(31,14,3,0.6)",
+          color: WHITE,
+          background: BROWN,
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "space-between",
