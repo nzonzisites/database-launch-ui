@@ -34,7 +34,7 @@ type PreviewScholar = {
 
 const DATABASE_PREVIEW: PreviewScholar[] = [
   { slug: "daniel-kumapayi", name: "Daniel Kumapayi" },
-  { slug: "chinasa-t-okolo", name: "Chinasa T. Okolo" },
+  { slug: "joan-mukogosi", name: "Joan Mukogosi" },
   { slug: "reginald-saga", name: "Reginald Saga" },
 ];
 
