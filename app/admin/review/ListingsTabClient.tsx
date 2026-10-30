@@ -646,17 +646,22 @@ function ListingRow({
             />
           </Field>
 
-          <Field label="Full bio (shown when a visitor clicks their portrait)">
-            <textarea value={fullBio} onChange={(e) => setFullBio(e.target.value)} rows={5} style={fieldStyle} />
+          <Field label="Full bio (shown in the background section)">
+            <textarea
+              value={fullBio}
+              onChange={(e) => setFullBio(e.target.value)}
+              rows={5}
+              style={fieldStyle}
+              placeholder="Separate paragraphs with a blank line"
+            />
           </Field>
 
-          <Field label="Background">
+          <Field label="Background (shown when a visitor clicks their portrait)">
             <textarea
               value={background}
               onChange={(e) => setBackground(e.target.value)}
               rows={5}
               style={fieldStyle}
-              placeholder="Separate paragraphs with a blank line"
             />
           </Field>
 

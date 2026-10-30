@@ -134,7 +134,7 @@ export default async function ScholarProfilePage({
         >
           <div style={{ position: "sticky", top: 24 }}>
             <ProfilePortrait
-              fullBio={profile.full_bio}
+              fullBio={profile.background}
               headshotUrl={profile.headshot_url}
               headshotFocalY={profile.headshot_focal_y}
             />
@@ -317,7 +317,7 @@ export default async function ScholarProfilePage({
               }}
             >
               <div style={{ minWidth: 0 }}>
-                {profile.background && (
+                {profile.full_bio && (
                   <>
                     <h2
                       style={{
@@ -331,7 +331,7 @@ export default async function ScholarProfilePage({
                     >
                       {BACKGROUND_HEADINGS[profile.slug] ?? "background"}
                     </h2>
-                    {paragraphs(profile.background).map((para, i) => (
+                    {paragraphs(profile.full_bio).map((para, i) => (
                       <p
                         key={i}
                         style={{ fontSize: 15.5, fontWeight: 400, lineHeight: 1.62, margin: "0 0 14px" }}
