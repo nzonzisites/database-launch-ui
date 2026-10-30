@@ -113,7 +113,7 @@ export default function LandingPage() {
       <div
         style={{
           padding: "20px clamp(20px, 6vw, 48px) 0",
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 500,
           color: "rgba(31,14,3,0.6)",
         }}
@@ -121,11 +121,11 @@ export default function LandingPage() {
         <Link href="/" style={{ color: "inherit" }}>
           home
         </Link>{" "}
-        <span style={{ opacity: 0.5 }}>/</span>{" "}
+        <span style={{ opacity: 0.5 }}>//</span>{" "}
         <Link href="/about" style={{ color: "inherit" }}>
           about
         </Link>{" "}
-        <span style={{ opacity: 0.5 }}>/</span>{" "}
+        <span style={{ opacity: 0.5 }}>//</span>{" "}
         <Link href="/apply" style={{ color: "inherit" }}>
           apply
         </Link>

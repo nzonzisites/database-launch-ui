@@ -118,12 +118,12 @@ export default async function ScholarProfilePage({
   return (
     <div style={{ background: SAND, color: BROWN, minHeight: "100vh" }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 32px 72px" }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: "rgba(31,14,3,0.6)", marginBottom: 26 }}>
+        <div style={{ fontSize: 15, fontWeight: 500, color: "rgba(31,14,3,0.6)", marginBottom: 26 }}>
           <Link href="/" style={{ color: "inherit" }}>
             home
           </Link>{" "}
-          <span style={{ opacity: 0.5 }}>/</span> {(category || "scholar").toLowerCase()}{" "}
-          <span style={{ opacity: 0.5 }}>/</span> {profile.full_name.toLowerCase()}
+          <span style={{ opacity: 0.5 }}>//</span> {(category || "scholar").toLowerCase()}{" "}
+          <span style={{ opacity: 0.5 }}>//</span> {profile.full_name.toLowerCase()}
         </div>
 
         <div
