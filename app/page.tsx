@@ -18,6 +18,10 @@ const SEE_ALSO = [
   "supply chain and sourcing experts",
 ];
 
+// Shown at the right end of the top nav. Add more entries here as new
+// accounts go live.
+const SOCIAL_LINKS = [{ label: "instagram", href: "https://www.instagram.com/nzonzi.home" }];
+
 // The 7 MVP categories plus "Other" — matches the scholar application's
 // category field.
 const SCHOLAR_CATEGORIES = [
@@ -116,19 +120,32 @@ export default function LandingPage() {
           fontSize: 15,
           fontWeight: 500,
           color: "rgba(31,14,3,0.6)",
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+          gap: 12,
         }}
       >
-        <Link href="/" style={{ color: "inherit" }}>
-          home
-        </Link>{" "}
-        <span style={{ opacity: 0.5 }}>//</span>{" "}
-        <Link href="/about" style={{ color: "inherit" }}>
-          about
-        </Link>{" "}
-        <span style={{ opacity: 0.5 }}>//</span>{" "}
-        <Link href="/apply" style={{ color: "inherit" }}>
-          apply
-        </Link>
+        <div>
+          <Link href="/" style={{ color: "inherit" }}>
+            home
+          </Link>{" "}
+          <span style={{ opacity: 0.5 }}>//</span>{" "}
+          <Link href="/about" style={{ color: "inherit" }}>
+            about
+          </Link>{" "}
+          <span style={{ opacity: 0.5 }}>//</span>{" "}
+          <Link href="/apply" style={{ color: "inherit" }}>
+            apply
+          </Link>
+        </div>
+        <div style={{ display: "flex", gap: 16 }}>
+          {SOCIAL_LINKS.map(({ label, href }) => (
+            <a key={href} href={href} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>
+              {label} ↗
+            </a>
+          ))}
+        </div>
       </div>
       <Link
         href="/admin/review"

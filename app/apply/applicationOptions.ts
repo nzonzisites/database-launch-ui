@@ -94,6 +94,41 @@ export const SECTOR_OPTIONS: { value: string; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+// "Other" can name up to SECTOR_OTHER_MAX industries. They're stored in
+// the existing single sector_other text column (application and
+// scholar_profile), one per line, rather than migrating it to text[] --
+// so read and write it only through these helpers.
+export const SECTOR_OTHER_MAX = 2;
+const SECTOR_OTHER_SEPARATOR = "\n";
+
+/** Raw entries, blanks kept -- for the form inputs while someone types. */
+export function sectorOtherEntries(sectorOther: string | null | undefined): string[] {
+  return (sectorOther ?? "").split(SECTOR_OTHER_SEPARATOR);
+}
+
+export function joinSectorOther(entries: string[]): string {
+  return entries.map((e) => e.replace(/\n/g, " ")).join(SECTOR_OTHER_SEPARATOR);
+}
+
+/** Trimmed, non-blank, capped -- what gets saved. */
+export function normalizeSectorOther(sectorOther: string | null | undefined): string {
+  return sectorOtherEntries(sectorOther)
+    .map((e) => e.trim())
+    .filter(Boolean)
+    .slice(0, SECTOR_OTHER_MAX)
+    .join(SECTOR_OTHER_SEPARATOR);
+}
+
+/** Display labels for a sector selection, with "other" expanded into
+ * each industry the person typed. */
+export function sectorLabels(sector: string[] | null | undefined, sectorOther: string | null | undefined): string[] {
+  if (!sector) return [];
+  return sector.flatMap((value) => {
+    const others = normalizeSectorOther(sectorOther);
+    return value === "other" && others ? others.split(SECTOR_OTHER_SEPARATOR) : [optionLabel(SECTOR_OPTIONS, value)];
+  });
+}
+
 // Replaced fixed USD bands (2026-10-01) -- a dollar band collapsed
 // everyone paid in a weaker currency into "under $250" regardless of
 // whether that payment was a strong, professional-market rate locally,

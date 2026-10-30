@@ -7,8 +7,63 @@ import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import { FUNCTION_OPTIONS, EXPERIENCE_AREA_OPTIONS, WORK_MODALITY_OPTIONS, SECTOR_OPTIONS } from "@/app/apply/applicationOptions";
 import { publishScholarProfile, unpublishScholarProfile, updateScholarProfile } from "./scholarProfileActions";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import SectorOtherInputs from "@/app/apply/SectorOtherInputs";
 
 const HEADSHOT_BUCKET = "scholar-headshots";
+
+// The bucket rejects anything over 5MB (file_size_limit in
+// sql/2026-09-27g-scholar-headshot-upload.sql), so aim a little under
+// it. Headshots never need more than ~2000px on the long side -- the
+// listing shows them at most a few hundred px wide.
+const HEADSHOT_MAX_BYTES = 4.5 * 1024 * 1024;
+const HEADSHOT_MAX_SIDE = 2000;
+
+/**
+ * Shrinks a photo in the browser before upload, so a straight-off-the-
+ * camera image doesn't bounce off the bucket's size cap. Files already
+ * under both limits go through untouched; anything bigger is redrawn at
+ * HEADSHOT_MAX_SIDE on its long side and re-encoded as JPEG, stepping
+ * the quality (then the size) down until it fits.
+ */
+async function shrinkHeadshot(file: File): Promise<File> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const longSide = Math.max(bitmap.width, bitmap.height);
+  if (file.size <= HEADSHOT_MAX_BYTES && longSide <= HEADSHOT_MAX_SIDE) {
+    bitmap.close();
+    return file;
+  }
+
+  let side = Math.min(longSide, HEADSHOT_MAX_SIDE);
+  try {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const scale = side / longSide;
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Couldn't resize that image.");
+      // JPEG has no transparency -- fill white so a transparent PNG
+      // doesn't come out with a black background.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+      for (const quality of [0.88, 0.78, 0.68]) {
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, "image/jpeg", quality)
+        );
+        if (blob && blob.size <= HEADSHOT_MAX_BYTES) {
+          const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+          return new File([blob], name, { type: "image/jpeg" });
+        }
+      }
+      side = Math.round(side * 0.75);
+    }
+  } finally {
+    bitmap.close();
+  }
+  throw new Error("Couldn't shrink that image under 5MB -- try a smaller file.");
+}
 
 const thumbStyle: CSSProperties = {
   width: 88,
@@ -231,14 +286,15 @@ function ListingRow({
    * here, so it stays available for comparison after this replaces it.
    */
   function handleHeadshotFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const picked = e.target.files?.[0];
     e.target.value = ""; // allow re-selecting the same file again later
-    if (!file) return;
+    if (!picked) return;
 
     setUploadError(null);
     setUploading(true);
     (async () => {
       try {
+        const file = await shrinkHeadshot(picked);
         const supabase = getSupabaseClient();
         const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `${p.id}-${Date.now()}.${ext}`;
@@ -630,10 +686,11 @@ function ListingRow({
               })}
             </div>
             {sector.includes("other") && (
-              <input
+              <SectorOtherInputs
                 value={sectorOther}
-                onChange={(e) => setSectorOther(e.target.value)}
-                style={{ ...fieldStyle, marginTop: 10 }}
+                onChange={setSectorOther}
+                inputStyle={fieldStyle}
+                linkColor={SAND}
                 placeholder="Describe the other industry"
               />
             )}

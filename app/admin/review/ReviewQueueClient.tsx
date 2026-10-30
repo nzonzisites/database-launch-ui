@@ -13,13 +13,13 @@ import SessionControls from "@/app/components/SessionControls";
 import {
   FUNCTION_OPTIONS,
   EXPERIENCE_AREA_OPTIONS,
-  SECTOR_OPTIONS,
   RATE_TYPE_OPTIONS,
   RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
   WORK_MODALITY_OPTIONS,
   optionLabel,
+  sectorLabels,
 } from "@/app/apply/applicationOptions";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -308,6 +308,11 @@ function ApplicationRow({
             {a.full_name || "No name yet"}
           </div>
           <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{a.email}</div>
+          {a.status === "draft" && a.resume_code && (
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, opacity: 0.75, marginTop: 3 }}>
+              Code {a.resume_code}
+            </div>
+          )}
         </div>
         <span style={{ fontSize: 13, opacity: 0.85 }}>{categoryLabel}</span>
         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, opacity: 0.65 }}>
@@ -352,6 +357,7 @@ function ApplicationRow({
               can be genuinely half-filled-in, and a reviewer should see
               at a glance exactly what was and wasn't answered rather
               than have unanswered questions quietly disappear. */}
+          {a.status === "draft" && <ResumeCode code={a.resume_code} />}
           <Detail
             label="Contact"
             value={
@@ -391,11 +397,7 @@ function ApplicationRow({
           <Detail
             label="Industries paid to work in"
             value={
-              a.sector && a.sector.length > 0
-                ? a.sector
-                    .map((v) => (v === "other" && a.sector_other ? a.sector_other : optionLabel(SECTOR_OPTIONS, v)))
-                    .join(", ")
-                : null
+              a.sector && a.sector.length > 0 ? sectorLabels(a.sector, a.sector_other).join(", ") : null
             }
           />
           <Detail label="Deliverables produced" value={a.deliverables} />
@@ -597,6 +599,43 @@ function ApplicationRow({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** A draft's "continue your application" code, with a copy button, so an
+ * admin can send it to an applicant who's lost the email. */
+function ResumeCode({ code }: { code: string | null }) {
+  const [copied, setCopied] = useState(false);
+  if (!code) return <Detail label="Continuation code" value={null} />;
+  return (
+    <div>
+      <div style={{ ...monoLabel, marginBottom: 4 }}>Continuation code</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 600, letterSpacing: "0.1em", color: SAND }}>
+          {code}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard.writeText(code).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            });
+          }}
+          style={{
+            background: "transparent",
+            border: "1px solid rgba(230,222,210,0.35)",
+            color: SAND,
+            padding: "5px 11px",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getPlatformAgentRow, hasPermission } from "@/lib/platformAgent";
+import { normalizeSectorOther } from "@/app/apply/applicationOptions";
 
 /**
  * Same pattern as requireReviewSellersPermission in ./actions.ts, but for
@@ -108,7 +109,7 @@ export async function updateScholarProfile(
       experience_label: fields.experience_label.trim() || null,
       vetted_date: fields.vetted_date || null,
       sector: fields.sector.length > 0 ? fields.sector : null,
-      sector_other: fields.sector.includes("other") ? fields.sector_other.trim() : null,
+      sector_other: fields.sector.includes("other") ? normalizeSectorOther(fields.sector_other) : null,
       reviewed_by: agentId,
     })
     .eq("id", profileId);

@@ -26,13 +26,14 @@ type AboutParagraph = {
 
 const ABOUT_PARAGRAPHS: AboutParagraph[] = [
   {
-    lead: "We are internationally oriented children, grandchildren, and great-grandchildren of Africa and the Caribbean.",
+    lead: "We are internationally oriented children, grandchildren, and great-grandchildren of Africa, the Caribbean, and Afro-Latin America.",
     text: "In homage to all that our ancestors have instilled within us, Nzonzis pursue the reclamation of our cultural inheritance through research, experimentation, collaboration, and practical expertise.",
   },
 ];
 
 const FOUNDERS_HREF = "/about/founders";
 const DATABASE_HREF = "/database";
+const IMPACT_AREAS_HREF = "/about/impact-areas";
 
 export default function AboutPage() {
   return (
@@ -109,6 +110,22 @@ export default function AboutPage() {
             LEARN MORE button on /database -- same shape, OCHRE instead of
             WHITE since this sits on SAND rather than BROWN. */}
         <div style={{ marginTop: 72, display: "flex", flexWrap: "wrap", gap: 16 }}>
+          <Link
+            href={IMPACT_AREAS_HREF}
+            style={{
+              display: "inline-block",
+              background: "transparent",
+              border: `1px solid ${OCHRE}`,
+              color: OCHRE,
+              fontSize: 12.5,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              padding: "14px 26px",
+            }}
+          >
+            Core Impact Areas
+          </Link>
           <Link
             href={FOUNDERS_HREF}
             style={{

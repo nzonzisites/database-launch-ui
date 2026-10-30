@@ -10,27 +10,46 @@
 // MORE button (removed; its bordered-box style moved to the "meet the
 // founders" link on /about instead).
 //
-// Everything here is a PLACEHOLDER (per Modupe: "use placeholder text
-// and images") -- the three "scholars" aren't real people, and the
-// photo boxes reuse ProfilePortrait's diagonal-stripe missing-headshot
-// pattern (inverted for the dark background). DATABASE_PREVIEW is the
-// one thing to touch once there's real content to show here.
+// The three cards are real scholars' live listings (same approach as
+// /about/founders): each slug in DATABASE_PREVIEW is looked up in
+// scholar_profile, and its card shows the headshot, name and category
+// and links to the full /profile/[slug] page. RLS only returns
+// published listings to the public, so a listing that's still a draft
+// (or a slug that doesn't match) falls back to the diagonal-stripe
+// missing-headshot pattern with just the name, unlinked, until it's
+// published. DATABASE_PREVIEW is the one thing to touch to change who's
+// featured.
 
 import Link from "next/link";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchScholarProfile, type ScholarProfileRow } from "@/lib/scholarProfile";
+import { CATEGORY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
 import { BROWN, OCHRE, WHITE } from "@/lib/colors";
 
 type PreviewScholar = {
+  slug: string;
+  // Shown on the fallback card while the listing isn't published.
   name: string;
-  title: string;
 };
 
 const DATABASE_PREVIEW: PreviewScholar[] = [
-  { name: "Scholar One", title: "Materials Science" },
-  { name: "Scholar Two", title: "Industrial Design" },
-  { name: "Scholar Three", title: "Applied Quant/Qual Research" },
+  { slug: "daniel-kumapayi", name: "Daniel Kumapayi" },
+  { slug: "chinasa-t-okolo", name: "Chinasa T. Okolo" },
+  { slug: "reginald-saga", name: "Reginald Saga" },
 ];
 
-export default function DatabasePage() {
+function categoryLabel(category: string | null, other: string | null): string {
+  if (!category) return "";
+  if (category === "other") return other || "Other";
+  return optionLabel(CATEGORY_OPTIONS, category);
+}
+
+export default async function DatabasePage() {
+  const supabase = await getSupabaseServerClient();
+  const profiles: (ScholarProfileRow | null)[] = await Promise.all(
+    DATABASE_PREVIEW.map((scholar) => fetchScholarProfile(supabase, scholar.slug).catch(() => null))
+  );
+
   return (
     <div
       style={{
@@ -107,55 +126,71 @@ export default function DatabasePage() {
             width: "100%",
           }}
         >
-          {DATABASE_PREVIEW.map((scholar) => (
-            <div key={scholar.name}>
-              <div
-                style={{
-                  aspectRatio: "4 / 5",
-                  maxHeight: "44vh",
-                  backgroundImage:
-                    "repeating-linear-gradient(135deg, rgba(240,240,240,0.12) 0 7px, transparent 7px 14px)",
-                  display: "flex",
-                  alignItems: "flex-end",
-                }}
-              >
-                <span
+          {DATABASE_PREVIEW.map((scholar, i) => {
+            const profile = profiles[i];
+            const card = (
+              <>
+                <div
                   style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "rgba(240,240,240,0.55)",
-                    background: BROWN,
-                    padding: "4px 8px",
-                    margin: 14,
+                    position: "relative",
+                    aspectRatio: "4 / 5",
+                    maxHeight: "44vh",
+                    overflow: "hidden",
+                    backgroundImage: profile?.headshot_url
+                      ? undefined
+                      : "repeating-linear-gradient(135deg, rgba(240,240,240,0.12) 0 7px, transparent 7px 14px)",
                   }}
                 >
-                  photo placeholder
-                </span>
-              </div>
-              <div
-                style={{
-                  fontSize: "clamp(18px, 1.8vw, 24px)",
-                  fontWeight: 600,
-                  letterSpacing: "-0.01em",
-                  marginTop: 18,
-                }}
-              >
-                {scholar.name}
-              </div>
-              <div
-                style={{
-                  fontSize: "clamp(13px, 1.1vw, 15px)",
-                  fontWeight: 500,
-                  color: OCHRE,
-                  marginTop: 4,
-                }}
-              >
-                {scholar.title}
-              </div>
-            </div>
-          ))}
+                  {profile?.headshot_url && (
+                    // Plain <img>, not next/image -- headshot URLs can be
+                    // arbitrary applicant-supplied links (see ProfilePortrait).
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.headshot_url}
+                      alt=""
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: `center ${profile.headshot_focal_y}%`,
+                      }}
+                    />
+                  )}
+                </div>
+                <div
+                  style={{
+                    fontSize: "clamp(18px, 1.8vw, 24px)",
+                    fontWeight: 600,
+                    letterSpacing: "-0.01em",
+                    marginTop: 18,
+                  }}
+                >
+                  {profile?.full_name ?? scholar.name}
+                </div>
+                {profile && (
+                  <div
+                    style={{
+                      fontSize: "clamp(13px, 1.1vw, 15px)",
+                      fontWeight: 500,
+                      color: OCHRE,
+                      marginTop: 4,
+                    }}
+                  >
+                    {categoryLabel(profile.intended_category, profile.intended_category_other)}
+                  </div>
+                )}
+              </>
+            );
+            return profile ? (
+              <Link key={scholar.slug} href={`/profile/${profile.slug}`} style={{ color: WHITE, display: "block" }}>
+                {card}
+              </Link>
+            ) : (
+              <div key={scholar.slug}>{card}</div>
+            );
+          })}
         </div>
       </div>
     </div>

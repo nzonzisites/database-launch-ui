@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchScholarProfile } from "@/lib/scholarProfile";
-import { CATEGORY_OPTIONS, SECTOR_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
+import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel, sectorLabels } from "@/app/apply/applicationOptions";
 import { BROWN, OCHRE, FOREST, SAND } from "@/lib/colors";
 import ProfilePortrait from "./ProfilePortrait";
 
@@ -24,15 +24,6 @@ function deliveryTags(workModality: string[] | null): string[] {
   return workModality.map((value) => optionLabel(WORK_MODALITY_OPTIONS, value));
 }
 
-/** Maps sector values to their display labels, substituting sector_other
- * for the "other" entry -- same convention the admin review portal and
- * the application-summary email already use for this field. */
-function industryLabels(sector: string[] | null, sectorOther: string | null): string[] {
-  if (!sector || sector.length === 0) return [];
-  return sector.map((value) =>
-    value === "other" && sectorOther ? sectorOther : optionLabel(SECTOR_OPTIONS, value)
-  );
-}
 
 /** The first non-primary residence, formatted as "City, Country" -- shown
  * as a second location fact alongside city_country (the primary one)
@@ -53,6 +44,13 @@ function vettedLabel(vettedDate: string | null): string | null {
   if (Number.isNaN(d.getTime())) return null;
   return d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
 }
+
+// Per-listing heading for the background section, keyed by slug since
+// it's a one-off wording choice, not a field on the scholar_profile row.
+// Listings not named here get the default "background".
+const BACKGROUND_HEADINGS: Record<string, string> = {
+  "chinasa-t-okolo": "innovation background",
+};
 
 /** Splits on blank lines so admin-entered background text renders as
  * separate <p> paragraphs, matching the mockup's two-paragraph layout
@@ -103,7 +101,7 @@ export default async function ScholarProfilePage({
     vetted ? { k: "Vetted", v: vetted } : null,
   ].filter((f): f is { k: string; v: string } => f !== null);
   const deliveryTagList = deliveryTags(profile.work_modality);
-  const industryTagList = industryLabels(profile.sector, profile.sector_other);
+  const industryTagList = sectorLabels(profile.sector, profile.sector_other);
 
   // Neither "message this scholar" nor "report this listing" has a real
   // backend yet -- these are simple mailto: placeholders routed to the
@@ -331,7 +329,7 @@ export default async function ScholarProfilePage({
                         color: "rgba(31,14,3,0.55)",
                       }}
                     >
-                      background
+                      {BACKGROUND_HEADINGS[profile.slug] ?? "background"}
                     </h2>
                     {paragraphs(profile.background).map((para, i) => (
                       <p

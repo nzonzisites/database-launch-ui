@@ -24,6 +24,13 @@ import ProfilePortrait from "@/app/profile/[slug]/ProfilePortrait";
 
 const FOUNDER_SLUGS = ["uchenna-ezejiofor", "ireti-akinrinade"];
 
+// Nzonzi roles, shown under each founder's name. Keyed by slug since
+// these are titles at Nzonzi, not fields on the scholar_profile row.
+const FOUNDER_TITLES: Record<string, string> = {
+  "uchenna-ezejiofor": "Research Strategy Lead",
+  "ireti-akinrinade": "Network Strategy Lead",
+};
+
 export const metadata: Metadata = {
   title: "The Nzonzi founders — Nzonzi",
   description: "Uche and Ireti's own listings on Nzonzi.",
@@ -124,6 +131,19 @@ export default async function FoundersPage() {
                     >
                       {profile.full_name}
                     </h2>
+                    {FOUNDER_TITLES[profile.slug] && (
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          letterSpacing: "0.01em",
+                          color: FOREST,
+                          margin: "0 0 10px",
+                        }}
+                      >
+                        {FOUNDER_TITLES[profile.slug]}
+                      </div>
+                    )}
                     {profile.tagline && (
                       <p
                         style={{

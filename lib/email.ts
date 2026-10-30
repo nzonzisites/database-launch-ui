@@ -18,12 +18,12 @@ import {
   EXPERIENCE_AREA_OPTIONS,
   WORK_MODALITY_OPTIONS,
   REFERENCE_CONTACT_METHOD_OPTIONS,
-  SECTOR_OPTIONS,
   RATE_TYPE_OPTIONS,
   RATE_RELATIVE_OPTIONS,
   CAPACITY_OPTIONS,
   PRIOR_PAID_WORK_OPTIONS,
   optionLabel,
+  sectorLabels,
 } from "@/app/apply/applicationOptions";
 
 const OCHRE = "#C2561A";
@@ -131,10 +131,7 @@ export async function sendApplicationConfirmationEmail(
     row("About these samples", data.workSamplesExplanation) +
     listRow("Links", data.externalLinks);
 
-  const sectorLabel =
-    data.sector
-      .map((value) => (value === "other" && data.sectorOther ? data.sectorOther : optionLabel(SECTOR_OPTIONS, value)))
-      .join(", ") || "";
+  const sectorLabel = sectorLabels(data.sector, data.sectorOther).join(", ");
   const rateLabel =
     data.rateType === "amount"
       ? `${data.rateAmount} ${data.rateCurrency === "other" ? data.rateCurrencyOther : data.rateCurrency}`

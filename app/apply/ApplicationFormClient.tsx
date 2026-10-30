@@ -37,6 +37,7 @@ import {
   PRIOR_PAID_WORK_OPTIONS,
 } from "./applicationOptions";
 import ApplicationSummary, { type ApplicationSummaryData } from "./ApplicationSummary";
+import SectorOtherInputs from "./SectorOtherInputs";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
 // Design tokens pulled directly from design_template.html -- not all of
@@ -1427,11 +1428,12 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                 })}
               </div>
               {sector.includes("other") && (
-                <input
-                  style={{ ...underlineInputStyle(false), marginTop: 14 }}
-                  placeholder="Tell us the industry"
+                <SectorOtherInputs
                   value={sectorOther}
-                  onChange={(e) => setSectorOther(e.target.value)}
+                  onChange={setSectorOther}
+                  inputStyle={underlineInputStyle(false)}
+                  linkColor={FOREST}
+                  placeholder="Tell us the industry"
                   required
                 />
               )}
