@@ -25,17 +25,24 @@ function deliveryTags(workModality: string[] | null): string[] {
 }
 
 
-/** The first non-primary residence, formatted as "City, Country" -- shown
- * as a second location fact alongside city_country (the primary one)
- * when the applicant listed more than one place they split time between. */
-function secondaryResidenceLabel(
-  residences: { city: string; country: string; is_primary: boolean }[] | null
+/** Every residence the applicant listed on the application, formatted as
+ * "City, Country" entries joined together -- primary residence first,
+ * since that's the one meaningful ordering in the data, with any others
+ * following in whatever order they were recorded. Falls back to the
+ * simple city_country string when no structured residences exist
+ * (applications from before the residences field was added). */
+function allLocationsLabel(
+  residences: { city: string; country: string; is_primary: boolean }[] | null,
+  cityCountry: string | null
 ): string | null {
-  if (!residences || residences.length === 0) return null;
-  const secondary = residences.find((r) => !r.is_primary) ?? null;
-  if (!secondary) return null;
-  const label = [secondary.city, secondary.country].filter(Boolean).join(", ");
-  return label || null;
+  if (!residences || residences.length === 0) return cityCountry || null;
+  const ordered = [...residences].sort((a, b) =>
+    a.is_primary === b.is_primary ? 0 : a.is_primary ? -1 : 1
+  );
+  const labels = ordered
+    .map((r) => [r.city, r.country].filter(Boolean).join(", "))
+    .filter(Boolean);
+  return labels.length > 0 ? labels.join("; ") : cityCountry || null;
 }
 
 function vettedLabel(vettedDate: string | null): string | null {
@@ -91,11 +98,10 @@ export default async function ScholarProfilePage({
   const category = categoryLabel(profile.intended_category, profile.intended_category_other);
   const vetted = vettedLabel(profile.vetted_date);
 
-  const alsoBasedIn = secondaryResidenceLabel(profile.residences);
+  const locations = allLocationsLabel(profile.residences, profile.city_country);
 
   const facts = [
-    profile.city_country ? { k: "Location", v: profile.city_country } : null,
-    alsoBasedIn ? { k: "Also based in", v: alsoBasedIn } : null,
+    locations ? { k: "Location(s)", v: locations } : null,
     profile.country_of_origin ? { k: "Country of origin", v: profile.country_of_origin } : null,
     profile.experience_label ? { k: "Experience", v: profile.experience_label } : null,
     vetted ? { k: "Vetted", v: vetted } : null,
