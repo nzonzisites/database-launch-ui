@@ -121,9 +121,10 @@ export default function LandingPage() {
         style={{
           padding: "20px clamp(20px, 6vw, 48px)",
           fontSize: 15,
-          fontWeight: 500,
-          color: WHITE,
-          background: BROWN,
+          fontWeight: 600,
+          color: BROWN,
+          background: SAND,
+          borderBottom: `2px solid ${OCHRE}`,
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "space-between",
