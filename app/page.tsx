@@ -20,7 +20,10 @@ const SEE_ALSO = [
 
 // Shown at the right end of the top nav. Add more entries here as new
 // accounts go live.
-const SOCIAL_LINKS = [{ label: "instagram", href: "https://www.instagram.com/nzonzi.home" }];
+const SOCIAL_LINKS = [
+  { label: "instagram", href: "https://www.instagram.com/nzonzi.home" },
+  { label: "substack", href: "https://intimates.substack.com" },
+];
 
 // The 7 MVP categories plus "Other" — matches the scholar application's
 // category field.
