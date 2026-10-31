@@ -152,19 +152,6 @@ function LoginForm() {
           </div>
         ) : (
           <form onSubmit={handleSendLink}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo.png"
-              alt="Nzonzi"
-              style={{
-                width: 56,
-                height: 56,
-                display: "block",
-                marginBottom: 26,
-                filter: "brightness(0) invert(1)",
-                opacity: 0.9,
-              }}
-            />
             <h1
               style={{
                 fontSize: 34,
