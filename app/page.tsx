@@ -198,17 +198,6 @@ export default function LandingPage() {
           <div style={{ width: "100%", maxWidth: 720, minWidth: 0 }}>
             {/* Definition card */}
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 16 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo.png"
-                alt="Nzonzi"
-                style={{
-                  width: "clamp(48px, 12vw, 76px)",
-                  height: "clamp(48px, 12vw, 76px)",
-                  display: "block",
-                  flex: "none",
-                }}
-              />
               <h1 style={{ margin: 0, lineHeight: 0 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
