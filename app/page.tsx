@@ -209,17 +209,17 @@ export default function LandingPage() {
                   flex: "none",
                 }}
               />
-              <h1
-                style={{
-                  fontSize: "clamp(40px, 13vw, 84px)",
-                  fontWeight: 300,
-                  letterSpacing: "-0.04em",
-                  lineHeight: 1,
-                  margin: 0,
-                  color: FOREST,
-                }}
-              >
-                nzonzi
+              <h1 style={{ margin: 0, lineHeight: 0 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/wordmark.png"
+                  alt="nzonzi"
+                  style={{
+                    height: "clamp(36px, 11vw, 70px)",
+                    width: "auto",
+                    display: "block",
+                  }}
+                />
               </h1>
             </div>
             <p
