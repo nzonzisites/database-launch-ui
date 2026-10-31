@@ -124,7 +124,6 @@ export default function LandingPage() {
           fontWeight: 600,
           color: BROWN,
           background: SAND,
-          borderBottom: `2px solid ${OCHRE}`,
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "space-between",
