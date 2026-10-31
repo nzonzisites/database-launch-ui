@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Nzonzi",
   description:
-    "Nzonzi is a marketplace connecting vetted scholar-practitioners with the organizations that need their expertise.",
+    "Children, grandchildren, and great-grandchildren of Africa, the Caribbean, and Afro-Latin America.",
 };
 
 export default function RootLayout({
