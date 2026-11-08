@@ -289,6 +289,16 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [resumingDraft, setResumingDraft] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
 
+  // Manual "save progress" button on both pages -- distinct from the
+  // quiet autosave above and from handleContinue's own save, so there's
+  // an explicit, visible action available right next to a submission
+  // error: hitting it re-runs the exact same saveApplicationDraft call
+  // the autosave uses, with on-screen confirmation (or the actual error)
+  // instead of failing silently in the background.
+  const [manualSaving, setManualSaving] = useState(false);
+  const [manualSaveMessage, setManualSaveMessage] = useState<string | null>(null);
+  const [manualSaveFailed, setManualSaveFailed] = useState(false);
+
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
   const [email, setEmail] = useState(prefill.email);
@@ -514,6 +524,31 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
       goToPage(2);
     } finally {
       setSavingDraft(false);
+    }
+  }
+
+  // Save-progress button on both pages -- no validation (same as
+  // autosave), so it works even mid-error on page 2 when some required
+  // fields for final submission aren't filled in yet. Gives on-screen
+  // feedback either way, instead of the autosave's silent retry-next-
+  // change behavior, which is the point of having an explicit button.
+  async function handleSaveDraft() {
+    setManualSaving(true);
+    setManualSaveMessage(null);
+    setManualSaveFailed(false);
+    try {
+      const result = await saveApplicationDraft(buildDraftInput());
+      if (!result.success) {
+        setManualSaveMessage(result.error);
+        setManualSaveFailed(true);
+        return;
+      }
+      setDraftId(result.draftId);
+      setResumeCode(result.resumeCode);
+      setManualSaveMessage(`Saved. Your continue code is ${result.resumeCode}.`);
+      setManualSaveFailed(false);
+    } finally {
+      setManualSaving(false);
     }
   }
 
@@ -1322,24 +1357,53 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             />
           </div>
 
-          <button
-            type="button"
-            onClick={handleContinue}
-            disabled={savingDraft}
-            style={{
-              background: "transparent",
-              border: 0,
-              padding: "5px 0",
-              marginTop: 40,
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: savingDraft ? "default" : "pointer",
-              color: "#1F0E03",
-              opacity: savingDraft ? 0.6 : 1,
-            }}
-          >
-            {savingDraft ? "saving..." : "continue →"}
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 40 }}>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={manualSaving}
+              style={{
+                background: "transparent",
+                border: 0,
+                padding: "5px 0",
+                fontSize: 15,
+                fontWeight: 500,
+                cursor: manualSaving ? "default" : "pointer",
+                color: "rgba(31,14,3,0.6)",
+                opacity: manualSaving ? 0.6 : 1,
+              }}
+            >
+              {manualSaving ? "saving..." : "save progress"}
+            </button>
+            <button
+              type="button"
+              onClick={handleContinue}
+              disabled={savingDraft}
+              style={{
+                background: "transparent",
+                border: 0,
+                padding: "5px 0",
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: savingDraft ? "default" : "pointer",
+                color: "#1F0E03",
+                opacity: savingDraft ? 0.6 : 1,
+              }}
+            >
+              {savingDraft ? "saving..." : "continue →"}
+            </button>
+          </div>
+          {manualSaveMessage && (
+            <p
+              style={{
+                fontSize: 13,
+                marginTop: 10,
+                color: manualSaveFailed ? "#B3261E" : "rgba(31,14,3,0.6)",
+              }}
+            >
+              {manualSaveMessage}
+            </p>
+          )}
         </div>
         )}
 
@@ -1748,7 +1812,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             />
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 40 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 24, marginTop: 40, flexWrap: "wrap" }}>
             <button
               type="button"
               onClick={() => goToPage(1)}
@@ -1763,6 +1827,23 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               }}
             >
               ← back
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={manualSaving}
+              style={{
+                background: "transparent",
+                border: 0,
+                padding: "5px 0",
+                fontSize: 15,
+                fontWeight: 500,
+                cursor: manualSaving ? "default" : "pointer",
+                color: "rgba(31,14,3,0.6)",
+                opacity: manualSaving ? 0.6 : 1,
+              }}
+            >
+              {manualSaving ? "saving..." : "save progress"}
             </button>
             <button
               type="submit"
@@ -1782,6 +1863,17 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               {isPending ? "submitting..." : "submit →"}
             </button>
           </div>
+          {manualSaveMessage && (
+            <p
+              style={{
+                fontSize: 13,
+                marginTop: 10,
+                color: manualSaveFailed ? "#B3261E" : "rgba(31,14,3,0.6)",
+              }}
+            >
+              {manualSaveMessage}
+            </p>
+          )}
         </div>
         )}
       </form>
