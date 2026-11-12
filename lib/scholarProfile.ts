@@ -160,3 +160,27 @@ export async function fetchScholarProfile(
   if (error) throw error;
   return (data as unknown as ScholarProfileRow) ?? null;
 }
+
+/**
+ * Every published scholar with a headshot on file -- the data source for
+ * the /sample-directory-preview teaser grid. Deliberately public (no
+ * review_listings gate): RLS's "anyone can read published scholar
+ * profiles" policy already allows this for an anonymous visitor, same as
+ * a direct /profile/[slug] visit. Excludes anything still in draft, and
+ * anything without a headshot (an empty-string or null headshot_url),
+ * since the whole point of the grid is a wall of real faces.
+ */
+export async function fetchPublishedProfilesWithHeadshots(
+  supabase: SupabaseClient
+): Promise<ScholarProfileRow[]> {
+  const { data, error } = await supabase
+    .from("scholar_profile")
+    .select(COLUMNS)
+    .eq("status", "published")
+    .not("headshot_url", "is", null)
+    .neq("headshot_url", "")
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as ScholarProfileRow[];
+}
