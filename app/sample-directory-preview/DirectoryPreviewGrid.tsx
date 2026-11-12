@@ -1,14 +1,16 @@
 "use client";
 
-// Client component for the single-reveal effect: every tile's photo is
-// always mounted underneath (so there's no reload flicker each cycle),
-// with a solid brown cover -- the exact same BROWN as the page
-// background -- cross-faded on top of all but one tile, so a covered
-// tile reads as empty space rather than a visible placeholder. A plain
-// setInterval advances which tile is uncovered; the caption block below
-// cross-fades in sync via the same revealedIndex state.
+// Client component for the single-reveal effect. Every person gets a
+// small covered tile (solid BROWN, same as the page background, so it
+// reads as empty space) except the currently revealed one, which renders
+// as an enlarged 2x2 image immediately followed by a caption cell right
+// beside it (1 column wide, same 2-row height) -- dense grid packing
+// slots both into the gap the enlarged tile leaves behind. A plain
+// setInterval jumps to a new random index every few seconds (never the
+// same one twice in a row); the caption's content changes in step since
+// it's derived from the same revealedIndex state.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BROWN, OCHRE, WHITE } from "@/lib/colors";
 
 export type PreviewPerson = {
@@ -21,14 +23,28 @@ export type PreviewPerson = {
 };
 
 const REVEAL_INTERVAL_MS = 3000;
+const TILE_SIZE = 140;
+
+function pickNextIndex(length: number, current: number): number {
+  if (length <= 1) return 0;
+  let next = current;
+  while (next === current) {
+    next = Math.floor(Math.random() * length);
+  }
+  return next;
+}
 
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
-  const [revealedIndex, setRevealedIndex] = useState(0);
+  const [revealedIndex, setRevealedIndex] = useState(() =>
+    people.length > 0 ? Math.floor(Math.random() * people.length) : 0
+  );
+  const revealedIndexRef = useRef(revealedIndex);
+  revealedIndexRef.current = revealedIndex;
 
   useEffect(() => {
     if (people.length <= 1) return;
     const timer = setInterval(() => {
-      setRevealedIndex((i) => (i + 1) % people.length);
+      setRevealedIndex(pickNextIndex(people.length, revealedIndexRef.current));
     }, REVEAL_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [people.length]);
@@ -36,29 +52,31 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   const current = people[revealedIndex];
 
   return (
-    <div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-        }}
-      >
-        {people.map((person, i) => {
-          const revealed = i === revealedIndex;
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: `repeat(auto-fill, ${TILE_SIZE}px)`,
+        gridAutoRows: `${TILE_SIZE}px`,
+        gridAutoFlow: "dense",
+      }}
+    >
+      {people.map((person, i) => {
+        if (i === revealedIndex) {
           return (
             <div
               key={person.slug}
               style={{
+                gridColumn: "span 2",
+                gridRow: "span 2",
                 position: "relative",
-                aspectRatio: "1 / 1",
                 overflow: "hidden",
-                backgroundColor: "rgba(31,14,3,0.06)",
+                animation: "fadeInTile 0.5s ease",
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={person.headshotUrl}
-                alt=""
+                alt={person.fullName}
                 style={{
                   position: "absolute",
                   inset: 0,
@@ -68,78 +86,100 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
                   objectPosition: `center ${person.headshotFocalY}%`,
                 }}
               />
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundColor: BROWN,
-                  opacity: revealed ? 0 : 1,
-                  transition: "opacity 0.6s ease",
-                }}
-              />
             </div>
           );
-        })}
-      </div>
+        }
 
-      <div
-        style={{
-          maxWidth: 640,
-          margin: "0 auto",
-          padding: "48px clamp(20px, 6vw, 48px) 64px",
-          textAlign: "center",
-        }}
-      >
-        {current && (
-          <div key={current.slug} style={{ animation: "fadeInCaption 0.6s ease" }}>
-            {current.category && (
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  letterSpacing: "0.02em",
-                  color: OCHRE,
-                  textTransform: "lowercase",
-                  marginBottom: 10,
-                }}
-              >
-                {current.category}
-              </div>
-            )}
-            <h1
+        return (
+          <div
+            key={person.slug}
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              backgroundColor: BROWN,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={person.headshotUrl}
+              alt=""
               style={{
-                fontSize: "clamp(28px, 5vw, 44px)",
-                fontWeight: 300,
-                letterSpacing: "-0.03em",
-                lineHeight: 1.05,
-                margin: "0 0 12px",
-                color: WHITE,
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: `center ${person.headshotFocalY}%`,
+                opacity: 0,
+              }}
+            />
+          </div>
+        );
+      })}
+
+      {current && (
+        <div
+          key={`${current.slug}-caption`}
+          style={{
+            gridColumn: "span 1",
+            gridRow: "span 2",
+            padding: "10px 12px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            animation: "fadeInTile 0.5s ease",
+          }}
+        >
+          {current.category && (
+            <div
+              style={{
+                fontSize: 9.5,
+                fontWeight: 500,
+                letterSpacing: "0.02em",
+                color: OCHRE,
                 textTransform: "lowercase",
+                marginBottom: 6,
               }}
             >
-              {current.fullName}
-            </h1>
-            {current.tagline && (
-              <p
-                style={{
-                  fontSize: 16,
-                  fontWeight: 300,
-                  lineHeight: 1.5,
-                  margin: 0,
-                  color: "rgba(240,240,240,0.75)",
-                }}
-              >
-                {current.tagline}
-              </p>
-            )}
+              {current.category}
+            </div>
+          )}
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 500,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.15,
+              color: WHITE,
+              textTransform: "lowercase",
+              marginBottom: 6,
+            }}
+          >
+            {current.fullName}
           </div>
-        )}
-      </div>
+          {current.tagline && (
+            <div
+              style={{
+                fontSize: 10.5,
+                fontWeight: 300,
+                lineHeight: 1.35,
+                color: "rgba(240,240,240,0.7)",
+                display: "-webkit-box",
+                WebkitLineClamp: 5,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {current.tagline}
+            </div>
+          )}
+        </div>
+      )}
 
       <style>{`
-        @keyframes fadeInCaption {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeInTile {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </div>
