@@ -32,7 +32,6 @@ const ABOUT_PARAGRAPHS: AboutParagraph[] = [
 ];
 
 const FOUNDERS_HREF = "/about/founders";
-const DATABASE_HREF = "/database";
 const IMPACT_AREAS_HREF = "/about/impact-areas";
 
 export default function AboutPage() {
@@ -141,22 +140,6 @@ export default function AboutPage() {
             }}
           >
             Meet the Nzonzi founders
-          </Link>
-          <Link
-            href={DATABASE_HREF}
-            style={{
-              display: "inline-block",
-              background: "transparent",
-              border: `1px solid ${OCHRE}`,
-              color: OCHRE,
-              fontSize: 12.5,
-              fontWeight: 600,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              padding: "14px 26px",
-            }}
-          >
-            Preview the directory
           </Link>
         </div>
       </div>
