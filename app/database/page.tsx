@@ -123,20 +123,34 @@ export default async function DatabasePage() {
         ← back
       </Link>
 
-      <div style={{ flexShrink: 0, textAlign: "center" }}>
+      {/* Drifts in from off-screen left and off again to the right, on a
+          slow loop -- position: absolute + translateX (not a scroll or a
+          layout shift) so it never affects anything else's position. */}
+      <div style={{ flexShrink: 0, position: "relative", overflow: "hidden", height: 28 }}>
         <p
           style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            whiteSpace: "nowrap",
             fontSize: "clamp(12px, 1.3vw, 15px)",
             fontStyle: "italic",
             fontWeight: 300,
             letterSpacing: "-0.01em",
             textTransform: "lowercase",
             color: "rgba(240,240,240,0.85)",
-            margin: "0 0 20px",
+            margin: 0,
+            animation: "driftAcross 22s linear infinite",
           }}
         >
           nzonzi database coming january 2027
         </p>
+        <style>{`
+          @keyframes driftAcross {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100vw); }
+          }
+        `}</style>
       </div>
 
       {people.length === 0 ? (
