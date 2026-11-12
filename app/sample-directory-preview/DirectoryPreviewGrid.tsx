@@ -65,13 +65,18 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   }, []);
 
   // Cycle through the decided reveal order, wrapping back to the start
-  // once it reaches the end.
+  // once it reaches the end. Positions that don't exist for the actual
+  // person count are dropped up front rather than wrapped with modulo --
+  // modulo-wrapping an out-of-range position (e.g. "8" when there are
+  // only 7 people) could land back on index 0 and reveal person 1, which
+  // is exactly the one position this order is supposed to skip.
   useEffect(() => {
-    if (people.length === 0) return;
+    const validOrder = REVEAL_ORDER_1INDEXED.filter((n) => n <= people.length);
+    if (validOrder.length === 0) return;
     let step = 0;
     const applyStep = () => {
-      const position1Indexed = REVEAL_ORDER_1INDEXED[step % REVEAL_ORDER_1INDEXED.length];
-      setRevealedIndex((position1Indexed - 1) % people.length);
+      const position1Indexed = validOrder[step % validOrder.length];
+      setRevealedIndex(position1Indexed - 1);
       step += 1;
     };
     applyStep();
