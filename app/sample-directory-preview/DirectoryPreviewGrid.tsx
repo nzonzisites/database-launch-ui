@@ -1,25 +1,27 @@
 "use client";
 
-// Single-reveal view for /sample-directory-preview. Every person is an
-// [image | caption] pair, side by side -- the image stays its own full
-// square tile, and the caption (name, location(s), tagline -- no
-// category badge, no bio/country-of-origin) sits next to it, not on top
-// of it. Two of these pairs per row, four rows, filling the page
-// exactly.
+// Single-reveal view for /sample-directory-preview.
 //
-// Only the currently-revealed person's photo and caption show; every
-// other tile is covered (dark square, no caption) -- same hide/reveal
-// treatment as the original wall concept, now applied to this 2x4
-// pair layout. The reveal cycles through the fixed, decided order
-// below, repeating once it reaches the end.
+// Base layer: pure image columns, directly adjacent to each other (no
+// caption column interleaved between them) -- IMAGE_COLUMNS square
+// tiles per row, ROWS rows, filling the page exactly (8 people total).
+// Only the currently-revealed person's photo shows (opacity); every
+// other tile stays covered. Same proven approach as before: the base
+// layer never changes shape based on who's revealed, so nothing ever
+// shifts, overlaps, or stretches non-square.
 //
-// Sizing: row height = (measured container height) / ROWS, and each
-// pair's image is a square sized to that row height (so the grid's 4
-// rows exactly fill the container's height); each pair's total width is
-// (measured container width) / COLUMNS (so the grid's 2-per-row pairs
-// exactly fill the width), with the caption taking whatever width is
-// left over next to the square image. The page (see page.tsx) gives
-// this component a fixed-height flex slot to measure against.
+// Caption: a single overlay, positioned next to wherever the revealed
+// image actually is -- to its right if there's more room that way,
+// otherwise to its left -- capped at MAX_CAPTION_SPAN (3) image-widths
+// wide, and narrower than that near the grid's middle columns where a
+// full 3-wide run isn't available on either side without overlapping
+// the image itself.
+//
+// Sizing: tile size is whichever is smaller of (measured container
+// width) / IMAGE_COLUMNS and (measured container height) / ROWS, so
+// every tile is a true square that fills the page in both dimensions.
+// The page (see page.tsx) gives this component a fixed-height flex slot
+// to measure against.
 
 import { useEffect, useRef, useState } from "react";
 import { BROWN, WHITE } from "@/lib/colors";
@@ -45,9 +47,10 @@ export type PreviewPerson = {
   tagline: string;
 };
 
-// 2 [image|caption] pairs per row, 4 rows -- 8 people filling the page.
-const COLUMNS = 2;
-const ROWS = 4;
+// 4 adjacent image columns x 2 rows -- 8 people filling the page.
+const IMAGE_COLUMNS = 4;
+const ROWS = 2;
+const MAX_CAPTION_SPAN = 3;
 
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,9 +70,8 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   // Cycle through the decided reveal order, wrapping back to the start
   // once it reaches the end. Positions that don't exist for the actual
   // person count are dropped up front rather than wrapped with modulo --
-  // modulo-wrapping an out-of-range position (e.g. "8" when there are
-  // only 7 people) could land back on index 0 and reveal person 1, which
-  // is exactly the one position this order is supposed to skip.
+  // modulo-wrapping an out-of-range position could land back on index 0
+  // and reveal person 1, which this order is supposed to skip entirely.
   useEffect(() => {
     const validOrder = REVEAL_ORDER_1INDEXED.filter((n) => n <= people.length);
     if (validOrder.length === 0) return;
@@ -84,168 +86,179 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
     return () => clearInterval(timer);
   }, [people.length]);
 
-  const unitWidth = dims ? dims.width / COLUMNS : null;
-  const rowHeight = dims ? dims.height / ROWS : null;
-  // The image stays a true square at the row's height, clamped so it
-  // never claims more than its pair's own width (leaving no room for a
-  // caption at all) on an unusually narrow/tall viewport.
-  const imageSize = unitWidth && rowHeight ? Math.floor(Math.min(rowHeight, unitWidth)) : null;
+  const tileSize =
+    dims != null
+      ? Math.max(0, Math.floor(Math.min(dims.width / IMAGE_COLUMNS, dims.height / ROWS)))
+      : null;
+  const gridWidth = tileSize ? tileSize * IMAGE_COLUMNS : "100%";
+
+  const revealed = revealedIndex != null ? people[revealedIndex] : undefined;
+  const revealedRow = revealedIndex != null ? Math.floor(revealedIndex / IMAGE_COLUMNS) : 0;
+  const revealedCol = revealedIndex != null ? revealedIndex % IMAGE_COLUMNS : 0;
+
+  // Contiguous room on each side of the revealed column, in tile-widths.
+  const roomRight = IMAGE_COLUMNS - (revealedCol + 1);
+  const roomLeft = revealedCol;
+  const useRightSide = roomRight >= roomLeft;
+  const captionSpan = Math.min(MAX_CAPTION_SPAN, useRightSide ? roomRight : roomLeft);
+  const captionStartCol = useRightSide ? revealedCol + 1 : revealedCol - captionSpan;
 
   return (
     <div ref={containerRef} style={{ height: "100%", overflow: "hidden" }}>
       <div
         style={{
+          position: "relative",
+          width: gridWidth,
+          margin: "0 auto",
           display: "grid",
-          gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`,
+          gridTemplateColumns: `repeat(${IMAGE_COLUMNS}, 1fr)`,
         }}
       >
         {people.map((person, i) => (
           <div
             key={person.slug}
             style={{
-              display: "flex",
-              alignItems: "stretch",
-              height: rowHeight ?? 0,
+              width: "100%",
+              height: tileSize ?? 0,
+              position: "relative",
               overflow: "hidden",
+              backgroundColor: BROWN,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={person.headshotUrl}
+              alt={i === revealedIndex ? person.fullName : ""}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: `center ${person.headshotFocalY}%`,
+                opacity: i === revealedIndex ? 1 : 0,
+                transition: "opacity 0.5s ease",
+              }}
+            />
+            {/* Number badge -- this person's 1-indexed position in the
+                grid, left-to-right, top-to-bottom. Left on every tile
+                (covered or not) to keep the reveal order checkable. */}
+            <div
+              style={{
+                position: "absolute",
+                top: 8,
+                left: 8,
+                minWidth: 28,
+                height: 28,
+                padding: "0 6px",
+                borderRadius: 14,
+                backgroundColor: "rgba(0,0,0,0.65)",
+                color: WHITE,
+                fontSize: 15,
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {i + 1}
+            </div>
+          </div>
+        ))}
+
+        {/* Caption overlay -- next to wherever the revealed image lies,
+            capped at MAX_CAPTION_SPAN image-widths. */}
+        {tileSize && revealed && captionSpan > 0 && (
+          <div
+            key={revealed.slug}
+            style={{
+              position: "absolute",
+              top: revealedRow * tileSize,
+              left: captionStartCol * tileSize,
+              width: captionSpan * tileSize,
+              height: tileSize,
+              padding: "16px 20px",
+              boxSizing: "border-box",
+              backgroundColor: BROWN,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
+              overflow: "hidden",
+              animation: "fadeInCaption 0.5s ease",
             }}
           >
             <div
               style={{
-                width: imageSize ?? 0,
-                height: imageSize ?? 0,
-                flexShrink: 0,
-                position: "relative",
-                overflow: "hidden",
-                backgroundColor: BROWN,
+                fontSize: 18,
+                fontWeight: 500,
+                letterSpacing: "-0.01em",
+                lineHeight: 1.15,
+                color: WHITE,
+                textTransform: "lowercase",
+                marginBottom: revealed.locations.length > 0 || revealed.countryOfOrigin ? 4 : 6,
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={person.headshotUrl}
-                alt={i === revealedIndex ? person.fullName : ""}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: `center ${person.headshotFocalY}%`,
-                  opacity: i === revealedIndex ? 1 : 0,
-                  transition: "opacity 0.5s ease",
-                }}
-              />
-              {/* Number badge -- this person's 1-indexed position in the
-                  grid, left-to-right, top-to-bottom. Left on every tile
-                  (covered or not) to keep the reveal order checkable. */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 8,
-                  left: 8,
-                  minWidth: 28,
-                  height: 28,
-                  padding: "0 6px",
-                  borderRadius: 14,
-                  backgroundColor: "rgba(0,0,0,0.65)",
-                  color: WHITE,
-                  fontSize: 15,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {i + 1}
-              </div>
+              {revealed.fullName}
             </div>
-
-            {/* Caption -- next to the image, not on top of it. Name,
-                location(s), tagline only -- only for the currently
-                revealed person; blank (just keeps the row's width) for
-                everyone else. */}
-            <div
-              style={{
-                flex: 1,
-                minWidth: 0,
-                padding: "16px 20px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-start",
-                overflow: "hidden",
-              }}
-            >
-              {i === revealedIndex && (
-                <>
+            {(revealed.locations.length > 0 || revealed.countryOfOrigin) && (
+              <div style={{ marginBottom: 6 }}>
+                {revealed.locations.map((loc, li) => (
                   <div
+                    key={li}
                     style={{
-                      fontSize: 18,
-                      fontWeight: 500,
-                      letterSpacing: "-0.01em",
-                      lineHeight: 1.15,
-                      color: WHITE,
+                      fontSize: 11.5,
+                      fontWeight: 400,
+                      lineHeight: 1.3,
+                      color: "rgba(240,240,240,0.55)",
                       textTransform: "lowercase",
-                      marginBottom:
-                        person.locations.length > 0 || person.countryOfOrigin ? 4 : 6,
                     }}
                   >
-                    {person.fullName}
+                    {loc}
                   </div>
-                  {(person.locations.length > 0 || person.countryOfOrigin) && (
-                    <div style={{ marginBottom: 6 }}>
-                      {person.locations.map((loc, li) => (
-                        <div
-                          key={li}
-                          style={{
-                            fontSize: 11.5,
-                            fontWeight: 400,
-                            lineHeight: 1.3,
-                            color: "rgba(240,240,240,0.55)",
-                            textTransform: "lowercase",
-                          }}
-                        >
-                          {loc}
-                        </div>
-                      ))}
-                      {/* Country of origin -- page.tsx already drops this
-                          to null when it matches a country the person
-                          currently lives in, so this only ever shows up
-                          when it's actually distinct. */}
-                      {person.countryOfOrigin && (
-                        <div
-                          style={{
-                            fontSize: 11.5,
-                            fontWeight: 400,
-                            lineHeight: 1.3,
-                            color: "rgba(240,240,240,0.55)",
-                            textTransform: "lowercase",
-                          }}
-                        >
-                          {person.countryOfOrigin}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {person.tagline && (
-                    <div
-                      style={{
-                        fontSize: 12.5,
-                        fontWeight: 300,
-                        lineHeight: 1.35,
-                        color: "rgba(240,240,240,0.7)",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 4,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {person.tagline}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+                ))}
+                {/* Country of origin -- page.tsx already drops this to
+                    null when it matches a country the person currently
+                    lives in, so this only ever shows up when distinct. */}
+                {revealed.countryOfOrigin && (
+                  <div
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 400,
+                      lineHeight: 1.3,
+                      color: "rgba(240,240,240,0.55)",
+                      textTransform: "lowercase",
+                    }}
+                  >
+                    {revealed.countryOfOrigin}
+                  </div>
+                )}
+              </div>
+            )}
+            {revealed.tagline && (
+              <div
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 300,
+                  lineHeight: 1.35,
+                  color: "rgba(240,240,240,0.7)",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 4,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {revealed.tagline}
+              </div>
+            )}
           </div>
-        ))}
+        )}
+
+        <style>{`
+          @keyframes fadeInCaption {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+        `}</style>
       </div>
     </div>
   );
