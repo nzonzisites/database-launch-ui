@@ -8,20 +8,15 @@
 //    row-major order. This NEVER changes shape based on who's currently
 //    revealed -- it's laid out once and just sits there as the covered
 //    wall of faces.
-// 2. The reveal overlay: a single absolutely-positioned block (image +
-//    caption) layered on top, moved from cell to cell as revealedIndex
-//    changes. Its position is computed in real pixels from a measured
-//    column count, not from CSS Grid spans/placement.
+// 2. The reveal overlay: a single absolutely-positioned block (image on
+//    top, caption stacked below it) layered on top, moved from cell to
+//    cell as revealedIndex changes. Its position is computed in real
+//    pixels from a measured column count, not from CSS Grid
+//    spans/placement.
 //
-// This replaces an earlier version where the "revealed" person's own
-// grid item grew to span 5 columns x 2 rows (image + caption) on top of
-// an auto-flow "dense" grid. That meant every reveal tick changed one
-// item's size, which forced the browser to recompute placement for
-// every item after it in the grid -- producing visible jank, people's
-// tiles shifting and momentarily overlapping, and some people's tiles
-// wrapping to unexpected rows. Decoupling the overlay from the base
-// grid's layout algorithm (outline the place for every image first, then
-// layer the reveal on top, never the other way round) fixes all three.
+// Keeping these separate means every reveal tick only moves the overlay
+// -- it never changes the base grid's layout, so nobody's tile shifts,
+// overlaps, or wraps onto an unexpected row when the overlay moves.
 //
 // A shuffled queue of every index is consumed one at a time (a "shuffle
 // bag") so every person is shown exactly once before any repeats; once
@@ -53,10 +48,10 @@ export type PreviewPerson = {
 
 const REVEAL_INTERVAL_MS = 3000;
 const TILE_SIZE = 140;
-const IMAGE_SPAN = 2;
-const CAPTION_SPAN = 3;
-const OVERLAY_SPAN = IMAGE_SPAN + CAPTION_SPAN;
-const OVERLAY_ROW_SPAN = 2;
+const OVERLAY_COL_SPAN = 2;
+const IMAGE_ROW_SPAN = 2;
+const CAPTION_ROW_SPAN = 3;
+const OVERLAY_ROW_SPAN = IMAGE_ROW_SPAN + CAPTION_ROW_SPAN;
 
 function shuffle(length: number): number[] {
   const arr = Array.from({ length }, (_, i) => i);
@@ -123,7 +118,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   let overlayStyle: React.CSSProperties | null = null;
   if (columns && revealed) {
     const totalRows = Math.ceil(people.length / columns);
-    const span = Math.min(OVERLAY_SPAN, columns);
+    const span = Math.min(OVERLAY_COL_SPAN, columns);
     const row = Math.floor(revealedIndex / columns);
     const col = revealedIndex % columns;
     const clampedCol = Math.min(col, Math.max(0, columns - span));
@@ -172,13 +167,14 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
       </div>
 
       {/* Reveal overlay -- layered on top, moved per tick; never changes
-          the base grid above. */}
+          the base grid above. Image on top, caption stacked below it. */}
       {overlayStyle && revealed && (
         <div
           key={revealed.slug}
           style={{
             ...overlayStyle,
             display: "flex",
+            flexDirection: "column",
             alignItems: "stretch",
             animation: "fadeInTile 0.5s ease",
           }}
@@ -187,7 +183,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             style={{
               position: "relative",
               overflow: "hidden",
-              width: TILE_SIZE * IMAGE_SPAN,
+              height: TILE_SIZE * IMAGE_ROW_SPAN,
               flexShrink: 0,
             }}
           >
@@ -209,8 +205,8 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
           <div
             style={{
               flex: 1,
-              minWidth: 0,
-              padding: "20px 24px",
+              minHeight: 0,
+              padding: "16px 20px",
               backgroundColor: BROWN,
               display: "flex",
               flexDirection: "column",
@@ -220,12 +216,12 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             {revealed.category && (
               <div
                 style={{
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 500,
                   letterSpacing: "0.02em",
                   color: OCHRE,
                   textTransform: "lowercase",
-                  marginBottom: 10,
+                  marginBottom: 8,
                 }}
               >
                 {revealed.category}
@@ -233,24 +229,24 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             )}
             <div
               style={{
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: 500,
                 letterSpacing: "-0.01em",
                 lineHeight: 1.15,
                 color: WHITE,
                 textTransform: "lowercase",
-                marginBottom: revealed.locations.length > 0 || revealed.countryOfOrigin ? 2 : 10,
+                marginBottom: revealed.locations.length > 0 || revealed.countryOfOrigin ? 2 : 8,
               }}
             >
               {revealed.fullName}
             </div>
             {(revealed.locations.length > 0 || revealed.countryOfOrigin) && (
-              <div style={{ marginBottom: 10 }}>
+              <div style={{ marginBottom: 8 }}>
                 {revealed.locations.map((loc, li) => (
                   <div
                     key={li}
                     style={{
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: 400,
                       lineHeight: 1.3,
                       color: "rgba(240,240,240,0.55)",
@@ -263,7 +259,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
                 {revealed.countryOfOrigin && (
                   <div
                     style={{
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: 400,
                       lineHeight: 1.3,
                       color: "rgba(240,240,240,0.55)",
@@ -278,12 +274,12 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             {revealed.tagline && (
               <div
                 style={{
-                  fontSize: 15,
+                  fontSize: 13,
                   fontWeight: 300,
                   lineHeight: 1.4,
                   color: "rgba(240,240,240,0.7)",
                   display: "-webkit-box",
-                  WebkitLineClamp: 7,
+                  WebkitLineClamp: 9,
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",
                 }}
