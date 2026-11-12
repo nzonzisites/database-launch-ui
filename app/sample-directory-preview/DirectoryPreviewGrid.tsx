@@ -142,29 +142,6 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
                 transition: "opacity 0.5s ease",
               }}
             />
-            {/* Number badge -- this person's 1-indexed position in the
-                grid, left-to-right, top-to-bottom. Left on every tile
-                (covered or not) to keep the reveal order checkable. */}
-            <div
-              style={{
-                position: "absolute",
-                top: 8,
-                left: 8,
-                minWidth: 28,
-                height: 28,
-                padding: "0 6px",
-                borderRadius: 14,
-                backgroundColor: "rgba(0,0,0,0.65)",
-                color: WHITE,
-                fontSize: 15,
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {i + 1}
-            </div>
           </div>
         ))}
 
