@@ -48,6 +48,36 @@ function locationLines(
   return labels.length > 0 ? labels : cityCountry ? [cityCountry] : [];
 }
 
+/** Just the country names a person currently lives in, for filtering
+ * country_of_origin against -- same residences-first, city_country
+ * fallback source as locationLines above. city_country is free text
+ * ("City, Country" in practice), so take the part after the last comma
+ * as its country when there's no structured residences to read from. */
+function currentCountries(
+  residences: { city: string; country: string; is_primary: boolean }[] | null,
+  cityCountry: string | null
+): string[] {
+  if (residences && residences.length > 0) {
+    return residences.map((r) => r.country).filter(Boolean);
+  }
+  if (!cityCountry) return [];
+  const parts = cityCountry.split(",").map((p) => p.trim());
+  return [parts[parts.length - 1]].filter(Boolean);
+}
+
+/** country_of_origin, but only when it's not already one of the
+ * countries the person currently lives in -- otherwise it's a
+ * redundant line in the caption. */
+function distinctCountryOfOrigin(
+  countryOfOrigin: string | null,
+  residences: { city: string; country: string; is_primary: boolean }[] | null,
+  cityCountry: string | null
+): string | null {
+  if (!countryOfOrigin) return null;
+  const lived = currentCountries(residences, cityCountry).map((c) => c.toLowerCase());
+  return lived.includes(countryOfOrigin.toLowerCase()) ? null : countryOfOrigin;
+}
+
 export default async function SampleDirectoryPreviewPage() {
   const supabase = await getSupabaseServerClient();
   const profiles = await fetchPublishedProfilesWithHeadshots(supabase);
@@ -59,7 +89,7 @@ export default async function SampleDirectoryPreviewPage() {
     headshotFocalY: p.headshot_focal_y,
     category: categoryLabel(p.intended_category, p.intended_category_other),
     locations: locationLines(p.residences, p.city_country),
-    countryOfOrigin: p.country_of_origin,
+    countryOfOrigin: distinctCountryOfOrigin(p.country_of_origin, p.residences, p.city_country),
     tagline: p.tagline,
   }));
 
