@@ -2,14 +2,14 @@
 
 // Client component for the single-reveal effect: every tile's photo is
 // always mounted underneath (so there's no reload flicker each cycle),
-// with the same diagonal-stripe placeholder ListingsTabClient.tsx and
-// /database use for a missing headshot cross-faded on top of all but
-// one tile. A plain setInterval advances which tile is uncovered;
-// the caption block below cross-fades in sync via the same
-// revealedIndex state.
+// with a solid brown cover -- the exact same BROWN as the page
+// background -- cross-faded on top of all but one tile, so a covered
+// tile reads as empty space rather than a visible placeholder. A plain
+// setInterval advances which tile is uncovered; the caption block below
+// cross-fades in sync via the same revealedIndex state.
 
 import { useEffect, useState } from "react";
-import { OCHRE, WHITE } from "@/lib/colors";
+import { BROWN, OCHRE, WHITE } from "@/lib/colors";
 
 export type PreviewPerson = {
   slug: string;
@@ -72,9 +72,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
                 style={{
                   position: "absolute",
                   inset: 0,
-                  backgroundColor: "rgba(230,222,210,0.06)",
-                  backgroundImage:
-                    "repeating-linear-gradient(135deg, rgba(230,222,210,0.22) 0 4px, transparent 4px 8px)",
+                  backgroundColor: BROWN,
                   opacity: revealed ? 0 : 1,
                   transition: "opacity 0.6s ease",
                 }}
