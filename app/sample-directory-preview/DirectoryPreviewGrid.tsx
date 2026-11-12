@@ -4,7 +4,7 @@
 // small covered tile (solid BROWN, same as the page background, so it
 // reads as empty space) except the currently revealed one, which renders
 // as an enlarged 2x2 image immediately followed by a caption cell right
-// beside it (1 column wide, same 2-row height) -- dense grid packing
+// beside it (3 columns wide, same 2-row height) -- dense grid packing
 // slots both into the gap the enlarged tile leaves behind. A shuffled
 // queue of every index is consumed one at a time (a "shuffle bag") so
 // every person is shown exactly once before any repeats; once the queue
@@ -12,6 +12,12 @@
 // first pick away from whoever was just shown so the boundary between
 // passes never repeats back-to-back. The caption's content changes in
 // step since it's derived from the same revealedIndex state.
+//
+// The queue is seeded inside useEffect, not inside useState's lazy
+// initializer: writing to queueRef from the initializer was a render-phase
+// side effect, and Next's dev-mode Strict Mode double-invokes render-phase
+// functions, which could leave the queue one shuffle out of sync with the
+// index actually committed as state -- surfacing as an early repeat.
 
 import { useEffect, useRef, useState } from "react";
 import { BROWN, OCHRE, WHITE } from "@/lib/colors";
@@ -50,14 +56,17 @@ function nextShuffle(length: number, avoidFirst: number): number[] {
 
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
   const queueRef = useRef<number[]>([]);
-  const [revealedIndex, setRevealedIndex] = useState(() => {
-    if (people.length === 0) return 0;
-    const order = shuffle(people.length);
-    queueRef.current = order.slice(1);
-    return order[0];
-  });
+  const [revealedIndex, setRevealedIndex] = useState(0);
 
   useEffect(() => {
+    if (people.length === 0) return;
+
+    // All the randomness lives here, in an effect, instead of in render --
+    // see the note above the component for why that matters.
+    const order = shuffle(people.length);
+    queueRef.current = order.slice(1);
+    setRevealedIndex(order[0]);
+
     if (people.length <= 1) return;
     const timer = setInterval(() => {
       setRevealedIndex((current) => {
@@ -142,7 +151,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
         <div
           key={`${current.slug}-caption`}
           style={{
-            gridColumn: "span 2",
+            gridColumn: "span 3",
             gridRow: "span 2",
             padding: "20px 24px",
             display: "flex",
@@ -186,7 +195,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
                 lineHeight: 1.4,
                 color: "rgba(240,240,240,0.7)",
                 display: "-webkit-box",
-                WebkitLineClamp: 6,
+                WebkitLineClamp: 7,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
               }}
