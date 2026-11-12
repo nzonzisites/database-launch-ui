@@ -2,21 +2,23 @@
 
 // Client component for the single-reveal effect.
 //
-// Two layers, deliberately kept separate:
+// Layout: a single vertical column of covered face tiles running down
+// the left side of the page, with a caption panel to the right of
+// whichever tile is currently revealed. Two layers, kept deliberately
+// separate:
 //
-// 1. The base layer: every person at a fixed 1x1 cell, in plain
-//    row-major order. This NEVER changes shape based on who's currently
-//    revealed -- it's laid out once and just sits there as the covered
-//    wall of faces.
-// 2. The reveal overlay: a single absolutely-positioned block (image on
-//    top, caption stacked below it) layered on top, moved from cell to
-//    cell as revealedIndex changes. Its position is computed in real
-//    pixels from a measured column count, not from CSS Grid
-//    spans/placement.
+// 1. The base layer: every person stacked in one fixed-width column, in
+//    plain order top to bottom. This NEVER changes shape based on who's
+//    currently revealed.
+// 2. The reveal overlay: a single absolutely-positioned block (the
+//    enlarged image, same column width, with the caption beside it to
+//    the right) layered on top, moved up/down the column as
+//    revealedIndex changes.
 //
-// Keeping these separate means every reveal tick only moves the overlay
-// -- it never changes the base grid's layout, so nobody's tile shifts,
-// overlaps, or wraps onto an unexpected row when the overlay moves.
+// Because there's only ever one column, positioning the overlay doesn't
+// need to measure anything -- its vertical offset is just
+// revealedIndex * TILE_SIZE, clamped so the enlarged (2-tile-tall) image
+// never runs past the bottom of the column.
 //
 // A shuffled queue of every index is consumed one at a time (a "shuffle
 // bag") so every person is shown exactly once before any repeats; once
@@ -48,10 +50,7 @@ export type PreviewPerson = {
 
 const REVEAL_INTERVAL_MS = 3000;
 const TILE_SIZE = 140;
-const OVERLAY_COL_SPAN = 2;
 const IMAGE_ROW_SPAN = 2;
-const CAPTION_ROW_SPAN = 3;
-const OVERLAY_ROW_SPAN = IMAGE_ROW_SPAN + CAPTION_ROW_SPAN;
 
 function shuffle(length: number): number[] {
   const arr = Array.from({ length }, (_, i) => i);
@@ -76,21 +75,6 @@ function nextShuffle(length: number, avoidFirst: number): number[] {
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
   const queueRef = useRef<number[]>([]);
   const [revealedIndex, setRevealedIndex] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [columns, setColumns] = useState<number | null>(null);
-
-  // Measure how many TILE_SIZE columns actually fit, so the overlay can
-  // be placed in real pixels against the base grid's actual geometry
-  // instead of guessing at a CSS Grid placement.
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const measure = () => setColumns(Math.max(1, Math.floor(el.clientWidth / TILE_SIZE)));
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     if (people.length === 0) return;
@@ -114,39 +98,24 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   }, [people.length]);
 
   const revealed = people[revealedIndex];
-
-  let overlayStyle: React.CSSProperties | null = null;
-  if (columns && revealed) {
-    const totalRows = Math.ceil(people.length / columns);
-    const span = Math.min(OVERLAY_COL_SPAN, columns);
-    const row = Math.floor(revealedIndex / columns);
-    const col = revealedIndex % columns;
-    const clampedCol = Math.min(col, Math.max(0, columns - span));
-    const clampedRow = Math.min(row, Math.max(0, totalRows - OVERLAY_ROW_SPAN));
-    overlayStyle = {
-      position: "absolute",
-      top: clampedRow * TILE_SIZE,
-      left: clampedCol * TILE_SIZE,
-      width: span * TILE_SIZE,
-      height: OVERLAY_ROW_SPAN * TILE_SIZE,
-    };
-  }
+  const clampedRow = Math.min(revealedIndex, Math.max(0, people.length - IMAGE_ROW_SPAN));
 
   return (
-    <div ref={containerRef} style={{ position: "relative" }}>
-      {/* Base layer -- fixed placement for every person, never touched
-          by which one is currently revealed. */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(auto-fill, ${TILE_SIZE}px)`,
-          gridAutoRows: `${TILE_SIZE}px`,
-        }}
-      >
+    <div style={{ position: "relative" }}>
+      {/* Base layer -- a single column of covered tiles, fixed placement
+          for every person, never touched by which one is revealed. */}
+      <div style={{ width: TILE_SIZE, display: "flex", flexDirection: "column" }}>
         {people.map((person) => (
           <div
             key={person.slug}
-            style={{ position: "relative", overflow: "hidden", backgroundColor: BROWN }}
+            style={{
+              width: TILE_SIZE,
+              height: TILE_SIZE,
+              flexShrink: 0,
+              position: "relative",
+              overflow: "hidden",
+              backgroundColor: BROWN,
+            }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -166,15 +135,19 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
         ))}
       </div>
 
-      {/* Reveal overlay -- layered on top, moved per tick; never changes
-          the base grid above. Image on top, caption stacked below it. */}
-      {overlayStyle && revealed && (
+      {/* Reveal overlay -- layered on top, moved up/down the column per
+          tick; never changes the base column above. Image on the left
+          (same width as the column), caption to its right. */}
+      {revealed && (
         <div
           key={revealed.slug}
           style={{
-            ...overlayStyle,
+            position: "absolute",
+            top: clampedRow * TILE_SIZE,
+            left: 0,
+            width: "100%",
+            height: TILE_SIZE * IMAGE_ROW_SPAN,
             display: "flex",
-            flexDirection: "column",
             alignItems: "stretch",
             animation: "fadeInTile 0.5s ease",
           }}
@@ -183,7 +156,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             style={{
               position: "relative",
               overflow: "hidden",
-              height: TILE_SIZE * IMAGE_ROW_SPAN,
+              width: TILE_SIZE,
               flexShrink: 0,
             }}
           >
@@ -205,8 +178,8 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
           <div
             style={{
               flex: 1,
-              minHeight: 0,
-              padding: "16px 20px",
+              minWidth: 0,
+              padding: "20px 28px",
               backgroundColor: BROWN,
               display: "flex",
               flexDirection: "column",
@@ -216,12 +189,12 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             {revealed.category && (
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 500,
                   letterSpacing: "0.02em",
                   color: OCHRE,
                   textTransform: "lowercase",
-                  marginBottom: 8,
+                  marginBottom: 10,
                 }}
               >
                 {revealed.category}
@@ -229,24 +202,24 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             )}
             <div
               style={{
-                fontSize: 20,
+                fontSize: 26,
                 fontWeight: 500,
                 letterSpacing: "-0.01em",
                 lineHeight: 1.15,
                 color: WHITE,
                 textTransform: "lowercase",
-                marginBottom: revealed.locations.length > 0 || revealed.countryOfOrigin ? 2 : 8,
+                marginBottom: revealed.locations.length > 0 || revealed.countryOfOrigin ? 2 : 10,
               }}
             >
               {revealed.fullName}
             </div>
             {(revealed.locations.length > 0 || revealed.countryOfOrigin) && (
-              <div style={{ marginBottom: 8 }}>
+              <div style={{ marginBottom: 10 }}>
                 {revealed.locations.map((loc, li) => (
                   <div
                     key={li}
                     style={{
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: 400,
                       lineHeight: 1.3,
                       color: "rgba(240,240,240,0.55)",
@@ -259,7 +232,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
                 {revealed.countryOfOrigin && (
                   <div
                     style={{
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: 400,
                       lineHeight: 1.3,
                       color: "rgba(240,240,240,0.55)",
@@ -274,12 +247,12 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             {revealed.tagline && (
               <div
                 style={{
-                  fontSize: 13,
+                  fontSize: 16,
                   fontWeight: 300,
                   lineHeight: 1.4,
                   color: "rgba(240,240,240,0.7)",
                   display: "-webkit-box",
-                  WebkitLineClamp: 9,
+                  WebkitLineClamp: 8,
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",
                 }}
