@@ -184,12 +184,13 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
                       lineHeight: 1.15,
                       color: WHITE,
                       textTransform: "lowercase",
-                      marginBottom: person.locations.length > 0 ? 4 : 6,
+                      marginBottom:
+                        person.locations.length > 0 || person.countryOfOrigin ? 4 : 6,
                     }}
                   >
                     {person.fullName}
                   </div>
-                  {person.locations.length > 0 && (
+                  {(person.locations.length > 0 || person.countryOfOrigin) && (
                     <div style={{ marginBottom: 6 }}>
                       {person.locations.map((loc, li) => (
                         <div
@@ -205,6 +206,23 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
                           {loc}
                         </div>
                       ))}
+                      {/* Country of origin -- page.tsx already drops this
+                          to null when it matches a country the person
+                          currently lives in, so this only ever shows up
+                          when it's actually distinct. */}
+                      {person.countryOfOrigin && (
+                        <div
+                          style={{
+                            fontSize: 11.5,
+                            fontWeight: 400,
+                            lineHeight: 1.3,
+                            color: "rgba(240,240,240,0.55)",
+                            textTransform: "lowercase",
+                          }}
+                        >
+                          {person.countryOfOrigin}
+                        </div>
+                      )}
                     </div>
                   )}
                   {person.tagline && (
