@@ -28,22 +28,24 @@ function categoryLabel(category: string | null, other: string | null): string {
   return optionLabel(CATEGORY_OPTIONS, category);
 }
 
-/** Same residences-first, city_country-fallback formatting as the
- * /profile/[slug] page's allLocationsLabel -- copied rather than shared
- * since each page already keeps its own small label helpers
- * (categoryLabel above is the same pattern). */
-function locationLabel(
+/** Same residences-first, city_country-fallback source as the
+ * /profile/[slug] page's allLocationsLabel, but returns each residence
+ * as its own array entry (one per line in the grid) rather than a single
+ * joined string -- copied rather than shared since each page already
+ * keeps its own small label helpers (categoryLabel above is the same
+ * pattern). */
+function locationLines(
   residences: { city: string; country: string; is_primary: boolean }[] | null,
   cityCountry: string | null
-): string {
-  if (!residences || residences.length === 0) return cityCountry || "";
+): string[] {
+  if (!residences || residences.length === 0) return cityCountry ? [cityCountry] : [];
   const ordered = [...residences].sort((a, b) =>
     a.is_primary === b.is_primary ? 0 : a.is_primary ? -1 : 1
   );
   const labels = ordered
     .map((r) => [r.city, r.country].filter(Boolean).join(", "))
     .filter(Boolean);
-  return labels.length > 0 ? labels.join("; ") : cityCountry || "";
+  return labels.length > 0 ? labels : cityCountry ? [cityCountry] : [];
 }
 
 export default async function SampleDirectoryPreviewPage() {
@@ -56,7 +58,8 @@ export default async function SampleDirectoryPreviewPage() {
     headshotUrl: p.headshot_url as string,
     headshotFocalY: p.headshot_focal_y,
     category: categoryLabel(p.intended_category, p.intended_category_other),
-    location: locationLabel(p.residences, p.city_country),
+    locations: locationLines(p.residences, p.city_country),
+    countryOfOrigin: p.country_of_origin,
     tagline: p.tagline,
   }));
 
