@@ -123,10 +123,10 @@ export default async function DatabasePage() {
         ← back
       </Link>
 
-      <div style={{ flexShrink: 0 }}>
+      <div style={{ flexShrink: 0, textAlign: "center" }}>
         <p
           style={{
-            fontSize: "clamp(16px, 2vw, 22px)",
+            fontSize: "clamp(12px, 1.3vw, 15px)",
             fontStyle: "italic",
             fontWeight: 300,
             letterSpacing: "-0.01em",
