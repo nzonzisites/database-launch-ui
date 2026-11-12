@@ -21,7 +21,7 @@ import Link from "next/link";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchPublishedProfilesWithHeadshots } from "@/lib/scholarProfile";
 import { CATEGORY_OPTIONS, optionLabel } from "@/app/apply/applicationOptions";
-import { BROWN, OCHRE, WHITE } from "@/lib/colors";
+import { BROWN, WHITE } from "@/lib/colors";
 import DirectoryPreviewGrid, {
   type PreviewPerson,
 } from "@/app/sample-directory-preview/DirectoryPreviewGrid";
@@ -124,47 +124,18 @@ export default async function DatabasePage() {
       </Link>
 
       <div style={{ flexShrink: 0 }}>
-        <h1
-          style={{
-            fontSize: "clamp(28px, 4.8vw, 52px)",
-            fontWeight: 600,
-            letterSpacing: "-0.01em",
-            lineHeight: 1.06,
-            margin: "0 0 10px",
-            textTransform: "uppercase",
-          }}
-        >
-          The Nzonzi Database
-        </h1>
-
         <p
           style={{
-            fontSize: 16,
-            fontWeight: 500,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            color: OCHRE,
-            margin: "0 0 14px",
-          }}
-        >
-          Coming soon
-        </p>
-
-        {/* Curation criteria, per Modupe's exact wording. */}
-        <p
-          style={{
-            fontSize: "clamp(14px, 1.6vw, 17px)",
+            fontSize: "clamp(16px, 2vw, 22px)",
+            fontStyle: "italic",
             fontWeight: 300,
-            lineHeight: 1.5,
-            maxWidth: 680,
+            letterSpacing: "-0.01em",
+            textTransform: "lowercase",
             color: "rgba(240,240,240,0.85)",
             margin: "0 0 20px",
           }}
         >
-          Every profile listed on Nzonzi directory is a trusted contact with
-          proven expertise in their field and has demonstrated their
-          commitment to engaging with African and Caribbean knowledge
-          systems.
+          nzonzi database coming january 2027
         </p>
       </div>
 
