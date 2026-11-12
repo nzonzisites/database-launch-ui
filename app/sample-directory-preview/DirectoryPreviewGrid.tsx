@@ -1,20 +1,27 @@
 "use client";
 
-// Client component for the single-reveal effect. Every person gets a
-// small covered tile (solid BROWN, same as the page background, so it
-// reads as empty space) except the currently revealed one, which renders
-// as a single combined tile: a fixed-width enlarged image on the left and
-// the caption on the right, laid out with flexbox inside ONE grid item.
+// Client component for the single-reveal effect.
 //
-// Earlier this was two separate grid items (the image at span 2, the
-// caption at span 3) and relied on CSS Grid's dense auto-placement to
-// slot the caption in right beside the image. That's fragile -- dense
-// packing places each item in document order wherever the next fitting
-// gap is, which only lines the two up by coincidence, and broke outright
-// once the caption's span no longer matched the exact gap the image
-// happened to leave. Combining them into one flex row guarantees they're
-// always adjacent and share the same top edge, since they're now DOM
-// siblings instead of two independently-placed grid items.
+// Two layers, deliberately kept separate:
+//
+// 1. The base layer: every person at a fixed 1x1 cell, in plain
+//    row-major order. This NEVER changes shape based on who's currently
+//    revealed -- it's laid out once and just sits there as the covered
+//    wall of faces.
+// 2. The reveal overlay: a single absolutely-positioned block (image +
+//    caption) layered on top, moved from cell to cell as revealedIndex
+//    changes. Its position is computed in real pixels from a measured
+//    column count, not from CSS Grid spans/placement.
+//
+// This replaces an earlier version where the "revealed" person's own
+// grid item grew to span 5 columns x 2 rows (image + caption) on top of
+// an auto-flow "dense" grid. That meant every reveal tick changed one
+// item's size, which forced the browser to recompute placement for
+// every item after it in the grid -- producing visible jank, people's
+// tiles shifting and momentarily overlapping, and some people's tiles
+// wrapping to unexpected rows. Decoupling the overlay from the base
+// grid's layout algorithm (outline the place for every image first, then
+// layer the reveal on top, never the other way round) fixes all three.
 //
 // A shuffled queue of every index is consumed one at a time (a "shuffle
 // bag") so every person is shown exactly once before any repeats; once
@@ -48,6 +55,8 @@ const REVEAL_INTERVAL_MS = 3000;
 const TILE_SIZE = 140;
 const IMAGE_SPAN = 2;
 const CAPTION_SPAN = 3;
+const OVERLAY_SPAN = IMAGE_SPAN + CAPTION_SPAN;
+const OVERLAY_ROW_SPAN = 2;
 
 function shuffle(length: number): number[] {
   const arr = Array.from({ length }, (_, i) => i);
@@ -72,6 +81,21 @@ function nextShuffle(length: number, avoidFirst: number): number[] {
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
   const queueRef = useRef<number[]>([]);
   const [revealedIndex, setRevealedIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState<number | null>(null);
+
+  // Measure how many TILE_SIZE columns actually fit, so the overlay can
+  // be placed in real pixels against the base grid's actual geometry
+  // instead of guessing at a CSS Grid placement.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const measure = () => setColumns(Math.max(1, Math.floor(el.clientWidth / TILE_SIZE)));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (people.length === 0) return;
@@ -94,148 +118,40 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
     return () => clearInterval(timer);
   }, [people.length]);
 
+  const revealed = people[revealedIndex];
+
+  let overlayStyle: React.CSSProperties | null = null;
+  if (columns && revealed) {
+    const totalRows = Math.ceil(people.length / columns);
+    const span = Math.min(OVERLAY_SPAN, columns);
+    const row = Math.floor(revealedIndex / columns);
+    const col = revealedIndex % columns;
+    const clampedCol = Math.min(col, Math.max(0, columns - span));
+    const clampedRow = Math.min(row, Math.max(0, totalRows - OVERLAY_ROW_SPAN));
+    overlayStyle = {
+      position: "absolute",
+      top: clampedRow * TILE_SIZE,
+      left: clampedCol * TILE_SIZE,
+      width: span * TILE_SIZE,
+      height: OVERLAY_ROW_SPAN * TILE_SIZE,
+    };
+  }
+
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(auto-fill, ${TILE_SIZE}px)`,
-        gridAutoRows: `${TILE_SIZE}px`,
-        gridAutoFlow: "dense",
-      }}
-    >
-      {people.map((person, i) => {
-        if (i === revealedIndex) {
-          return (
-            <div
-              key={person.slug}
-              style={{
-                gridColumn: `span ${IMAGE_SPAN + CAPTION_SPAN}`,
-                gridRow: "span 2",
-                display: "flex",
-                alignItems: "stretch",
-                animation: "fadeInTile 0.5s ease",
-              }}
-            >
-              <div
-                style={{
-                  position: "relative",
-                  overflow: "hidden",
-                  width: TILE_SIZE * IMAGE_SPAN,
-                  flexShrink: 0,
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={person.headshotUrl}
-                  alt={person.fullName}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: `center ${person.headshotFocalY}%`,
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  padding: "20px 24px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "flex-start",
-                }}
-              >
-                {person.category && (
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 500,
-                      letterSpacing: "0.02em",
-                      color: OCHRE,
-                      textTransform: "lowercase",
-                      marginBottom: 10,
-                    }}
-                  >
-                    {person.category}
-                  </div>
-                )}
-                <div
-                  style={{
-                    fontSize: 24,
-                    fontWeight: 500,
-                    letterSpacing: "-0.01em",
-                    lineHeight: 1.15,
-                    color: WHITE,
-                    textTransform: "lowercase",
-                    marginBottom: person.locations.length > 0 || person.countryOfOrigin ? 2 : 10,
-                  }}
-                >
-                  {person.fullName}
-                </div>
-                {(person.locations.length > 0 || person.countryOfOrigin) && (
-                  <div style={{ marginBottom: 10 }}>
-                    {person.locations.map((loc, li) => (
-                      <div
-                        key={li}
-                        style={{
-                          fontSize: 12.5,
-                          fontWeight: 400,
-                          lineHeight: 1.3,
-                          color: "rgba(240,240,240,0.55)",
-                          textTransform: "lowercase",
-                        }}
-                      >
-                        {loc}
-                      </div>
-                    ))}
-                    {person.countryOfOrigin && (
-                      <div
-                        style={{
-                          fontSize: 12.5,
-                          fontWeight: 400,
-                          lineHeight: 1.3,
-                          color: "rgba(240,240,240,0.55)",
-                          textTransform: "lowercase",
-                        }}
-                      >
-                        {person.countryOfOrigin}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {person.tagline && (
-                  <div
-                    style={{
-                      fontSize: 15,
-                      fontWeight: 300,
-                      lineHeight: 1.4,
-                      color: "rgba(240,240,240,0.7)",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 7,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {person.tagline}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        }
-
-        return (
+    <div ref={containerRef} style={{ position: "relative" }}>
+      {/* Base layer -- fixed placement for every person, never touched
+          by which one is currently revealed. */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(auto-fill, ${TILE_SIZE}px)`,
+          gridAutoRows: `${TILE_SIZE}px`,
+        }}
+      >
+        {people.map((person) => (
           <div
             key={person.slug}
-            style={{
-              position: "relative",
-              overflow: "hidden",
-              backgroundColor: BROWN,
-            }}
+            style={{ position: "relative", overflow: "hidden", backgroundColor: BROWN }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -252,8 +168,132 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
               }}
             />
           </div>
-        );
-      })}
+        ))}
+      </div>
+
+      {/* Reveal overlay -- layered on top, moved per tick; never changes
+          the base grid above. */}
+      {overlayStyle && revealed && (
+        <div
+          key={revealed.slug}
+          style={{
+            ...overlayStyle,
+            display: "flex",
+            alignItems: "stretch",
+            animation: "fadeInTile 0.5s ease",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              width: TILE_SIZE * IMAGE_SPAN,
+              flexShrink: 0,
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={revealed.headshotUrl}
+              alt={revealed.fullName}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: `center ${revealed.headshotFocalY}%`,
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: "20px 24px",
+              backgroundColor: BROWN,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
+            }}
+          >
+            {revealed.category && (
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  letterSpacing: "0.02em",
+                  color: OCHRE,
+                  textTransform: "lowercase",
+                  marginBottom: 10,
+                }}
+              >
+                {revealed.category}
+              </div>
+            )}
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 500,
+                letterSpacing: "-0.01em",
+                lineHeight: 1.15,
+                color: WHITE,
+                textTransform: "lowercase",
+                marginBottom: revealed.locations.length > 0 || revealed.countryOfOrigin ? 2 : 10,
+              }}
+            >
+              {revealed.fullName}
+            </div>
+            {(revealed.locations.length > 0 || revealed.countryOfOrigin) && (
+              <div style={{ marginBottom: 10 }}>
+                {revealed.locations.map((loc, li) => (
+                  <div
+                    key={li}
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: 400,
+                      lineHeight: 1.3,
+                      color: "rgba(240,240,240,0.55)",
+                      textTransform: "lowercase",
+                    }}
+                  >
+                    {loc}
+                  </div>
+                ))}
+                {revealed.countryOfOrigin && (
+                  <div
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: 400,
+                      lineHeight: 1.3,
+                      color: "rgba(240,240,240,0.55)",
+                      textTransform: "lowercase",
+                    }}
+                  >
+                    {revealed.countryOfOrigin}
+                  </div>
+                )}
+              </div>
+            )}
+            {revealed.tagline && (
+              <div
+                style={{
+                  fontSize: 15,
+                  fontWeight: 300,
+                  lineHeight: 1.4,
+                  color: "rgba(240,240,240,0.7)",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 7,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+              >
+                {revealed.tagline}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeInTile {
