@@ -4,12 +4,15 @@
 // around a simple 2-column wall of square tiles:
 //
 // - Base layer: exactly 2 columns, edge-to-edge across the full page
-//   width, tile size = (measured container width) / 2 so every tile is
-//   a true square, however wide the page is. Every person always gets
-//   the same tile, same size, same position -- this never changes based
-//   on who's revealed, which is what keeps tiles from ever overlapping,
-//   wrapping unexpectedly, or (the last version's bug) getting stretched
-//   into a non-square rectangle.
+//   width, AND sized to fit the full page height with no scrolling --
+//   tile size is whichever is smaller of (measured container width) /
+//   COLUMNS and (measured container height) / rows, so every tile is a
+//   true square that fits both dimensions at once. The page (see
+//   page.tsx) gives this component a fixed-height flex slot to measure
+//   against. Every person always gets the same tile, same size, same
+//   position -- this never changes based on who's revealed, which is
+//   what keeps tiles from ever overlapping, wrapping unexpectedly, or
+//   (an earlier bug) getting stretched into a non-square rectangle.
 // - Reveal: the currently-revealed person's own tile just turns its
 //   opacity up (same square, same spot -- no resizing, so no risk of it
 //   going non-square). Every other tile stays covered.
@@ -54,17 +57,25 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   const [tileSize, setTileSize] = useState<number | null>(null);
   const [revealedIndex, setRevealedIndex] = useState(0);
 
-  // Measure the container once (and on resize) so tiles are always a
-  // true square: tileSize = containerWidth / COLUMNS.
+  // Measure the container's actual available width AND height (its
+  // parent gives it a fixed-height flex slot -- see page.tsx) so tiles
+  // are sized to fit both: whichever of width/COLUMNS or height/rows is
+  // smaller wins, keeping them square while guaranteeing the whole wall
+  // fits with no scrolling.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const measure = () => setTileSize(el.clientWidth / COLUMNS);
+    const rows = Math.max(1, Math.ceil(people.length / COLUMNS));
+    const measure = () => {
+      const byWidth = el.clientWidth / COLUMNS;
+      const byHeight = el.clientHeight / rows;
+      setTileSize(Math.max(0, Math.floor(Math.min(byWidth, byHeight))));
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [people.length]);
 
   useEffect(() => {
     if (people.length === 0) return;
@@ -87,12 +98,23 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   // in that same row.
   const captionCol = revealedCol === 0 ? 1 : 0;
 
+  const gridWidth = tileSize ? tileSize * COLUMNS : "100%";
+
   return (
-    <div ref={containerRef} style={{ position: "relative" }}>
+    <div ref={containerRef} style={{ height: "100%", overflow: "hidden" }}>
       {/* Base layer -- fixed 2-column grid, every tile the same square
-          size and position regardless of who's revealed. */}
+          size and position regardless of who's revealed. Centered
+          horizontally for the (common) case where the available height
+          is the tighter constraint, leaving the grid narrower than the
+          full container width. position: relative here (not on the
+          outer measuring container) so the caption overlay below is
+          positioned against this centered box, not the full-width
+          container it may be narrower than. */}
       <div
         style={{
+          position: "relative",
+          width: gridWidth,
+          margin: "0 auto",
           display: "grid",
           gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`,
         }}
@@ -125,30 +147,31 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             />
           </div>
         ))}
-      </div>
 
-      {/* Caption overlay -- the one element without a natural home in
-          the 2-column grid. Placed over whichever column isn't the
-          revealed image's, at the same row, same size as that tile. */}
-      {tileSize && revealed && (
-        <div
-          key={revealed.slug}
-          style={{
-            position: "absolute",
-            top: revealedRow * tileSize,
-            left: captionCol === 0 ? 0 : "50%",
-            width: "50%",
-            height: tileSize,
-            padding: "20px 28px",
-            boxSizing: "border-box",
-            backgroundColor: BROWN,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-start",
-            overflow: "hidden",
-            animation: "fadeInCaption 0.5s ease",
-          }}
-        >
+        {/* Caption overlay -- the one element without a natural home in
+            the 2-column grid. Placed over whichever column isn't the
+            revealed image's, at the same row, same size as that tile.
+            Sits inside this same centered grid box (not the outer
+            container) so its pixel position always lines up correctly. */}
+        {tileSize && revealed && (
+          <div
+            key={revealed.slug}
+            style={{
+              position: "absolute",
+              top: revealedRow * tileSize,
+              left: captionCol * tileSize,
+              width: tileSize,
+              height: tileSize,
+              padding: "20px 28px",
+              boxSizing: "border-box",
+              backgroundColor: BROWN,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
+              overflow: "hidden",
+              animation: "fadeInCaption 0.5s ease",
+            }}
+          >
           {revealed.category && (
             <div
               style={{
@@ -225,6 +248,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
           )}
         </div>
       )}
+      </div>
 
       <style>{`
         @keyframes fadeInCaption {

@@ -64,8 +64,17 @@ export default async function SampleDirectoryPreviewPage() {
   }));
 
   return (
-    <div style={{ background: BROWN, color: WHITE, minHeight: "100vh" }}>
-      <div style={{ padding: "28px clamp(20px, 6vw, 48px) 0" }}>
+    <div
+      style={{
+        background: BROWN,
+        color: WHITE,
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ padding: "16px clamp(20px, 6vw, 48px)", flexShrink: 0 }}>
         <Link
           href="/"
           style={{
@@ -90,7 +99,13 @@ export default async function SampleDirectoryPreviewPage() {
           Nothing published with a headshot yet.
         </p>
       ) : (
-        <DirectoryPreviewGrid people={people} />
+        // flex: 1 + minHeight: 0 so this fills whatever vertical space is
+        // left under the back-link, and DirectoryPreviewGrid measures
+        // that exact space to size its tiles -- the whole wall fits in
+        // the viewport with no scrolling, on any screen height.
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <DirectoryPreviewGrid people={people} />
+        </div>
       )}
     </div>
   );
