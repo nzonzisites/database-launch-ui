@@ -1,21 +1,27 @@
 "use client";
 
 // Numbering-check view for /sample-directory-preview, ahead of wiring the
-// single-reveal effect back in. Shows every person's real photo at once
-// (nothing covered) with a number badge on each tile, so the grid's
-// left-to-right, top-to-bottom numbering can be confirmed before a
-// reveal order gets built on top of it.
+// single-reveal effect back in. This version shows every person's TEXT
+// content at once (no images at all), each tile numbered the same way
+// the photo version was -- so the caption layout/order can be checked on
+// its own before combining it with the images.
 //
-// Layout itself is unchanged from the reveal version: exactly 2 columns,
-// edge-to-edge across the full page width, AND sized to fit the full
-// page height with no scrolling -- tile size is whichever is smaller of
-// (measured container width) / COLUMNS and (measured container height) /
-// rows, so every tile is a true square that fits both dimensions at
-// once. The page (see page.tsx) gives this component a fixed-height flex
-// slot to measure against.
+// Layout itself is unchanged: exactly 2 columns, edge-to-edge across the
+// full page width, AND sized to fit the full page height with no
+// scrolling -- tile size is whichever is smaller of (measured container
+// width) / COLUMNS and (measured container height) / rows. The page
+// (see page.tsx) gives this component a fixed-height flex slot to
+// measure against.
+//
+// Captured reveal order for the next phase (not wired in yet while this
+// is still a static check view): cycle 4, 5, 8, 2, 3, 6, 7 -- person 1
+// is skipped entirely, never revealed.
 
 import { useEffect, useRef, useState } from "react";
-import { WHITE } from "@/lib/colors";
+import { BROWN, OCHRE, WHITE } from "@/lib/colors";
+
+const REVEAL_ORDER_1INDEXED = [4, 5, 8, 2, 3, 6, 7];
+void REVEAL_ORDER_1INDEXED; // referenced here only to keep it from going stale; wired in next.
 
 export type PreviewPerson = {
   slug: string;
@@ -39,8 +45,8 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   // Measure the container's actual available width AND height (its
   // parent gives it a fixed-height flex slot -- see page.tsx) so tiles
   // are sized to fit both: whichever of width/COLUMNS or height/rows is
-  // smaller wins, keeping them square while guaranteeing the whole wall
-  // fits with no scrolling.
+  // smaller wins, keeping every tile the same size while guaranteeing
+  // the whole wall fits with no scrolling.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -76,23 +82,18 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
               height: tileSize ?? 0,
               position: "relative",
               overflow: "hidden",
+              backgroundColor: BROWN,
+              border: "1px solid rgba(240,240,240,0.15)",
+              boxSizing: "border-box",
+              padding: "20px 24px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={person.headshotUrl}
-              alt={person.fullName}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: `center ${person.headshotFocalY}%`,
-              }}
-            />
             {/* Number badge -- this person's 1-indexed position in the
-                grid, left-to-right, top-to-bottom. */}
+                grid, left-to-right, top-to-bottom. Same style as the
+                photo version's badge. */}
             <div
               style={{
                 position: "absolute",
@@ -112,6 +113,83 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
               }}
             >
               {i + 1}
+            </div>
+
+            <div style={{ marginTop: 32 }}>
+              {person.category && (
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    letterSpacing: "0.02em",
+                    color: OCHRE,
+                    textTransform: "lowercase",
+                    marginBottom: 10,
+                  }}
+                >
+                  {person.category}
+                </div>
+              )}
+              <div
+                style={{
+                  fontSize: 26,
+                  fontWeight: 500,
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.15,
+                  color: WHITE,
+                  textTransform: "lowercase",
+                  marginBottom: person.locations.length > 0 || person.countryOfOrigin ? 2 : 10,
+                }}
+              >
+                {person.fullName}
+              </div>
+              {(person.locations.length > 0 || person.countryOfOrigin) && (
+                <div style={{ marginBottom: 10 }}>
+                  {person.locations.map((loc, li) => (
+                    <div
+                      key={li}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 400,
+                        lineHeight: 1.3,
+                        color: "rgba(240,240,240,0.55)",
+                        textTransform: "lowercase",
+                      }}
+                    >
+                      {loc}
+                    </div>
+                  ))}
+                  {person.countryOfOrigin && (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 400,
+                        lineHeight: 1.3,
+                        color: "rgba(240,240,240,0.55)",
+                        textTransform: "lowercase",
+                      }}
+                    >
+                      {person.countryOfOrigin}
+                    </div>
+                  )}
+                </div>
+              )}
+              {person.tagline && (
+                <div
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 300,
+                    lineHeight: 1.4,
+                    color: "rgba(240,240,240,0.7)",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 6,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {person.tagline}
+                </div>
+              )}
             </div>
           </div>
         ))}
