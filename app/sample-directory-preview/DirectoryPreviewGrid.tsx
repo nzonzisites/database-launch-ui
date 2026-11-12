@@ -28,6 +28,7 @@ export type PreviewPerson = {
   headshotUrl: string;
   headshotFocalY: number;
   category: string;
+  location: string;
   tagline: string;
 };
 
@@ -156,7 +157,7 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             padding: "20px 24px",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
+            justifyContent: "flex-start",
             animation: "fadeInTile 0.5s ease",
           }}
         >
@@ -182,11 +183,25 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
               lineHeight: 1.15,
               color: WHITE,
               textTransform: "lowercase",
-              marginBottom: 10,
+              marginBottom: current.location ? 2 : 10,
             }}
           >
             {current.fullName}
           </div>
+          {current.location && (
+            <div
+              style={{
+                fontSize: 12.5,
+                fontWeight: 400,
+                lineHeight: 1.3,
+                color: "rgba(240,240,240,0.55)",
+                textTransform: "lowercase",
+                marginBottom: 10,
+              }}
+            >
+              {current.location}
+            </div>
+          )}
           {current.tagline && (
             <div
               style={{
