@@ -182,8 +182,11 @@ export default async function DatabasePage() {
         // flex: 1 + minHeight: 0 so this fills whatever vertical space is
         // left under the text above, and DirectoryPreviewGrid measures
         // that exact space to size its tiles -- the whole wall fits in
-        // the viewport with no scrolling, on any screen height.
-        <div style={{ flex: 1, minHeight: 0 }}>
+        // the viewport with no scrolling, on any screen height. A little
+        // top padding here (rather than on the text above) sets the wall
+        // down a bit from the description, without touching its own
+        // sizing math.
+        <div style={{ flex: 1, minHeight: 0, paddingTop: "clamp(16px, 3vh, 32px)" }}>
           <DirectoryPreviewGrid people={people} />
         </div>
       )}

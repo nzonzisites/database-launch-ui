@@ -52,7 +52,7 @@ export type PreviewPerson = {
 // Rows the page's height is divided into -- however many image columns
 // fit across the actual width at that row height is however many there
 // are (see tileSize/columns below).
-const ROWS = 4;
+const ROWS = 3;
 const MAX_CAPTION_SPAN = 3;
 
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
