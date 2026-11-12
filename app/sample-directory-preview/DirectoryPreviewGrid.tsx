@@ -3,12 +3,12 @@
 // Single-reveal view for /sample-directory-preview.
 //
 // Base layer: pure image columns, directly adjacent to each other (no
-// caption column interleaved between them) -- IMAGE_COLUMNS square
-// tiles per row, ROWS rows, filling the page exactly (8 people total).
-// Only the currently-revealed person's photo shows (opacity); every
-// other tile stays covered. Same proven approach as before: the base
-// layer never changes shape based on who's revealed, so nothing ever
-// shifts, overlaps, or stretches non-square.
+// caption column interleaved between them) -- square tiles, ROWS rows,
+// filling the page's height (8 people total). Only the
+// currently-revealed person's photo shows (opacity); every other tile
+// stays covered. Same proven approach as before: the base layer never
+// changes shape based on who's revealed, so nothing ever shifts,
+// overlaps, or stretches non-square.
 //
 // Caption: a single overlay, positioned next to wherever the revealed
 // image actually is -- to its right if there's more room that way,
@@ -17,9 +17,11 @@
 // full 3-wide run isn't available on either side without overlapping
 // the image itself.
 //
-// Sizing: tile size is whichever is smaller of (measured container
-// width) / IMAGE_COLUMNS and (measured container height) / ROWS, so
-// every tile is a true square that fills the page in both dimensions.
+// Sizing: tile size is (measured container height) / ROWS only -- the
+// image only needs to fit the page's height, not its width, so however
+// many tiles fit across the actual width at that size is how many
+// columns there are (plain CSS auto-fill), with no attempt to stretch
+// or shrink tiles to make a fixed column count span the full width.
 // The page (see page.tsx) gives this component a fixed-height flex slot
 // to measure against.
 
@@ -47,9 +49,10 @@ export type PreviewPerson = {
   tagline: string;
 };
 
-// 4 adjacent image columns x 2 rows -- 8 people filling the page.
-const IMAGE_COLUMNS = 4;
-const ROWS = 2;
+// Rows the page's height is divided into -- however many image columns
+// fit across the actual width at that row height is however many there
+// are (see tileSize/columns below).
+const ROWS = 4;
 const MAX_CAPTION_SPAN = 3;
 
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
@@ -86,18 +89,19 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
     return () => clearInterval(timer);
   }, [people.length]);
 
-  const tileSize =
-    dims != null
-      ? Math.max(0, Math.floor(Math.min(dims.width / IMAGE_COLUMNS, dims.height / ROWS)))
-      : null;
-  const gridWidth = tileSize ? tileSize * IMAGE_COLUMNS : "100%";
+  // Height alone drives tile size; width just takes however many whole
+  // tiles fit (auto-fill), rather than being stretched/shrunk to make a
+  // fixed column count span the full width.
+  const tileSize = dims != null ? Math.max(0, Math.floor(dims.height / ROWS)) : null;
+  const columns =
+    tileSize && tileSize > 0 && dims != null ? Math.max(1, Math.floor(dims.width / tileSize)) : 1;
 
   const revealed = revealedIndex != null ? people[revealedIndex] : undefined;
-  const revealedRow = revealedIndex != null ? Math.floor(revealedIndex / IMAGE_COLUMNS) : 0;
-  const revealedCol = revealedIndex != null ? revealedIndex % IMAGE_COLUMNS : 0;
+  const revealedRow = revealedIndex != null ? Math.floor(revealedIndex / columns) : 0;
+  const revealedCol = revealedIndex != null ? revealedIndex % columns : 0;
 
   // Contiguous room on each side of the revealed column, in tile-widths.
-  const roomRight = IMAGE_COLUMNS - (revealedCol + 1);
+  const roomRight = columns - (revealedCol + 1);
   const roomLeft = revealedCol;
   const useRightSide = roomRight >= roomLeft;
   const captionSpan = Math.min(MAX_CAPTION_SPAN, useRightSide ? roomRight : roomLeft);
@@ -108,10 +112,8 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
       <div
         style={{
           position: "relative",
-          width: gridWidth,
-          margin: "0 auto",
           display: "grid",
-          gridTemplateColumns: `repeat(${IMAGE_COLUMNS}, 1fr)`,
+          gridTemplateColumns: tileSize ? `repeat(auto-fill, ${tileSize}px)` : undefined,
         }}
       >
         {people.map((person, i) => (
