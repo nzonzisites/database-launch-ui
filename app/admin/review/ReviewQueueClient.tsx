@@ -3,10 +3,10 @@
 import { useMemo, useState, useTransition } from "react";
 import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { PlatformAgentRow } from "@/lib/platformAgent";
-import type { ApplicationForReview, ApplicationStatus } from "@/lib/applicationReview";
+import type { ApplicationForReview, ApplicationStatus, NotificationStatus } from "@/lib/applicationReview";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import type { ProspectSignupForReview } from "@/lib/prospectSignupReview";
-import { approveApplication, rejectApplication, revokeDecision } from "./actions";
+import { approveApplication, rejectApplication, revokeDecision, updateNotificationStatus } from "./actions";
 import ListingsTabClient from "./ListingsTabClient";
 import ProspectsTabClient from "./ProspectsTabClient";
 import SessionControls from "@/app/components/SessionControls";
@@ -59,6 +59,17 @@ const TAB_LABEL: Record<Tab, string> = {
   listings: "Listings",
   reports: "Reports",
 };
+
+const NOTIFICATION_LABELS: Record<NotificationStatus, string> = {
+  not_yet: "Not yet",
+  sent: "Sent",
+  responded: "Responded",
+};
+
+// What each clickable stat tile filters the Applications list down to.
+// "decided" and "accepted" overlap (accepted is the subset of decided
+// that's approved rather than rejected) -- both are useful on their own.
+type StatusFilterKey = "open" | "applied" | "under_review" | "decided" | "accepted" | "draft";
 
 const monoLabel: React.CSSProperties = {
   fontFamily: "'JetBrains Mono', monospace",
@@ -117,22 +128,56 @@ export default function ReviewQueueClient({
 
   const [tab, setTab] = useState<Tab>(availableTabs[0] ?? "all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilterKey | null>(null);
 
   const stats = useMemo(() => {
     const draft = applications.filter((a) => a.status === "draft").length;
     const applied = applications.filter((a) => a.status === "applied").length;
     const underReview = applications.filter((a) => a.status === "under_review").length;
+    const approved = applications.filter((a) => a.status === "approved").length;
     const decided = applications.filter(
       (a) => a.status === "approved" || a.status === "rejected"
     ).length;
     return [
-      { k: "Open", v: applied + underReview },
-      { k: "Applied", v: applied },
-      { k: "Under review", v: underReview },
-      { k: "Decided", v: decided },
-      { k: "Draft (incomplete)", v: draft },
+      { k: "Open", v: applied + underReview, filter: "open" as const },
+      { k: "Applied", v: applied, filter: "applied" as const },
+      { k: "Under review", v: underReview, filter: "under_review" as const },
+      { k: "Decided", v: decided, filter: "decided" as const },
+      { k: "Accepted", v: approved, filter: "accepted" as const },
+      { k: "Draft (incomplete)", v: draft, filter: "draft" as const },
     ];
   }, [applications]);
+
+  // Clicking a stat tile filters the Applications list below to match it
+  // (click the same one again to clear). The stats describe applications
+  // specifically, so clicking one also jumps to a tab that shows them if
+  // the reviewer was on Listings/Prospects/Reports at the time.
+  const filteredApplications = useMemo(() => {
+    if (!statusFilter) return applications;
+    return applications.filter((a) => {
+      switch (statusFilter) {
+        case "open":
+          return a.status === "applied" || a.status === "under_review";
+        case "applied":
+          return a.status === "applied";
+        case "under_review":
+          return a.status === "under_review";
+        case "decided":
+          return a.status === "approved" || a.status === "rejected";
+        case "accepted":
+          return a.status === "approved";
+        case "draft":
+          return a.status === "draft";
+        default:
+          return true;
+      }
+    });
+  }, [applications, statusFilter]);
+
+  function handleStatClick(filter: StatusFilterKey) {
+    setStatusFilter((prev) => (prev === filter ? null : filter));
+    setTab((prevTab) => (prevTab === "applications" || prevTab === "all" ? prevTab : "applications"));
+  }
 
   const showApplications = tab === "all" || tab === "applications";
 
@@ -200,13 +245,61 @@ export default function ReviewQueueClient({
               review queue
             </h1>
           </div>
-          <div style={{ display: "flex", gap: 28 }}>
-            {stats.map((s) => (
-              <div key={s.k}>
-                <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>{s.v}</div>
-                <div style={{ ...monoLabel, marginTop: 3 }}>{s.k}</div>
-              </div>
-            ))}
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 24 }}>
+            {stats.map((s) => {
+              const active = statusFilter === s.filter;
+              return (
+                <button
+                  key={s.k}
+                  onClick={() => handleStatClick(s.filter)}
+                  style={{
+                    background: "transparent",
+                    border: 0,
+                    padding: 0,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    opacity: !statusFilter || active ? 1 : 0.4,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 26,
+                      fontWeight: 700,
+                      letterSpacing: "-0.02em",
+                      color: active ? MOSS : SAND,
+                    }}
+                  >
+                    {s.v}
+                  </div>
+                  <div
+                    style={{
+                      ...monoLabel,
+                      marginTop: 3,
+                      borderBottom: active ? `1px solid ${MOSS}` : "1px solid transparent",
+                      paddingBottom: 2,
+                    }}
+                  >
+                    {s.k}
+                  </div>
+                </button>
+              );
+            })}
+            {statusFilter && (
+              <button
+                onClick={() => setStatusFilter(null)}
+                style={{
+                  background: "transparent",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                  ...monoLabel,
+                  color: OCHRE,
+                  marginBottom: 3,
+                }}
+              >
+                Clear filter
+              </button>
+            )}
           </div>
         </div>
 
@@ -246,7 +339,7 @@ export default function ReviewQueueClient({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "2.2fr 1.4fr 1fr 1.1fr 1fr",
+                gridTemplateColumns: "2fr 1.2fr 0.9fr 1fr 1.1fr 0.9fr",
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: 9.5,
                 letterSpacing: "0.13em",
@@ -259,14 +352,17 @@ export default function ReviewQueueClient({
               <span>Sector</span>
               <span>Submitted</span>
               <span>Status</span>
+              <span>Notified</span>
               <span style={{ textAlign: "right" }}>Action</span>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column" }}>
-              {applications.length === 0 && (
-                <p style={{ ...monoLabel, padding: "16px 14px" }}>No applications yet.</p>
+              {filteredApplications.length === 0 && (
+                <p style={{ ...monoLabel, padding: "16px 14px" }}>
+                  {statusFilter ? "No applications match this filter." : "No applications yet."}
+                </p>
               )}
-              {applications.map((a) => (
+              {filteredApplications.map((a) => (
                 <ApplicationRow
                   key={a.id}
                   application={a}
@@ -296,6 +392,8 @@ function ApplicationRow({
   const [reason, setReason] = useState("");
   const [approving, setApproving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [notificationStatus, setNotificationStatus] = useState<NotificationStatus>(a.notification_status);
+  const [notifPending, startNotifTransition] = useTransition();
   const statusStyle = STATUS_STYLE[a.status];
   const canDecide = a.status === "applied" || a.status === "under_review";
   const categoryLabel = a.intended_function
@@ -307,6 +405,20 @@ function ApplicationRow({
         ? a.intended_category_other || "Other"
         : CATEGORY_LABELS[a.intended_category] || a.intended_category
       : "No response";
+
+  function handleNotificationChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.target.value as NotificationStatus;
+    const previous = notificationStatus;
+    setNotificationStatus(value);
+    startNotifTransition(async () => {
+      try {
+        await updateNotificationStatus(a.id, value);
+      } catch (err) {
+        setNotificationStatus(previous);
+        setActionError(err instanceof Error ? err.message : "Couldn't update notification status.");
+      }
+    });
+  }
 
   function handleApprove() {
     setActionError(null);
@@ -349,7 +461,7 @@ function ApplicationRow({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "2.2fr 1.4fr 1fr 1.1fr 1fr",
+          gridTemplateColumns: "2fr 1.2fr 0.9fr 1fr 1.1fr 0.9fr",
           gap: 0,
           alignItems: "center",
           padding: "15px 14px",
@@ -388,6 +500,27 @@ function ApplicationRow({
         >
           {statusStyle.label}
         </span>
+        <select
+          value={notificationStatus}
+          onChange={handleNotificationChange}
+          disabled={notifPending}
+          style={{
+            background: "rgba(230,222,210,0.1)",
+            color: SAND,
+            border: "1px solid rgba(230,222,210,0.3)",
+            borderRadius: 4,
+            fontSize: 12,
+            padding: "5px 6px",
+            width: "fit-content",
+            cursor: "pointer",
+          }}
+        >
+          {(["not_yet", "sent", "responded"] as NotificationStatus[]).map((opt) => (
+            <option key={opt} value={opt}>
+              {NOTIFICATION_LABELS[opt]}
+            </option>
+          ))}
+        </select>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button
             onClick={onToggle}

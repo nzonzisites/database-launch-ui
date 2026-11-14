@@ -3,6 +3,11 @@ import { resolveReviewerNames } from "./reviewerNames";
 
 export type ApplicationStatus = "draft" | "applied" | "under_review" | "approved" | "rejected";
 
+// Tracks whether the applicant has been told a decision (or any other
+// outreach) -- purely an admin tracking field, doesn't gate anything
+// else in the review flow. See sql/2026-11-14a-application-notification-status.sql.
+export type NotificationStatus = "not_yet" | "sent" | "responded";
+
 // Most of these became nullable at the DB level alongside the autosave
 // feature (sql/2026-10-12c-application-autosave.sql dropped NOT NULL on
 // full_name, city_country, intended_function, work_modality,
@@ -60,6 +65,7 @@ export interface ApplicationForReview {
   rate_scope: string | null;
   capacity: string | null;
   status: ApplicationStatus;
+  notification_status: NotificationStatus;
   // The "continue your application" code emailed to the applicant when
   // they save a draft -- shown to admins so they can pass it along if
   // the applicant loses it.
@@ -83,7 +89,7 @@ const REVIEW_COLUMNS =
   "reference_relationship, reference_contact_method, reference_contact_value, " +
   "reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, " +
   "prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity, " +
-  "status, resume_code, reviewed_by, decision_reason, created_at";
+  "status, notification_status, resume_code, reviewed_by, decision_reason, created_at";
 
 /**
  * All seller applications, newest first. The review queue UI splits these

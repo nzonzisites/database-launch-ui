@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getPlatformAgentRow, hasPermission } from "@/lib/platformAgent";
+import type { NotificationStatus } from "@/lib/applicationReview";
 
 /**
  * Re-checks the signed-in user's platform_agent permission on the server
@@ -90,6 +91,27 @@ export async function revokeDecision(applicationId: string) {
       reviewed_by: agentId,
       decision_reason: null,
     })
+    .eq("id", applicationId);
+
+  if (error) throw error;
+  revalidatePath("/admin/review");
+}
+
+/**
+ * Tracks whether an applicant has been notified of something (most often
+ * a decision) -- not_yet / sent / responded. Purely a bookkeeping field
+ * for admins; doesn't change the application's status or trigger any
+ * actual outreach itself.
+ */
+export async function updateNotificationStatus(
+  applicationId: string,
+  status: NotificationStatus
+) {
+  const { supabase } = await requireReviewSellersPermission();
+
+  const { error } = await supabase
+    .from("application")
+    .update({ notification_status: status })
     .eq("id", applicationId);
 
   if (error) throw error;
