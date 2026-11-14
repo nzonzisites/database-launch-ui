@@ -3,10 +3,10 @@
 import { useMemo, useState, useTransition } from "react";
 import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { PlatformAgentRow } from "@/lib/platformAgent";
-import type { ApplicationForReview, ApplicationStatus, NotificationStatus } from "@/lib/applicationReview";
+import type { ApplicationForReview, ApplicationStatus, ReviewStatus } from "@/lib/applicationReview";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import type { ProspectSignupForReview } from "@/lib/prospectSignupReview";
-import { approveApplication, rejectApplication, revokeDecision, updateNotificationStatus } from "./actions";
+import { approveApplication, rejectApplication, revokeDecision, updateReviewStatus } from "./actions";
 import ListingsTabClient from "./ListingsTabClient";
 import ProspectsTabClient from "./ProspectsTabClient";
 import SessionControls from "@/app/components/SessionControls";
@@ -60,16 +60,19 @@ const TAB_LABEL: Record<Tab, string> = {
   reports: "Reports",
 };
 
-const NOTIFICATION_LABELS: Record<NotificationStatus, string> = {
-  not_yet: "Not yet",
-  sent: "Sent",
-  responded: "Responded",
+const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
+  reference_check: "Reference check",
+  notified: "Notified",
+  onboarded: "Onboarded",
 };
+
+const REVIEW_STATUS_VALUES: ReviewStatus[] = ["reference_check", "notified", "onboarded"];
 
 // What each clickable stat tile filters the Applications list down to.
 // "decided" and "accepted" overlap (accepted is the subset of decided
 // that's approved rather than rejected) -- both are useful on their own.
 type StatusFilterKey = "open" | "applied" | "under_review" | "decided" | "accepted" | "draft";
+type ReviewFilterKey = ReviewStatus;
 
 const monoLabel: React.CSSProperties = {
   fontFamily: "'JetBrains Mono', monospace",
@@ -77,6 +80,19 @@ const monoLabel: React.CSSProperties = {
   letterSpacing: "0.13em",
   textTransform: "uppercase",
   opacity: 0.55,
+};
+
+// Heading above each stats group (Application status / Review status) --
+// a notch more visible than monoLabel since it's labeling a whole group,
+// not a single tile.
+const groupTitleStyle: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 10,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: SAND,
+  opacity: 0.7,
+  marginBottom: 10,
 };
 
 function formatDate(iso: string) {
@@ -128,7 +144,12 @@ export default function ReviewQueueClient({
 
   const [tab, setTab] = useState<Tab>(availableTabs[0] ?? "all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Two independent facets a reviewer can filter the Applications list
+  // by at once: Application status (the application.status column --
+  // approved/draft/under review/etc) and Review status (the post-decision
+  // follow-up process -- reference check/notified/onboarded).
   const [statusFilter, setStatusFilter] = useState<StatusFilterKey | null>(null);
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilterKey | null>(null);
 
   const stats = useMemo(() => {
     const draft = applications.filter((a) => a.status === "draft").length;
@@ -148,34 +169,58 @@ export default function ReviewQueueClient({
     ];
   }, [applications]);
 
+  const reviewStats = useMemo(() => {
+    const referenceCheck = applications.filter((a) => a.review_status === "reference_check").length;
+    const notified = applications.filter((a) => a.review_status === "notified").length;
+    const onboarded = applications.filter((a) => a.review_status === "onboarded").length;
+    return [
+      { k: "Reference check", v: referenceCheck, filter: "reference_check" as const },
+      { k: "Notified", v: notified, filter: "notified" as const },
+      { k: "Onboarded", v: onboarded, filter: "onboarded" as const },
+    ];
+  }, [applications]);
+
   // Clicking a stat tile filters the Applications list below to match it
-  // (click the same one again to clear). The stats describe applications
-  // specifically, so clicking one also jumps to a tab that shows them if
-  // the reviewer was on Listings/Prospects/Reports at the time.
+  // (click the same one again to clear). Application-status and
+  // Review-status filters combine (AND) when both are set. The stats
+  // describe applications specifically, so clicking one also jumps to a
+  // tab that shows them if the reviewer was on Listings/Prospects/Reports
+  // at the time.
   const filteredApplications = useMemo(() => {
-    if (!statusFilter) return applications;
     return applications.filter((a) => {
-      switch (statusFilter) {
-        case "open":
-          return a.status === "applied" || a.status === "under_review";
-        case "applied":
-          return a.status === "applied";
-        case "under_review":
-          return a.status === "under_review";
-        case "decided":
-          return a.status === "approved" || a.status === "rejected";
-        case "accepted":
-          return a.status === "approved";
-        case "draft":
-          return a.status === "draft";
-        default:
-          return true;
+      if (statusFilter) {
+        const matchesStatus = (() => {
+          switch (statusFilter) {
+            case "open":
+              return a.status === "applied" || a.status === "under_review";
+            case "applied":
+              return a.status === "applied";
+            case "under_review":
+              return a.status === "under_review";
+            case "decided":
+              return a.status === "approved" || a.status === "rejected";
+            case "accepted":
+              return a.status === "approved";
+            case "draft":
+              return a.status === "draft";
+            default:
+              return true;
+          }
+        })();
+        if (!matchesStatus) return false;
       }
+      if (reviewFilter && a.review_status !== reviewFilter) return false;
+      return true;
     });
-  }, [applications, statusFilter]);
+  }, [applications, statusFilter, reviewFilter]);
 
   function handleStatClick(filter: StatusFilterKey) {
     setStatusFilter((prev) => (prev === filter ? null : filter));
+    setTab((prevTab) => (prevTab === "applications" || prevTab === "all" ? prevTab : "applications"));
+  }
+
+  function handleReviewStatClick(filter: ReviewFilterKey) {
+    setReviewFilter((prev) => (prev === filter ? null : filter));
     setTab((prevTab) => (prevTab === "applications" || prevTab === "all" ? prevTab : "applications"));
   }
 
@@ -190,6 +235,53 @@ export default function ReviewQueueClient({
     () => scholarProfiles.filter((p) => p.status === "published" && !p.experience_label),
     [scholarProfiles]
   );
+
+  // Shared tile renderer for both stats groups below -- a plain
+  // JSX-returning helper (not a component), called from inside each
+  // group's .map rather than used as <RenderStatTile />.
+  function renderStatTile(
+    s: { k: string; v: number },
+    isActive: boolean,
+    anyActive: boolean,
+    onClick: () => void
+  ) {
+    return (
+      <button
+        key={s.k}
+        onClick={onClick}
+        style={{
+          background: "transparent",
+          border: 0,
+          padding: 0,
+          cursor: "pointer",
+          textAlign: "left",
+          color: SAND,
+          opacity: !anyActive || isActive ? 1 : 0.4,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 26,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            color: isActive ? MOSS : SAND,
+          }}
+        >
+          {s.v}
+        </div>
+        <div
+          style={{
+            ...monoLabel,
+            marginTop: 3,
+            borderBottom: isActive ? `1px solid ${MOSS}` : "1px solid transparent",
+            paddingBottom: 2,
+          }}
+        >
+          {s.k}
+        </div>
+      </button>
+    );
+  }
 
   return (
     <div style={{ background: BROWN, minHeight: "100vh", padding: "34px 32px 70px", color: SAND }}>
@@ -238,56 +330,36 @@ export default function ReviewQueueClient({
             is enough.
           </div>
         )}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 26, flexWrap: "wrap", gap: 20 }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 26, flexWrap: "wrap", gap: 28 }}>
           <div>
             <span style={monoLabel}>Platform agent · {agent.permissions.join(", ")}</span>
             <h1 style={{ fontSize: 32, fontWeight: 300, letterSpacing: "-0.035em", margin: "10px 0 0", textTransform: "lowercase" }}>
               review queue
             </h1>
           </div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 24 }}>
-            {stats.map((s) => {
-              const active = statusFilter === s.filter;
-              return (
-                <button
-                  key={s.k}
-                  onClick={() => handleStatClick(s.filter)}
-                  style={{
-                    background: "transparent",
-                    border: 0,
-                    padding: 0,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    color: SAND,
-                    opacity: !statusFilter || active ? 1 : 0.4,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 26,
-                      fontWeight: 700,
-                      letterSpacing: "-0.02em",
-                      color: active ? MOSS : SAND,
-                    }}
-                  >
-                    {s.v}
-                  </div>
-                  <div
-                    style={{
-                      ...monoLabel,
-                      marginTop: 3,
-                      borderBottom: active ? `1px solid ${MOSS}` : "1px solid transparent",
-                      paddingBottom: 2,
-                    }}
-                  >
-                    {s.k}
-                  </div>
-                </button>
-              );
-            })}
-            {statusFilter && (
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 36, flexWrap: "wrap" }}>
+            <div>
+              <div style={groupTitleStyle}>Application status</div>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 24 }}>
+                {stats.map((s) =>
+                  renderStatTile(s, statusFilter === s.filter, !!statusFilter, () => handleStatClick(s.filter))
+                )}
+              </div>
+            </div>
+            <div>
+              <div style={groupTitleStyle}>Review status</div>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 24 }}>
+                {reviewStats.map((s) =>
+                  renderStatTile(s, reviewFilter === s.filter, !!reviewFilter, () => handleReviewStatClick(s.filter))
+                )}
+              </div>
+            </div>
+            {(statusFilter || reviewFilter) && (
               <button
-                onClick={() => setStatusFilter(null)}
+                onClick={() => {
+                  setStatusFilter(null);
+                  setReviewFilter(null);
+                }}
                 style={{
                   background: "transparent",
                   border: 0,
@@ -295,10 +367,11 @@ export default function ReviewQueueClient({
                   cursor: "pointer",
                   ...monoLabel,
                   color: OCHRE,
+                  alignSelf: "flex-end",
                   marginBottom: 3,
                 }}
               >
-                Clear filter
+                Clear filters
               </button>
             )}
           </div>
@@ -353,7 +426,7 @@ export default function ReviewQueueClient({
               <span>Sector</span>
               <span>Submitted</span>
               <span>Status</span>
-              <span>Notified</span>
+              <span>Review status</span>
               <span style={{ textAlign: "right" }}>Action</span>
             </div>
 
@@ -393,8 +466,8 @@ function ApplicationRow({
   const [reason, setReason] = useState("");
   const [approving, setApproving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [notificationStatus, setNotificationStatus] = useState<NotificationStatus>(a.notification_status);
-  const [notifPending, startNotifTransition] = useTransition();
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>(a.review_status);
+  const [reviewStatusPending, startReviewStatusTransition] = useTransition();
   const statusStyle = STATUS_STYLE[a.status];
   const canDecide = a.status === "applied" || a.status === "under_review";
   const categoryLabel = a.intended_function
@@ -407,15 +480,15 @@ function ApplicationRow({
         : CATEGORY_LABELS[a.intended_category] || a.intended_category
       : "No response";
 
-  function handleNotificationChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const value = e.target.value as NotificationStatus;
-    const previous = notificationStatus;
-    setNotificationStatus(value);
-    startNotifTransition(async () => {
+  function handleReviewStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.target.value as ReviewStatus;
+    const previous = reviewStatus;
+    setReviewStatus(value);
+    startReviewStatusTransition(async () => {
       try {
-        await updateNotificationStatus(a.id, value);
+        await updateReviewStatus(a.id, value);
       } catch (err) {
-        setNotificationStatus(previous);
+        setReviewStatus(previous);
         setActionError(err instanceof Error ? err.message : "Couldn't update notification status.");
       }
     });
@@ -502,9 +575,9 @@ function ApplicationRow({
           {statusStyle.label}
         </span>
         <select
-          value={notificationStatus}
-          onChange={handleNotificationChange}
-          disabled={notifPending}
+          value={reviewStatus}
+          onChange={handleReviewStatusChange}
+          disabled={reviewStatusPending}
           style={{
             background: "rgba(230,222,210,0.1)",
             color: SAND,
@@ -516,9 +589,9 @@ function ApplicationRow({
             cursor: "pointer",
           }}
         >
-          {(["not_yet", "sent", "responded"] as NotificationStatus[]).map((opt) => (
+          {REVIEW_STATUS_VALUES.map((opt) => (
             <option key={opt} value={opt}>
-              {NOTIFICATION_LABELS[opt]}
+              {REVIEW_STATUS_LABELS[opt]}
             </option>
           ))}
         </select>
