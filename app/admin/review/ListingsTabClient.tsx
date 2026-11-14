@@ -5,6 +5,19 @@ import type { CSSProperties, ReactNode } from "react";
 import { BROWN, SAND, MOSS, OCHRE, WHITE } from "@/lib/colors";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import { FUNCTION_OPTIONS, EXPERIENCE_AREA_OPTIONS, WORK_MODALITY_OPTIONS, SECTOR_OPTIONS } from "@/app/apply/applicationOptions";
+
+// Experience label used to be a free-text input (examples like "14
+// years" or "Political strategist & writer") -- 2026-11-13 switched it
+// to a fixed set of year-range buckets instead. Existing free-text
+// values that don't match one of these are still shown (see
+// customExperienceLabel below) rather than silently discarded.
+const EXPERIENCE_LEVEL_OPTIONS = [
+  "Less than 1 year experience",
+  "1-3 years experience",
+  "3-5 years experience",
+  "5-10 years experience",
+  "10+ years experience",
+];
 import { publishScholarProfile, unpublishScholarProfile, updateScholarProfile } from "./scholarProfileActions";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import SectorOtherInputs from "@/app/apply/SectorOtherInputs";
@@ -207,6 +220,13 @@ function ListingRow({
   const [fullBio, setFullBio] = useState(p.full_bio);
   const [background, setBackground] = useState(p.background);
   const [experienceLabel, setExperienceLabel] = useState(p.experience_label ?? "");
+  // If this listing's stored value predates the fixed-bucket dropdown
+  // and doesn't match any of the current options, keep it selectable so
+  // saving doesn't silently wipe it out from under the admin.
+  const customExperienceLabel =
+    p.experience_label && !EXPERIENCE_LEVEL_OPTIONS.includes(p.experience_label)
+      ? p.experience_label
+      : null;
   const [vettedDate, setVettedDate] = useState(p.vetted_date ?? "");
   const [sector, setSector] = useState<string[]>(p.sector ?? []);
   const [sectorOther, setSectorOther] = useState(p.sector_other ?? "");
@@ -773,12 +793,24 @@ function ListingRow({
           </Field>
 
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-            <Field label="Experience label (e.g. '14 years')">
-              <input
+            <Field label="Experience level">
+              <select
                 value={experienceLabel}
                 onChange={(e) => setExperienceLabel(e.target.value)}
-                style={{ ...fieldStyle, width: 220 }}
-              />
+                style={{ ...fieldStyle, width: 220, cursor: "pointer" }}
+              >
+                <option value="">— not set —</option>
+                {customExperienceLabel && (
+                  <option value={customExperienceLabel} style={{ color: "#1F0E03" }}>
+                    {customExperienceLabel} (existing, not a standard bucket)
+                  </option>
+                )}
+                {EXPERIENCE_LEVEL_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt} style={{ color: "#1F0E03" }}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </Field>
             <Field label="Vetted date">
               <input

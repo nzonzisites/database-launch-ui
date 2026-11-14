@@ -258,6 +258,7 @@ export default function ReviewQueueClient({
                     padding: 0,
                     cursor: "pointer",
                     textAlign: "left",
+                    color: SAND,
                     opacity: !statusFilter || active ? 1 : 0.4,
                   }}
                 >
