@@ -59,7 +59,17 @@ export async function proxy(request: NextRequest) {
 
   // Touches the session so an expiring token gets refreshed. Not used for
   // route protection here -- /admin/review does its own allowlist check.
-  await supabase.auth.getUser();
+  // Deliberately swallowed: a thrown error here (a transient network blip
+  // reaching Supabase Auth, a corrupted session cookie) would otherwise
+  // crash this middleware outright, which Next.js turns into a 500 on
+  // EVERY request site-wide -- this runs in front of every page, static
+  // homepage included. Worst case on a real failure is a stale/unrefreshed
+  // session for this one request, not a site-wide outage.
+  try {
+    await supabase.auth.getUser();
+  } catch (err) {
+    console.error("proxy: failed to refresh Supabase session", err);
+  }
 
   return response;
 }
