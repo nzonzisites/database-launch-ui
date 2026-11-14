@@ -29,6 +29,8 @@ async function requireReviewListingsPermission() {
 }
 
 export interface ScholarProfileEditableFields {
+  // Added 2026-11-13 -- optional, "" clears it (stored as null).
+  pronouns: string;
   headshot_url: string; // "" clears it (stored as null)
   headshot_focal_y: number; // 0-100 vertical crop position, clamped on save
   // The public listing descriptor -- same column the approval gate
@@ -84,6 +86,7 @@ export async function updateScholarProfile(
   const { error } = await supabase
     .from("scholar_profile")
     .update({
+      pronouns: fields.pronouns.trim() || null,
       headshot_url: fields.headshot_url.trim() || null,
       headshot_focal_y: Math.round(Math.min(100, Math.max(0, fields.headshot_focal_y))),
       intended_category: fields.intended_category.trim(),

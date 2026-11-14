@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchScholarProfile } from "@/lib/scholarProfile";
-import { CATEGORY_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel, sectorLabels } from "@/app/apply/applicationOptions";
+import { CATEGORY_OPTIONS, FUNCTION_OPTIONS, WORK_MODALITY_OPTIONS, optionLabel, sectorLabels } from "@/app/apply/applicationOptions";
 import { BROWN, OCHRE, FOREST, SAND } from "@/lib/colors";
 import ProfilePortrait from "./ProfilePortrait";
 
@@ -43,6 +43,48 @@ function allLocationsLabel(
     .map((r) => [r.city, r.country].filter(Boolean).join(", "))
     .filter(Boolean);
   return labels.length > 0 ? labels.join("; ") : cityCountry || null;
+}
+
+/** Just the country names the scholar currently lives in, same
+ * residences-first, city_country-fallback source as allLocationsLabel
+ * above -- used to filter country_of_origin against so it isn't shown
+ * when it's not actually distinct from where they live now (city_country
+ * is free text, "City, Country" in practice, so take the part after the
+ * last comma as its country when there's no structured residences). */
+function currentCountries(
+  residences: { city: string; country: string; is_primary: boolean }[] | null,
+  cityCountry: string | null
+): string[] {
+  if (residences && residences.length > 0) {
+    return residences.map((r) => r.country).filter(Boolean);
+  }
+  if (!cityCountry) return [];
+  const parts = cityCountry.split(",").map((p) => p.trim());
+  return [parts[parts.length - 1]].filter(Boolean);
+}
+
+/** country_of_origin, but only when it's not already one of the
+ * countries the scholar currently lives in -- otherwise it's a
+ * redundant line on the page. Same logic as the directory preview grid
+ * (app/sample-directory-preview/page.tsx's distinctCountryOfOrigin),
+ * which /profile/[slug] never had despite being the main public listing
+ * (2026-11-13 fix -- Reginald and Laura's own country_of_origin answers
+ * both happen to equal their current country, so this previously showed
+ * as a redundant line on their live listings). */
+function distinctCountryOfOrigin(
+  countryOfOrigin: string | null,
+  residences: { city: string; country: string; is_primary: boolean }[] | null,
+  cityCountry: string | null
+): string | null {
+  if (!countryOfOrigin) return null;
+  const lived = currentCountries(residences, cityCountry).map((c) => c.toLowerCase());
+  return lived.includes(countryOfOrigin.toLowerCase()) ? null : countryOfOrigin;
+}
+
+function sectorLabel(intendedFunction: string | null, intendedFunctionOther: string | null): string | null {
+  if (!intendedFunction) return null;
+  if (intendedFunction === "other") return intendedFunctionOther || "Other";
+  return optionLabel(FUNCTION_OPTIONS, intendedFunction) || null;
 }
 
 function vettedLabel(vettedDate: string | null): string | null {
@@ -99,10 +141,17 @@ export default async function ScholarProfilePage({
   const vetted = vettedLabel(profile.vetted_date);
 
   const locations = allLocationsLabel(profile.residences, profile.city_country);
+  const countryOfOrigin = distinctCountryOfOrigin(
+    profile.country_of_origin,
+    profile.residences,
+    profile.city_country
+  );
+  const sector = sectorLabel(profile.intended_function, profile.intended_function_other);
 
   const facts = [
     locations ? { k: "Location(s)", v: locations } : null,
-    profile.country_of_origin ? { k: "Country of origin", v: profile.country_of_origin } : null,
+    countryOfOrigin ? { k: "Country of origin", v: countryOfOrigin } : null,
+    sector ? { k: "Sector", v: sector } : null,
     profile.experience_label ? { k: "Experience", v: profile.experience_label } : null,
     vetted ? { k: "Vetted", v: vetted } : null,
   ].filter((f): f is { k: string; v: string } => f !== null);
@@ -172,6 +221,11 @@ export default async function ScholarProfilePage({
               }}
             >
               {profile.full_name}
+              {profile.pronouns && (
+                <span style={{ fontSize: 20, fontWeight: 300, color: "rgba(31,14,3,0.5)", marginLeft: 12 }}>
+                  {profile.pronouns}
+                </span>
+              )}
             </h1>
             {profile.tagline && (
               <p

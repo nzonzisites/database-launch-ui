@@ -106,6 +106,7 @@ export async function sendApplicationConfirmationEmail(
 
   const contactRows =
     row("Name", data.fullName) +
+    row("Pronouns", data.pronouns) +
     row("Email", data.email) +
     row(data.contactMethod === "phone" ? "Number" : "Email", data.contactValue) +
     (data.contactMethod === "phone"

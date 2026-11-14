@@ -199,9 +199,16 @@ function MultiValueField({
   const [draft, setDraft] = useState("");
 
   function add() {
-    const trimmed = draft.trim();
-    if (!trimmed) return;
-    onChange([...values, trimmed]);
+    // Splits on commas so "A, B, C" typed (or pasted) into one entry
+    // becomes three separate ones instead of a single crammed string --
+    // the actual failure mode seen in submitted applications (see
+    // 2026-11-13's affiliations data cleanup).
+    const parts = draft
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return;
+    onChange([...values, ...parts]);
     setDraft("");
   }
 
@@ -308,6 +315,11 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
   const [countryOfOrigin, setCountryOfOrigin] = useState("");
   const [affiliations, setAffiliations] = useState<string[]>(prefill.affiliations);
   const [headshotUrl, setHeadshotUrl] = useState(prefill.headshotUrl);
+  // Optional -- shown next to the name on the public listing when given.
+  // Not carried through resumeApplicationDraft or the prospect prefill
+  // lookup (neither returns it yet), so a resumed draft starts this blank
+  // again rather than restoring what was typed before.
+  const [pronouns, setPronouns] = useState("");
 
   const [hasPrefill, setHasPrefill] = useState(
     Boolean(prefill.firstName || prefill.lastName || prefill.city || prefill.country) ||
@@ -465,6 +477,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     return {
       draftId,
       fullName: `${firstName} ${lastName}`.trim(),
+      pronouns,
       email,
       contactMethod,
       contactValue,
@@ -770,6 +783,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
     const primaryResidence = residences.find((r) => r.isPrimary) ?? residences[0];
     const summaryData: ApplicationSummaryData = {
       fullName: `${firstName} ${lastName}`.trim(),
+      pronouns,
       email,
       contactMethod,
       contactValue,
@@ -1099,7 +1113,7 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
                     </label>
                     <input
                       style={underlineInputStyle(false)}
-                      placeholder="Ibadan"
+                      placeholder="Lagos"
                       value={r.city}
                       onChange={(e) => updateResidence(i, "city", e.target.value)}
                       required={i === 0}
@@ -1179,7 +1193,8 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
             onDark={false}
             values={affiliations}
             onChange={setAffiliations}
-            placeholder="e.g. University of Ibadan"
+            placeholder="e.g. University of Lagos"
+            helper="List them one at a time -- press Enter or click away after each (commas also split into separate entries)."
           />
 
           <div>
@@ -1354,6 +1369,17 @@ export default function ApplicationFormClient({ prefill }: { prefill: Prefill })
               placeholder="https://..."
               value={headshotUrl}
               onChange={(e) => setHeadshotUrl(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label style={fieldLabelStyle(false)}>15. Preferred pronouns (optional)</label>
+            <p style={helperTextStyle(false)}>Shown next to your name on your public listing, if given.</p>
+            <input
+              style={underlineInputStyle(false)}
+              placeholder="e.g. she/her, he/him, they/them"
+              value={pronouns}
+              onChange={(e) => setPronouns(e.target.value)}
             />
           </div>
 

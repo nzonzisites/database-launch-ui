@@ -188,6 +188,7 @@ function ListingRow({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  const [pronouns, setPronouns] = useState(p.pronouns ?? "");
   const [headshotUrl, setHeadshotUrl] = useState(p.headshot_url ?? "");
   const [headshotFocalY, setHeadshotFocalY] = useState(p.headshot_focal_y ?? 50);
   const [listingDescriptor, setListingDescriptor] = useState(p.intended_category ?? "");
@@ -243,9 +244,15 @@ function ListingRow({
   }
 
   function addAffiliation() {
-    const trimmed = affiliationDraft.trim();
-    if (!trimmed) return;
-    setAffiliations((prev) => [...prev, trimmed]);
+    // Splits on commas -- same fix as the applicant-facing form's
+    // MultiValueField (2026-11-13), so an admin pasting "A, B, C" here
+    // gets three separate entries too, not one crammed string.
+    const parts = affiliationDraft
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return;
+    setAffiliations((prev) => [...prev, ...parts]);
     setAffiliationDraft("");
   }
 
@@ -254,6 +261,7 @@ function ListingRow({
   }
 
   const fields = {
+    pronouns,
     headshot_url: headshotUrl,
     headshot_focal_y: headshotFocalY,
     intended_category: listingDescriptor,
@@ -599,6 +607,15 @@ function ListingRow({
               onChange={(e) => setCountryOfOrigin(e.target.value)}
               style={fieldStyle}
               placeholder="e.g. Nigeria"
+            />
+          </Field>
+
+          <Field label="Pronouns">
+            <input
+              value={pronouns}
+              onChange={(e) => setPronouns(e.target.value)}
+              style={fieldStyle}
+              placeholder="e.g. she/her"
             />
           </Field>
 

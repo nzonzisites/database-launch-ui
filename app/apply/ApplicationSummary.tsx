@@ -35,6 +35,7 @@ const OFFWHITE = "#F0F0F0";
 
 export interface ApplicationSummaryData {
   fullName: string;
+  pronouns: string;
   email: string;
   contactMethod: string;
   contactValue: string;
@@ -218,6 +219,7 @@ export default function ApplicationSummary({
         <Section>
           <SectionLabel>Contact</SectionLabel>
           <Row label="Name" value={data.fullName} />
+          <Row label="Pronouns" value={data.pronouns} />
           <Row label="Email" value={data.email} />
           <Row
             label={data.contactMethod === "phone" ? "Number" : "Email"}

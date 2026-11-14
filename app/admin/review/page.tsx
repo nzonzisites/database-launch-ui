@@ -86,12 +86,48 @@ export default async function ReviewQueuePage() {
     ? await fetchProspectSignupsForReview(supabase)
     : [];
 
+  // A reviewer can also be a published scholar themselves (Ireti and
+  // Uche both are) -- if their own listing is missing the Experience
+  // checkboxes or an admin-typed Experience label, nudge them about it
+  // right here rather than leaving it to be noticed by chance. Two
+  // sequential lookups rather than an embedded-resource filter: simpler
+  // to get right than Postgrest's join-filter syntax, and this page
+  // isn't hit often enough for the extra round-trip to matter.
+  let ownListingGap: {
+    slug: string;
+    missingExperienceAreas: boolean;
+    missingExperienceLabel: boolean;
+  } | null = null;
+  if (agent.permissions.includes("review_listings") && user.email) {
+    const { data: ownApplication } = await supabase
+      .from("application")
+      .select("id")
+      .ilike("email", user.email)
+      .maybeSingle();
+    if (ownApplication) {
+      const { data: ownProfile } = await supabase
+        .from("scholar_profile")
+        .select("slug, experience_areas, experience_label")
+        .eq("application_id", ownApplication.id)
+        .maybeSingle();
+      if (ownProfile) {
+        const missingExperienceAreas =
+          !ownProfile.experience_areas || (ownProfile.experience_areas as string[]).length === 0;
+        const missingExperienceLabel = !ownProfile.experience_label;
+        if (missingExperienceAreas || missingExperienceLabel) {
+          ownListingGap = { slug: ownProfile.slug as string, missingExperienceAreas, missingExperienceLabel };
+        }
+      }
+    }
+  }
+
   return (
     <ReviewQueueClient
       agent={agent}
       applications={applications}
       scholarProfiles={scholarProfiles}
       prospects={prospects}
+      ownListingGap={ownListingGap}
     />
   );
 }

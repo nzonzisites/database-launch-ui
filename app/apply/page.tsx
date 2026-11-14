@@ -10,11 +10,12 @@ const OCHRE = "#C2561A";
 const OFFWHITE = "#F0F0F0";
 
 const APPLICATION_SUMMARY_COLUMNS =
-  "status, full_name, email, contact_method, contact_value, whatsapp_available, city_country, residences, country_of_origin, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, experience_areas, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity";
+  "status, full_name, pronouns, email, contact_method, contact_value, whatsapp_available, city_country, residences, country_of_origin, affiliations, external_links, headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, experience_areas, work_modality, infrastructure_narrative, expertise_narrative, full_bio, work_samples, work_samples_explanation, reference_name, reference_relationship, reference_contact_method, reference_contact_value, reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity";
 
 type ExistingApplicationRow = {
   status: string;
   full_name: string | null;
+  pronouns: string | null;
   email: string | null;
   contact_method: "email" | "phone" | null;
   contact_value: string | null;
@@ -155,6 +156,7 @@ export default async function ApplyPage() {
     const firstName = existingApplication.full_name?.trim().split(/\s+/)[0] ?? "";
     const summaryData: ApplicationSummaryData = {
       fullName: existingApplication.full_name ?? "",
+      pronouns: existingApplication.pronouns ?? "",
       email: existingApplication.email ?? "",
       contactMethod: existingApplication.contact_method ?? "",
       contactValue: existingApplication.contact_value ?? "",

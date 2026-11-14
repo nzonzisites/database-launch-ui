@@ -93,11 +93,17 @@ export default function ReviewQueueClient({
   applications,
   scholarProfiles,
   prospects,
+  ownListingGap,
 }: {
   agent: PlatformAgentRow;
   applications: ApplicationForReview[];
   scholarProfiles: ScholarProfileWithSeller[];
   prospects: ProspectSignupForReview[];
+  ownListingGap: {
+    slug: string;
+    missingExperienceAreas: boolean;
+    missingExperienceLabel: boolean;
+  } | null;
 }) {
   const availableTabs = TABS.filter((t) => {
     if (t === "all" || t === "applications") return agent.permissions.includes("review_sellers");
@@ -130,12 +136,63 @@ export default function ReviewQueueClient({
 
   const showApplications = tab === "all" || tab === "applications";
 
+  // Listings tab reminder: every published listing with a blank
+  // Experience label shows nothing on that line publicly, even when the
+  // applicant answered the Experience checkboxes -- see the 2026-11-13
+  // review of all 7 published listings' actual responses, which found
+  // this true for 4 of them.
+  const missingExperienceLabelListings = useMemo(
+    () => scholarProfiles.filter((p) => p.status === "published" && !p.experience_label),
+    [scholarProfiles]
+  );
+
   return (
     <div style={{ background: BROWN, minHeight: "100vh", padding: "34px 32px 70px", color: SAND }}>
       <div style={{ maxWidth: 1180, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
           <SessionControls textColor="rgba(230,222,210,0.55)" hoverColor={SAND} />
         </div>
+        {ownListingGap && (
+          <div
+            style={{
+              background: "rgba(194,86,26,0.14)",
+              border: `1px solid ${OCHRE}`,
+              borderRadius: 6,
+              padding: "12px 16px",
+              marginBottom: 20,
+              fontSize: 13.5,
+              lineHeight: 1.5,
+            }}
+          >
+            Your own listing ({ownListingGap.slug}) is missing{" "}
+            {ownListingGap.missingExperienceAreas && ownListingGap.missingExperienceLabel
+              ? "its Experience checkboxes and an Experience label"
+              : ownListingGap.missingExperienceAreas
+                ? "its Experience checkboxes"
+                : "an Experience label"}
+            . Update it on the Listings tab when you get a chance.
+          </div>
+        )}
+        {missingExperienceLabelListings.length > 0 && (
+          <div
+            style={{
+              background: "rgba(45,77,49,0.16)",
+              border: `1px solid ${MOSS}`,
+              borderRadius: 6,
+              padding: "12px 16px",
+              marginBottom: 20,
+              fontSize: 13.5,
+              lineHeight: 1.5,
+            }}
+          >
+            {missingExperienceLabelListings.length} published listing
+            {missingExperienceLabelListings.length === 1 ? "" : "s"} have no Experience label, so
+            nothing shows on that line publicly even though the applicant answered the Experience
+            checkboxes: {missingExperienceLabelListings.map((p) => p.full_name).join(", ")}. Add one
+            on the Listings tab -- a short phrase like "5 years" or "Political strategist &amp; writer"
+            is enough.
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 26, flexWrap: "wrap", gap: 20 }}>
           <div>
             <span style={monoLabel}>Platform agent · {agent.permissions.join(", ")}</span>

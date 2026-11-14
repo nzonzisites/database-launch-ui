@@ -16,6 +16,8 @@ export interface ResidenceInput {
 
 export interface SubmitApplicationInput {
   fullName: string;
+  // Optional -- shown on the public listing next to the name when given.
+  pronouns: string;
   email: string;
   contactMethod: string;
   contactValue: string;
@@ -161,6 +163,7 @@ export async function saveApplicationDraft(input: SaveDraftInput): Promise<SaveD
     applicant_user_id: applicantUserId,
     prospect_signup_id: input.prospectSignupId,
     full_name: input.fullName.trim() || null,
+    pronouns: input.pronouns.trim() || null,
     email: input.email.trim(),
     headshot_url: input.headshotUrl.trim() || null,
     contact_method: input.contactMethod || null,
@@ -564,6 +567,7 @@ export async function submitApplication(
     applicant_user_id: applicantUserId,
     prospect_signup_id: prospectSignupId,
     full_name: input.fullName.trim(),
+    pronouns: input.pronouns.trim() || null,
     email: input.email.trim(),
     headshot_url: input.headshotUrl.trim() || null,
     contact_method: input.contactMethod,
@@ -633,6 +637,7 @@ export async function submitApplication(
   try {
     await sendApplicationConfirmationEmail({
       fullName: input.fullName.trim(),
+      pronouns: input.pronouns.trim(),
       email: input.email.trim(),
       contactMethod: input.contactMethod,
       contactValue: input.contactValue.trim(),

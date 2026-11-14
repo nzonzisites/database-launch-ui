@@ -41,6 +41,10 @@ export interface ScholarProfileRow {
   // public-facing URL.
   slug: string;
   full_name: string;
+  // Optional -- added 2026-11-13 alongside the application's own
+  // "Preferred pronouns" question. Shown next to the name on
+  // /profile/[slug] when present.
+  pronouns: string | null;
   headshot_url: string | null;
   // 0-100 vertical crop position for headshot_url (see ProfilePortrait) --
   // not_null with a default of 50 (centered) at the DB level, so this is
@@ -101,7 +105,7 @@ export interface ScholarProfileRow {
 export type ScholarProfileWithSeller = ScholarProfileRow;
 
 const COLUMNS =
-  "id, application_id, slug, full_name, headshot_url, headshot_focal_y, submitted_headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, " +
+  "id, application_id, slug, full_name, pronouns, headshot_url, headshot_focal_y, submitted_headshot_url, intended_category, intended_category_other, intended_function, intended_function_other, " +
   "city_country, residences, country_of_origin, affiliations, work_modality, experience_areas, " +
   "tagline, full_bio, background, experience_label, vetted_date, sector, sector_other, status, reviewed_by, created_at";
 
