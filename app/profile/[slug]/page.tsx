@@ -152,7 +152,10 @@ export default async function ScholarProfilePage({
     locations ? { k: "Location(s)", v: locations } : null,
     countryOfOrigin ? { k: "Country of origin", v: countryOfOrigin } : null,
     sector ? { k: "Sector", v: sector } : null,
-    profile.experience_label ? { k: "Experience", v: profile.experience_label } : null,
+    // Hidden on the public profile per Modupe's 2026-11-14 request --
+    // experience_label still exists and is still editable on the
+    // Listings tab, just not shown here. Re-add this line to bring it back.
+    // profile.experience_label ? { k: "Experience", v: profile.experience_label } : null,
     vetted ? { k: "Vetted", v: vetted } : null,
   ].filter((f): f is { k: string; v: string } => f !== null);
   const deliveryTagList = deliveryTags(profile.work_modality);
