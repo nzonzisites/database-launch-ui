@@ -7,7 +7,7 @@ export type ApplicationStatus = "draft" | "applied" | "under_review" | "approved
 // outreach) -- purely an admin tracking field, doesn't gate anything
 // else in the review flow. Stages are reference check -> notified ->
 // onboarded. See sql/2026-11-14b-application-review-status.sql.
-export type ReviewStatus = "reference_check" | "notified" | "onboarded";
+export type ReviewStatus = "reference_check_sent" | "reference_check_responded" | "notified" | "onboarded";
 
 // Most of these became nullable at the DB level alongside the autosave
 // feature (sql/2026-10-12c-application-autosave.sql dropped NOT NULL on

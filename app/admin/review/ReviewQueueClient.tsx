@@ -61,12 +61,18 @@ const TAB_LABEL: Record<Tab, string> = {
 };
 
 const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
-  reference_check: "Reference check",
+  reference_check_sent: "Reference check - sent",
+  reference_check_responded: "Reference check - responded",
   notified: "Notified",
   onboarded: "Onboarded",
 };
 
-const REVIEW_STATUS_VALUES: ReviewStatus[] = ["reference_check", "notified", "onboarded"];
+const REVIEW_STATUS_VALUES: ReviewStatus[] = [
+  "reference_check_sent",
+  "reference_check_responded",
+  "notified",
+  "onboarded",
+];
 
 // What each clickable stat tile filters the Applications list down to.
 // "decided" and "accepted" overlap (accepted is the subset of decided
@@ -170,11 +176,15 @@ export default function ReviewQueueClient({
   }, [applications]);
 
   const reviewStats = useMemo(() => {
-    const referenceCheck = applications.filter((a) => a.review_status === "reference_check").length;
+    const referenceCheckSent = applications.filter((a) => a.review_status === "reference_check_sent").length;
+    const referenceCheckResponded = applications.filter(
+      (a) => a.review_status === "reference_check_responded"
+    ).length;
     const notified = applications.filter((a) => a.review_status === "notified").length;
     const onboarded = applications.filter((a) => a.review_status === "onboarded").length;
     return [
-      { k: "Reference check", v: referenceCheck, filter: "reference_check" as const },
+      { k: "Reference check - sent", v: referenceCheckSent, filter: "reference_check_sent" as const },
+      { k: "Reference check - responded", v: referenceCheckResponded, filter: "reference_check_responded" as const },
       { k: "Notified", v: notified, filter: "notified" as const },
       { k: "Onboarded", v: onboarded, filter: "onboarded" as const },
     ];
