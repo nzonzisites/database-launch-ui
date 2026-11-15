@@ -61,6 +61,7 @@ const TAB_LABEL: Record<Tab, string> = {
 };
 
 const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
+  not_yet_reviewed: "Not yet reviewed",
   reference_check_sent: "Reference check - sent",
   reference_check_responded: "Reference check - responded",
   notified: "Notified",
@@ -68,6 +69,7 @@ const REVIEW_STATUS_LABELS: Record<ReviewStatus, string> = {
 };
 
 const REVIEW_STATUS_VALUES: ReviewStatus[] = [
+  "not_yet_reviewed",
   "reference_check_sent",
   "reference_check_responded",
   "notified",
@@ -176,6 +178,7 @@ export default function ReviewQueueClient({
   }, [applications]);
 
   const reviewStats = useMemo(() => {
+    const notYetReviewed = applications.filter((a) => a.review_status === "not_yet_reviewed").length;
     const referenceCheckSent = applications.filter((a) => a.review_status === "reference_check_sent").length;
     const referenceCheckResponded = applications.filter(
       (a) => a.review_status === "reference_check_responded"
@@ -183,6 +186,7 @@ export default function ReviewQueueClient({
     const notified = applications.filter((a) => a.review_status === "notified").length;
     const onboarded = applications.filter((a) => a.review_status === "onboarded").length;
     return [
+      { k: "Not yet reviewed", v: notYetReviewed, filter: "not_yet_reviewed" as const },
       { k: "Reference check - sent", v: referenceCheckSent, filter: "reference_check_sent" as const },
       { k: "Reference check - responded", v: referenceCheckResponded, filter: "reference_check_responded" as const },
       { k: "Notified", v: notified, filter: "notified" as const },
