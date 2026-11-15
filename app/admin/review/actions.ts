@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getPlatformAgentRow, hasPermission } from "@/lib/platformAgent";
 import type { ReviewStatus } from "@/lib/applicationReview";
+import { sendDraftReminderEmail } from "@/lib/email";
 
 /**
  * Re-checks the signed-in user's platform_agent permission on the server
@@ -116,5 +117,56 @@ export async function updateReviewStatus(
     .eq("id", applicationId);
 
   if (error) throw error;
+  revalidatePath("/admin/review");
+}
+
+/**
+ * Manually prompts the "continue your application" reminder email for one
+ * incomplete (draft) application, on demand -- separate from the
+ * automated daily cron (app/api/cron/draft-reminders) that fires this
+ * same email once, ever, after 30+ minutes of inactivity. An admin can
+ * click this as many times as they want; each send bumps
+ * manual_reminder_count and timestamps last_manual_reminder_sent_at, and
+ * neither of those is read by the cron's own guard, so sending a manual
+ * reminder never suppresses (or is suppressed by) the automated one.
+ */
+export async function sendApplicationReminder(applicationId: string) {
+  const { supabase } = await requireReviewSellersPermission();
+
+  const { data: application, error: fetchError } = await supabase
+    .from("application")
+    .select("id, email, full_name, resume_code, status, manual_reminder_count")
+    .eq("id", applicationId)
+    .maybeSingle();
+
+  if (fetchError) throw fetchError;
+  if (!application) throw new Error("Application not found.");
+  if (application.status !== "draft") {
+    throw new Error("Only incomplete (draft) applications can get a reminder.");
+  }
+  if (!application.email || !application.resume_code) {
+    throw new Error("This application is missing an email or continuation code -- can't send a reminder.");
+  }
+
+  const result = await sendDraftReminderEmail({
+    email: application.email,
+    fullName: application.full_name,
+    resumeCode: application.resume_code,
+  });
+
+  if (!result.success) {
+    throw new Error(result.error || "Couldn't send the reminder email.");
+  }
+
+  const { error: updateError } = await supabase
+    .from("application")
+    .update({
+      manual_reminder_count: (application.manual_reminder_count ?? 0) + 1,
+      last_manual_reminder_sent_at: new Date().toISOString(),
+    })
+    .eq("id", applicationId);
+
+  if (updateError) throw updateError;
+
   revalidatePath("/admin/review");
 }

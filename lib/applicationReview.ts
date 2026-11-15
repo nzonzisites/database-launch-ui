@@ -71,6 +71,11 @@ export interface ApplicationForReview {
   // they save a draft -- shown to admins so they can pass it along if
   // the applicant loses it.
   resume_code: string | null;
+  // Manual "Send reminder" button on a draft application -- separate
+  // from reminder_sent_at, which is the automated daily cron's own
+  // once-ever tracking. See sql/2026-11-14e-application-manual-reminder-tracking.sql.
+  manual_reminder_count: number;
+  last_manual_reminder_sent_at: string | null;
   reviewed_by: string | null;
   reviewer_name: string | null;
   decision_reason: string | null;
@@ -90,7 +95,7 @@ const REVIEW_COLUMNS =
   "reference_relationship, reference_contact_method, reference_contact_value, " +
   "reference_whatsapp_available, reference_may_contact, additional_notes, referral_source, " +
   "prior_paid_work, sector, sector_other, deliverables, rate_type, rate_amount, rate_currency, rate_relative_to_market, rate_scope, capacity, " +
-  "status, review_status, resume_code, reviewed_by, decision_reason, created_at";
+  "status, review_status, resume_code, manual_reminder_count, last_manual_reminder_sent_at, reviewed_by, decision_reason, created_at";
 
 /**
  * All seller applications, newest first. The review queue UI splits these

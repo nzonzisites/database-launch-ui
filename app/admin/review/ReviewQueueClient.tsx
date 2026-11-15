@@ -6,7 +6,7 @@ import type { PlatformAgentRow } from "@/lib/platformAgent";
 import type { ApplicationForReview, ApplicationStatus, ReviewStatus } from "@/lib/applicationReview";
 import type { ScholarProfileWithSeller } from "@/lib/scholarProfile";
 import type { ProspectSignupForReview } from "@/lib/prospectSignupReview";
-import { approveApplication, rejectApplication, revokeDecision, updateReviewStatus } from "./actions";
+import { approveApplication, rejectApplication, revokeDecision, updateReviewStatus, sendApplicationReminder } from "./actions";
 import ListingsTabClient from "./ListingsTabClient";
 import ProspectsTabClient from "./ProspectsTabClient";
 import SessionControls from "@/app/components/SessionControls";
@@ -636,6 +636,13 @@ function ApplicationRow({
               at a glance exactly what was and wasn't answered rather
               than have unanswered questions quietly disappear. */}
           {a.status === "draft" && <ResumeCode code={a.resume_code} />}
+          {a.status === "draft" && (
+            <ReminderControl
+              applicationId={a.id}
+              initialCount={a.manual_reminder_count}
+              lastSentAt={a.last_manual_reminder_sent_at}
+            />
+          )}
           <Detail
             label="Contact"
             value={
@@ -914,6 +921,65 @@ function ResumeCode({ code }: { code: string | null }) {
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
+    </div>
+  );
+}
+
+function ReminderControl({
+  applicationId,
+  initialCount,
+  lastSentAt,
+}: {
+  applicationId: string;
+  initialCount: number;
+  lastSentAt: string | null;
+}) {
+  const [count, setCount] = useState(initialCount);
+  const [sentAt, setSentAt] = useState(lastSentAt);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function handleSend() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await sendApplicationReminder(applicationId);
+        setCount((c) => c + 1);
+        setSentAt(new Date().toISOString());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Couldn't send the reminder.");
+      }
+    });
+  }
+
+  return (
+    <div>
+      <div style={{ ...monoLabel, marginBottom: 4 }}>Application reminder</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={isPending}
+          style={{
+            background: MOSS,
+            color: BROWN,
+            border: 0,
+            padding: "8px 13px",
+            fontSize: 12.5,
+            fontWeight: 600,
+            cursor: isPending ? "default" : "pointer",
+            opacity: isPending ? 0.6 : 1,
+          }}
+        >
+          {isPending ? "Sending..." : "Send reminder"}
+        </button>
+        <span style={{ fontSize: 13, color: SAND, opacity: 0.8 }}>
+          {count === 0
+            ? "No reminders sent yet"
+            : `${count} reminder${count === 1 ? "" : "s"} sent${sentAt ? ` -- last ${formatDate(sentAt)}` : ""}`}
+        </span>
+      </div>
+      {error && <p style={{ color: OCHRE, fontSize: 12.5, margin: "6px 0 0" }}>{error}</p>}
     </div>
   );
 }
