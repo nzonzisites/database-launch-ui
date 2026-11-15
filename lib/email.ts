@@ -28,6 +28,7 @@ import {
 
 const OCHRE = "#C2561A";
 const BROWN = "#1F0E03";
+const SAND = "#E6DED2"; // Warm Sand -- matches lib/colors.ts
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -223,42 +224,54 @@ export async function sendDraftReminderEmail(
 
   const firstName = data.fullName?.trim().split(/\s+/)[0] || "";
 
+  // Outer wrapper carries the Warm Sand background across the full
+  // email viewport (most clients render whatever's outside the inner
+  // max-width block at their own default, usually white) -- the inner
+  // div stays transparent and just handles the centered content column.
   const html = `
-    <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:${BROWN};background:#ffffff;">
-      <h1 style="font-size:24px;font-weight:600;line-height:1.25;margin:0 0 16px;">
-        ${
-          firstName
-            ? `${escapeHtml(firstName)}, your Nzonzi application is still waiting.`
-            : "Your Nzonzi application is still waiting."
-        }
-      </h1>
-      <p style="font-size:15px;line-height:1.6;color:#444;margin:0 0 24px;">
-        You started an application but didn't finish it. Pick up right where you left off --
-        head back to the application page and enter your code below.
-      </p>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-        <tr>
-          <td style="padding:16px;background:#f7f3ee;border-radius:8px;text-align:center;">
-            <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b6b;margin-bottom:6px;">Your code</div>
-            <div style="font-size:22px;font-weight:700;letter-spacing:0.1em;color:${OCHRE};">${escapeHtml(data.resumeCode)}</div>
-          </td>
-        </tr>
-      </table>
-      <p style="text-align:center;margin:0 0 24px;">
-        <a href="${APPLY_PAGE_URL}" style="display:inline-block;background:${OCHRE};color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:15px;font-weight:600;">
-          Continue your application
-        </a>
-      </p>
-      <p style="font-size:13px;color:#888;margin-top:32px;">
-        Questions? Reach out to <a href="mailto:hello@nzonzi.net" style="color:${OCHRE};">hello@nzonzi.net</a>.
-      </p>
+    <div style="background:${SAND};padding:40px 0;">
+      <div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:${BROWN};">
+        <h1 style="font-size:24px;font-weight:600;line-height:1.25;margin:0 0 16px;">
+          ${
+            firstName
+              ? `${escapeHtml(firstName)}, claim your place in the database before it's too late.`
+              : "Your Nzonzi application is still open, complete your application today!"
+          }
+        </h1>
+        <p style="font-size:15px;line-height:1.6;color:#444;margin:0 0 20px;">
+          Nzonzi is a network of knowledge producers, innovative practitioners, and local
+          leaders -- children, grandchildren, and great-grandchildren of Africa, the
+          Caribbean, and Afro-Latin America -- reclaiming our cultural inheritance through
+          research, experimentation, collaboration, and practical expertise.
+        </p>
+        <p style="font-size:15px;line-height:1.6;color:#444;margin:0 0 24px;">
+          You started the process of becoming a Nzonzi but didn't finish. Pick up right
+          where you left off -- head back to the application page and enter your code below.
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+          <tr>
+            <td style="padding:16px;background:#ffffff;border-radius:8px;text-align:center;">
+              <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b6b;margin-bottom:6px;">Your code</div>
+              <div style="font-size:22px;font-weight:700;letter-spacing:0.1em;color:${OCHRE};">${escapeHtml(data.resumeCode)}</div>
+            </td>
+          </tr>
+        </table>
+        <p style="text-align:center;margin:0 0 24px;">
+          <a href="${APPLY_PAGE_URL}" style="display:inline-block;background:${OCHRE};color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:15px;font-weight:600;">
+            Continue your application
+          </a>
+        </p>
+        <p style="font-size:13px;color:#888;margin-top:32px;">
+          Questions? Reach out to <a href="mailto:hello@nzonzi.net" style="color:${OCHRE};">hello@nzonzi.net</a>.
+        </p>
+      </div>
     </div>`;
 
   try {
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: data.email,
-      subject: "Continue your Nzonzi application",
+      subject: "Your Nzonzi application is still open",
       html,
     });
     if (error) return { success: false, error: error.message };
