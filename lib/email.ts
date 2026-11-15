@@ -240,9 +240,9 @@ export async function sendDraftReminderEmail(
         </h1>
         <p style="font-size:15px;line-height:1.6;color:#444;margin:0 0 20px;">
           Nzonzi is a network of knowledge producers, innovative practitioners, and local
-          leaders -- children, grandchildren, and great-grandchildren of Africa, the
-          Caribbean, and Afro-Latin America -- reclaiming our cultural inheritance through
-          research, experimentation, collaboration, and practical expertise.
+          leaders reclaiming our cultural inheritance through research, experimentation,
+          collaboration, and practical expertise. Listing in the directory just might be the
+          first step in building a global professional experience and network.
         </p>
         <p style="font-size:15px;line-height:1.6;color:#444;margin:0 0 24px;">
           You started the process of becoming a Nzonzi but didn't finish. Pick up right
