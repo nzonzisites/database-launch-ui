@@ -99,16 +99,28 @@ export default async function DatabasePage() {
 
   return (
     <div
+      className="database-page-shell"
       style={{
         background: BROWN,
         color: WHITE,
-        height: "100vh",
         padding: "28px clamp(20px, 6vw, 56px) 0",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
       }}
     >
+      <style>{`
+        .database-page-shell {
+          /* 100vh on mobile browsers is measured behind the address
+             bar, which clips the bottom of this page with no way to
+             scroll back to it (overflow: hidden, by design, below).
+             100dvh tracks the actual visible viewport instead; the
+             plain vh line above it is the fallback for browsers that
+             don't support dvh yet. */
+          height: 100vh;
+          height: 100dvh;
+        }
+      `}</style>
       <Link
         href="/"
         style={{

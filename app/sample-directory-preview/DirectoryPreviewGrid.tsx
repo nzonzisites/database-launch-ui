@@ -53,6 +53,15 @@ export type PreviewPerson = {
 // fit across the actual width at that row height is however many there
 // are (see tileSize/columns below).
 const ROWS = 3;
+// However many columns tile size derived from height alone would still
+// leave on the narrowest phones -- without this, a tall/narrow
+// container (most phones in portrait) collapses to a single column,
+// which breaks two things at once: nearly every reveal in
+// REVEAL_ORDER_1INDEXED lands several rows down, past where the fixed-
+// height, overflow: hidden container can show it, and a single column
+// also always has zero room beside it for a caption (see roomRight/
+// roomLeft below), so captions stop appearing entirely.
+const MIN_COLUMNS = 3;
 const MAX_CAPTION_SPAN = 3;
 
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
@@ -89,10 +98,18 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
     return () => clearInterval(timer);
   }, [people.length]);
 
-  // Height alone drives tile size; width just takes however many whole
-  // tiles fit (auto-fill), rather than being stretched/shrunk to make a
-  // fixed column count span the full width.
-  const tileSize = dims != null ? Math.max(0, Math.floor(dims.height / ROWS)) : null;
+  // Height drives tile size on a wide/short container the way it
+  // always has; width just takes however many whole tiles fit
+  // (auto-fill). But capping tile size by width/MIN_COLUMNS too keeps
+  // at least a few columns on a narrow/tall one -- the grid can end up
+  // taller than ROWS rows there, and anything past the container's own
+  // height is cropped exactly like extra columns already are cropped
+  // on a wide screen, so a phone is no worse off than a wide monitor
+  // already was.
+  const tileSize =
+    dims != null
+      ? Math.max(0, Math.floor(Math.min(dims.height / ROWS, dims.width / MIN_COLUMNS)))
+      : null;
   const columns =
     tileSize && tileSize > 0 && dims != null ? Math.max(1, Math.floor(dims.width / tileSize)) : 1;
 
