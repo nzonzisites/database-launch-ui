@@ -11,11 +11,17 @@
 // overlaps, or stretches non-square.
 //
 // Caption: a single overlay, positioned next to wherever the revealed
-// image actually is -- to its right if there's more room that way,
-// otherwise to its left -- capped at MAX_CAPTION_SPAN (3) image-widths
-// wide, and narrower than that near the grid's middle columns where a
-// full 3-wide run isn't available on either side without overlapping
-// the image itself.
+// image actually is. On a wide-enough container it sits beside the
+// image -- to its right if there's more room that way, otherwise to
+// its left -- capped at MAX_CAPTION_SPAN (3) image-widths wide, and
+// narrower than that near the grid's middle columns where a full
+// 3-wide run isn't available on either side without overlapping the
+// image itself. Below MOBILE_BREAKPOINT_PX there usually aren't that
+// many columns to spare, and a caption squeezed into a single
+// tile-width that's also only tile-HEIGHT tall clips its own text --
+// so instead it stacks above or below the image (same column, same
+// width as the image, spanning tile-heights rather than tile-widths),
+// using whichever direction has more room, by the same rule.
 //
 // Sizing: tile size is (measured container height) / ROWS only -- the
 // image only needs to fit the page's height, not its width, so however
@@ -63,6 +69,10 @@ const ROWS = 3;
 // roomLeft below), so captions stop appearing entirely.
 const MIN_COLUMNS = 3;
 const MAX_CAPTION_SPAN = 3;
+// Below this container width, the caption stacks above/below the
+// revealed image instead of sitting beside it -- see the comment on
+// caption placement up top.
+const MOBILE_BREAKPOINT_PX = 600;
 
 export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,13 +126,24 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   const revealed = revealedIndex != null ? people[revealedIndex] : undefined;
   const revealedRow = revealedIndex != null ? Math.floor(revealedIndex / columns) : 0;
   const revealedCol = revealedIndex != null ? revealedIndex % columns : 0;
+  const totalRows = columns > 0 ? Math.ceil(people.length / columns) : 0;
+  const isMobile = dims != null && dims.width < MOBILE_BREAKPOINT_PX;
 
-  // Contiguous room on each side of the revealed column, in tile-widths.
+  // Contiguous room on each side of the revealed tile -- columns to its
+  // left/right on a wide container, rows above/below it on a narrow
+  // one -- capped at MAX_CAPTION_SPAN tile-lengths either way.
   const roomRight = columns - (revealedCol + 1);
   const roomLeft = revealedCol;
-  const useRightSide = roomRight >= roomLeft;
-  const captionSpan = Math.min(MAX_CAPTION_SPAN, useRightSide ? roomRight : roomLeft);
-  const captionStartCol = useRightSide ? revealedCol + 1 : revealedCol - captionSpan;
+  const roomBelow = totalRows - (revealedRow + 1);
+  const roomAbove = revealedRow;
+  const roomForward = isMobile ? roomBelow : roomRight;
+  const roomBackward = isMobile ? roomAbove : roomLeft;
+  const useForward = roomForward >= roomBackward;
+  const captionSpan = Math.min(MAX_CAPTION_SPAN, useForward ? roomForward : roomBackward);
+  const captionStartCol = isMobile ? revealedCol : useForward ? revealedCol + 1 : revealedCol - captionSpan;
+  const captionStartRow = isMobile ? (useForward ? revealedRow + 1 : revealedRow - captionSpan) : revealedRow;
+  const captionWidth = isMobile ? tileSize ?? 0 : captionSpan * (tileSize ?? 0);
+  const captionHeight = isMobile ? captionSpan * (tileSize ?? 0) : tileSize ?? 0;
 
   return (
     <div ref={containerRef} style={{ height: "100%", overflow: "hidden" }}>
@@ -169,10 +190,10 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             key={revealed.slug}
             style={{
               position: "absolute",
-              top: revealedRow * tileSize,
+              top: captionStartRow * tileSize,
               left: captionStartCol * tileSize,
-              width: captionSpan * tileSize,
-              height: tileSize,
+              width: captionWidth,
+              height: captionHeight,
               padding: "16px 20px",
               boxSizing: "border-box",
               backgroundColor: BROWN,
