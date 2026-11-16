@@ -16,12 +16,19 @@
 // its left -- capped at MAX_CAPTION_SPAN (3) image-widths wide, and
 // narrower than that near the grid's middle columns where a full
 // 3-wide run isn't available on either side without overlapping the
-// image itself. Below MOBILE_BREAKPOINT_PX there usually aren't that
-// many columns to spare, and a caption squeezed into a single
-// tile-width that's also only tile-HEIGHT tall clips its own text --
-// so instead it stacks above or below the image (same column, same
-// width as the image, spanning tile-heights rather than tile-widths),
-// using whichever direction has more room, by the same rule.
+// image itself; a fixed, single-tile-tall box works there because
+// that's genuinely how much room there is to give it.
+//
+// Below MOBILE_BREAKPOINT_PX there usually isn't a second column to
+// spare, so the caption instead runs the full container width,
+// directly below the image (or above it, for the bottom row, so it
+// never dangles off the end with nothing under it) -- and its height
+// is auto rather than capped at one tile, because there's no tile
+// count that reliably fits a name plus every location plus a tagline.
+// The grid's own wrapper (containerRef below) switches from
+// overflow: hidden to a scrollable overflow-y on mobile so a caption
+// that's taller than the space left in the viewport is still fully
+// reachable rather than silently cut off.
 //
 // Sizing: tile size is (measured container height) / ROWS only -- the
 // image only needs to fit the page's height, not its width, so however
@@ -129,24 +136,29 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
   const totalRows = columns > 0 ? Math.ceil(people.length / columns) : 0;
   const isMobile = dims != null && dims.width < MOBILE_BREAKPOINT_PX;
 
-  // Contiguous room on each side of the revealed tile -- columns to its
-  // left/right on a wide container, rows above/below it on a narrow
-  // one -- capped at MAX_CAPTION_SPAN tile-lengths either way.
+  // Desktop only: contiguous room (in tile-widths) on each side of the
+  // revealed column, capped at MAX_CAPTION_SPAN -- a fixed-height
+  // sidebar caption, so this decides only how wide it gets.
   const roomRight = columns - (revealedCol + 1);
   const roomLeft = revealedCol;
-  const roomBelow = totalRows - (revealedRow + 1);
-  const roomAbove = revealedRow;
-  const roomForward = isMobile ? roomBelow : roomRight;
-  const roomBackward = isMobile ? roomAbove : roomLeft;
-  const useForward = roomForward >= roomBackward;
-  const captionSpan = Math.min(MAX_CAPTION_SPAN, useForward ? roomForward : roomBackward);
-  const captionStartCol = isMobile ? revealedCol : useForward ? revealedCol + 1 : revealedCol - captionSpan;
-  const captionStartRow = isMobile ? (useForward ? revealedRow + 1 : revealedRow - captionSpan) : revealedRow;
-  const captionWidth = isMobile ? tileSize ?? 0 : captionSpan * (tileSize ?? 0);
-  const captionHeight = isMobile ? captionSpan * (tileSize ?? 0) : tileSize ?? 0;
+  const useRightSide = roomRight >= roomLeft;
+  const desktopCaptionSpan = Math.min(MAX_CAPTION_SPAN, useRightSide ? roomRight : roomLeft);
+  const desktopCaptionStartCol = useRightSide ? revealedCol + 1 : revealedCol - desktopCaptionSpan;
+
+  // Mobile only: below the image unless this is the bottom row (then
+  // above it instead), full container width, height left to the
+  // content -- see the file-top comment for why.
+  const placeBelowOnMobile = revealedRow + 1 < totalRows;
 
   return (
-    <div ref={containerRef} style={{ height: "100%", overflow: "hidden" }}>
+    <div
+      ref={containerRef}
+      style={{
+        height: "100%",
+        overflowX: "hidden",
+        overflowY: isMobile ? "auto" : "hidden",
+      }}
+    >
       <div
         style={{
           position: "relative",
@@ -183,24 +195,37 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
           </div>
         ))}
 
-        {/* Caption overlay -- next to wherever the revealed image lies,
-            capped at MAX_CAPTION_SPAN image-widths. */}
-        {tileSize && revealed && captionSpan > 0 && (
+        {/* Caption overlay -- beside the revealed image on a wide
+            container (capped at MAX_CAPTION_SPAN image-widths), or
+            full-width above/below it on mobile, sized to its content
+            rather than clipped to a tile. */}
+        {tileSize && revealed && (isMobile || desktopCaptionSpan > 0) && (
           <div
             key={revealed.slug}
             style={{
               position: "absolute",
-              top: captionStartRow * tileSize,
-              left: captionStartCol * tileSize,
-              width: captionWidth,
-              height: captionHeight,
+              ...(isMobile
+                ? {
+                    left: 0,
+                    width: dims?.width ?? 0,
+                    height: "auto",
+                    ...(placeBelowOnMobile
+                      ? { top: (revealedRow + 1) * tileSize }
+                      : { bottom: (totalRows - revealedRow) * tileSize }),
+                  }
+                : {
+                    top: revealedRow * tileSize,
+                    left: desktopCaptionStartCol * tileSize,
+                    width: desktopCaptionSpan * tileSize,
+                    height: tileSize,
+                  }),
               padding: "16px 20px",
               boxSizing: "border-box",
               backgroundColor: BROWN,
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
-              overflow: "hidden",
+              overflow: isMobile ? "visible" : "hidden",
               animation: "fadeInCaption 0.5s ease",
             }}
           >
@@ -253,16 +278,25 @@ export default function DirectoryPreviewGrid({ people }: { people: PreviewPerson
             )}
             {revealed.tagline && (
               <div
-                style={{
-                  fontSize: 12.5,
-                  fontWeight: 300,
-                  lineHeight: 1.35,
-                  color: "rgba(240,240,240,0.7)",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 4,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}
+                style={
+                  isMobile
+                    ? {
+                        fontSize: 12.5,
+                        fontWeight: 300,
+                        lineHeight: 1.35,
+                        color: "rgba(240,240,240,0.7)",
+                      }
+                    : {
+                        fontSize: 12.5,
+                        fontWeight: 300,
+                        lineHeight: 1.35,
+                        color: "rgba(240,240,240,0.7)",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 4,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }
+                }
               >
                 {revealed.tagline}
               </div>
